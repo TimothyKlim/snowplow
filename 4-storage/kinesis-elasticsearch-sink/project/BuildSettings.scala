@@ -22,7 +22,7 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.7.0",
     description           :=  "Kinesis sink for Elasticsearch",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.10.6",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),

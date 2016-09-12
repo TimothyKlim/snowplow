@@ -20,7 +20,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.9.0",
     description   := "Hadoop job to shred event and context JSONs from enriched event TSVs",
-    scalaVersion  := "2.10.4",
+    scalaVersion  := "2.10.6",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
     resolvers     ++= Dependencies.resolutionRepos

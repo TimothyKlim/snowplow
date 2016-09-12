@@ -20,7 +20,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.2.0",
     description   := "Extracts and fixes up original Snowplow raw events from bad rows JSONs",
-    scalaVersion  := "2.10.4",
+    scalaVersion  := "2.10.6",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )

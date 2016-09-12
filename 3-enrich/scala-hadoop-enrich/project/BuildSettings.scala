@@ -22,7 +22,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "1.8.0",
     description   := "The Snowplow Hadoop Enrichment process, written in Scalding for Hadoop 2.4",
-    scalaVersion  := "2.10.4",
+    scalaVersion  := "2.10.6",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8",
                          "-target:jvm-1.7"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
