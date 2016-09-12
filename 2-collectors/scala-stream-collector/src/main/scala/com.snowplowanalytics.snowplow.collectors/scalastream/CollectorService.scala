@@ -41,116 +41,46 @@ object CollectorService {
 
 class CollectorService(collectorConfig: CollectorConfig, sinks: CollectorSinks) {
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
+  val cookieName = collectorConfig.cookieName
 
   // format: OFF
   val routes = {
-    val cookieName = collectorConfig.cookieName
     path(Segment / Segment) { (path1, path2) =>
-      post {
+      getRequestDetails(cookieName) {
+        case (reqCookie, userAgent, refererURI, rawRequest, host, ip, request) =>
+          post {
+            entity(as[String]) { body =>
+              complete(responseHandler.cookie(null, body, reqCookie, userAgent, host, ip, request, refererURI,
+                "/" + path1 + "/" + path2, false)._1)
+            }
+          } ~
+          get {
+            val q = rawRequest match {
+              case CollectorService.querystringExtractor(qs) => qs
+              case _ => ""
+            }
+            complete(responseHandler.cookie(q, null, reqCookie, userAgent, host, ip, request, refererURI,
+              "/" + path1 + "/" + path2, true)._1)
+          }
+      }
+    } ~
+    path("""ice\.png""".r | "i".r) { path =>
+      get {
         getRequestDetails(cookieName) {
           case (reqCookie, userAgent, refererURI, rawRequest, host, ip, request) =>
-            entity(as[String]) { body =>
-              complete(
-                responseHandler.cookie(null, body, reqCookie, userAgent, host, ip, request, refererURI, "/" + path1 + "/" + path2, false)._1
-              )
+            val q = rawRequest match {
+              case CollectorService.querystringExtractor(qs) => qs
+              case _ => ""
             }
-          }
+            complete(responseHandler.cookie(q, null, reqCookie, userAgent, host, ip, request, refererURI,
+              "/" + path, true)._1)
         }
       }
-      // get {
-      //   path("""ice\.png""".r | "i".r) { path =>
-      //     cookieIfWanted(cookieName) { reqCookie =>
-      //       optionalHeaderValueByName("User-Agent") { userAgent =>
-      //         optionalHeaderValueByName("Referer") { refererURI =>
-      //           headerValueByName("Raw-Request-URI") { rawRequest =>
-      //             hostName { host =>
-      //               clientIP { ip =>
-      //                 requestInstance { request =>
-      //                   complete(
-      //                     responseHandler
-      //                       .cookie(
-      //                         rawRequest match {
-      //                           case CollectorService.QuerystringExtractor(
-      //                               qs) =>
-      //                             qs
-      //                           case _ => ""
-      //                         },
-      //                         null,
-      //                         reqCookie,
-      //                         userAgent,
-      //                         host,
-      //                         ip,
-      //                         request,
-      //                         refererURI,
-      //                         "/" + path,
-      //                         true
-      //                       )
-      //                       ._1
-      //                   )
-      //                 }
-      //               }
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // } ~
-      // get {
-      //   path("health".r) { path =>
-      //     complete(responseHandler.healthy)
-      //   }
-      // } ~
-      // get {
-      //   path(Segment / Segment) { (path1, path2) =>
-      //     cookieIfWanted(cookieName) { reqCookie =>
-      //       optionalHeaderValueByName("User-Agent") { userAgent =>
-      //         optionalHeaderValueByName("Referer") { refererURI =>
-      //           headerValueByName("Raw-Request-URI") { rawRequest =>
-      //             hostName { host =>
-      //               clientIP { ip =>
-      //                 requestInstance { request =>
-      //                   complete(
-      //                     responseHandler
-      //                       .cookie(
-      //                         rawRequest match {
-      //                           case CollectorService.QuerystringExtractor(
-      //                               qs) =>
-      //                             qs
-      //                           case _ => ""
-      //                         },
-      //                         null,
-      //                         reqCookie,
-      //                         userAgent,
-      //                         host,
-      //                         ip,
-      //                         request,
-      //                         refererURI,
-      //                         "/" + path1 + "/" + path2,
-      //                         true
-      //                       )
-      //                       ._1
-      //                   )
-      //                 }
-      //               }
-      //             }
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // } ~
-      // options {
-      //   requestInstance { request =>
-      //     complete(responseHandler.preflightResponse(request))
-      //   }
-      // } ~
-      // get {
-      //   path("""crossdomain\.xml""".r) { path =>
-      //     complete(responseHandler.flashCrossDomainPolicy)
-      //   }
-      // } ~
-      // complete(responseHandler.notFound)
+    } ~
+    path("health".r)(_ => get(complete(responseHandler.healthy))) ~
+    options(extractRequest(req => complete(responseHandler.preflightResponse(req)))) ~
+    path("""crossdomain\.xml""".r)(_ => get(complete(responseHandler.flashCrossDomainPolicy))) ~
+    complete(HttpResponse(StatusCodes.NotFound))
   }
   // format: ON
 

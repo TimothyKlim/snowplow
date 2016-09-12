@@ -72,7 +72,7 @@ object Dependencies {
     val json4sJackson = "org.json4s" %% "json4s-jackson" % V.json4s
 
     // Scala (test only)
-    val scalaTest = "org.scalatest"      %% "scalatest"          % V.scalaTest % "test"
+    val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"
     val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % V.akka % "test"
   }
 }

@@ -119,7 +119,9 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     }
 
     // Set the content type
-    request.headers.collectFirst { case `Content-Type`(ct) => ct.value.toLowerCase }
+    request.headers.collectFirst {
+      case `Content-Type`(ct) => ct.value.toLowerCase
+    }
 
     // Only send to Kinesis if we aren't shutting down
     val sinkResponse = if (!KinesisSink.shuttingDown) {
@@ -224,9 +226,9 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
       "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
   )
 
-  def healthy = HttpResponse(status = 200, entity = s"OK")
-  def badRequest = HttpResponse(status = 400, entity = "400 Bad request")
-  def notFound = HttpResponse(status = 404, entity = "404 Not found")
+  def healthy = HttpResponse(StatusCodes.OK)
+  def badRequest = HttpResponse(StatusCodes.BadRequest)
+  def notFound = HttpResponse(StatusCodes.NotFound)
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 
   /**

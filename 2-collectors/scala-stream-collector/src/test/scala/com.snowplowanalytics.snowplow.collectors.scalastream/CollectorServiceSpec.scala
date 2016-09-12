@@ -44,7 +44,10 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class CollectorServiceSpec extends WordSpec with Matchers with ScalatestRouteTest {
+class CollectorServiceSpec
+    extends WordSpec
+    with Matchers
+    with ScalatestRouteTest {
   val testConf: Config =
     ConfigFactory.parseString("""
 collector {
@@ -102,15 +105,17 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   private def collectorGet(uri: String,
-                   cookie: Option[HttpCookiePair] = None,
-                   remoteAddr: String = "127.0.0.1") = {
+                           cookie: Option[HttpCookiePair] = None,
+                           remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddress(remoteAddr)), `Raw-Request-URI`(uri))
+      MutableList(`Remote-Address`(remoteAddress(remoteAddr)),
+                  `Raw-Request-URI`(uri))
     cookie.foreach(headers += Cookie(_))
     Get(uri).withHeaders(headers.toList)
   }
 
-  private def remoteAddress(ip: String) = RemoteAddress(InetAddress.getByName(ip))
+  private def remoteAddress(ip: String) =
+    RemoteAddress(InetAddress.getByName(ip))
 
   "Snowplow's Scala collector" should {
     "return an invisible pixel" in {
@@ -139,7 +144,7 @@ collector {
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
             DateTime.now.clicks
-        offset.asInstanceOf[Int] should === (0 +- 3600000) // 1 hour window.
+        offset.asInstanceOf[Int] should ===(0 +- 3600000) // 1 hour window.
       }
     }
     "return the same cookie as passed in" in {
@@ -192,16 +197,16 @@ collector {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
-      storedEvent.timestamp should === (DateTime.now.clicks +- 60000)
-      storedEvent.encoding should === ("UTF-8")
-      storedEvent.ipAddress should === ("127.0.0.1")
-      storedEvent.collector should === ("ssc-0.7.0-test")
-      storedEvent.path should === ("/i")
-      storedEvent.querystring should === (payloadData)
+      storedEvent.timestamp should ===(DateTime.now.clicks +- 60000)
+      storedEvent.encoding should ===("UTF-8")
+      storedEvent.ipAddress should ===("127.0.0.1")
+      storedEvent.collector should ===("ssc-0.8.0-test")
+      storedEvent.path should ===("/i")
+      storedEvent.querystring should ===(payloadData)
     }
     "report itself as healthy" in {
       collectorGet("/health") ~> collectorService.routes ~> check {
-        response.status should === (StatusCodes.OK)
+        response.status should ===(StatusCodes.OK)
       }
     }
   }
