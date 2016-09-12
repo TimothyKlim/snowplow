@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -21,36 +21,38 @@ import scalastream.sinks._
 package object scalastream {
 
   /**
-   * Whether the sink is for good rows or bad rows
-   */
+    * Whether the sink is for good rows or bad rows
+    */
   object InputType extends Enumeration {
     type InputType = Value
     val Good, Bad = Value
   }
 
   /**
-   * Case class for holding both good and
-   * bad sinks for the Stream Collector.
-   *
-   * @param good
-   * @param bad
-   */
-  case class CollectorSinks(good: AbstractSink, bad: AbstractSink)
+    * Case class for holding both good and
+    * bad sinks for the Stream Collector.
+    *
+    * @param good
+    * @param bad
+    */
+  final case class CollectorSinks(good: AbstractSink, bad: AbstractSink)
 
   /**
-   * Case class for holding the results of
-   * splitAndSerializePayload.
-   *
-   * @param good All good results
-   * @param bad All bad results
-   */
-  case class EventSerializeResult(good: List[Array[Byte]], bad: List[Array[Byte]])
+    * Case class for holding the results of
+    * splitAndSerializePayload.
+    *
+    * @param good All good results
+    * @param bad All bad results
+    */
+  final case class EventSerializeResult(good: List[Array[Byte]],
+                                        bad: List[Array[Byte]])
 
   /**
-   * Class for the result of splitting a too-large array of events in the body of a POST request
-   *
-   * @param goodBatches List of batches of events
-   * @param failedBigEvents List of events that were too large
-   */
-  case class SplitBatchResult(goodBatches: List[List[String]], failedBigEvents: List[String])   
+    * Class for the result of splitting a too-large array of events in the body of a POST request
+    *
+    * @param goodBatches List of batches of events
+    * @param failedBigEvents List of events that were too large
+    */
+  final case class SplitBatchResult(goodBatches: List[List[String]],
+                                    failedBigEvents: List[String])
 }

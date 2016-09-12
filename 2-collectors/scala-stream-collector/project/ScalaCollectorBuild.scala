@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -22,7 +22,9 @@ object ScalaCollectorBuild extends Build {
 
   // Configure prompt to show current project.
   override lazy val settings = super.settings :+ {
-    shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+    shellPrompt := { s =>
+      Project.extract(s).currentProject.id + " > "
+    }
   }
 
   // Define our project, with basic project information and library
@@ -31,17 +33,15 @@ object ScalaCollectorBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.akkaActor,
+        Libraries.akkaHttp,
+        Libraries.akkaHttpTestkit,
         Libraries.akkaSlf4j,
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.logback,
         Libraries.mimepull,
-        Libraries.sprayCan,
-        Libraries.sprayRouting,
         Libraries.commonsCodec,
-        Libraries.sprayTestkit,
-        Libraries.specs2,
+        Libraries.scalaTest,
         Libraries.scalazon,
         Libraries.awsSdk,
         Libraries.argot,

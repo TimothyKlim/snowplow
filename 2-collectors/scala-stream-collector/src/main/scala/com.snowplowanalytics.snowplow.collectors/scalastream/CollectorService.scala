@@ -17,16 +17,13 @@ package collectors
 package scalastream
 
 // Akka
-import akka.actor.{Actor,ActorRefFactory}
+import akka.actor.{Actor, ActorRefFactory}
+import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import akka.pattern.ask
 import akka.util.Timeout
-
-// Spray
-import spray.http.Timedout
-import spray.http.HttpCookie
-import spray.http.HttpHeaders.RawHeader
-import spray.routing.HttpService
-import spray.routing.Directive1
 
 // Scala
 import scala.concurrent.duration._
@@ -35,176 +32,171 @@ import scala.concurrent.duration._
 import sinks._
 import utils.SplitBatch
 
-// Actor accepting Http requests for the Scala collector.
-class CollectorServiceActor(collectorConfig: CollectorConfig,
-    sinks: CollectorSinks) extends Actor with HttpService {
-  implicit val timeout: Timeout = 1.second // For the actor 'asks'
-  def actorRefFactory = context
-
-  // Deletage responses (content and storing) to the ResponseHandler.
-  private val responseHandler = new ResponseHandler(collectorConfig, sinks)
-
-  // Use CollectorService so the same route can be accessed differently
-  // in the testing framework.
-  private val collectorService = new CollectorService(collectorConfig, responseHandler, context)
-
-  // Message loop for the Spray service.
-  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
-
-  def handleTimeouts: Receive = {
-    case Timedout(_) => sender ! responseHandler.timeout
-  }
-}
-
 /**
- * Companion object for the CollectorService class
- */
+  * Companion object for the CollectorService class
+  */
 object CollectorService {
-  private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
+  private val querystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
 
-// Store the route in CollectorService to be accessed from
-// both CollectorServiceActor and from the testing framework.
-class CollectorService(
-    collectorConfig: CollectorConfig,
-    responseHandler: ResponseHandler,
-    context: ActorRefFactory) extends HttpService {
-  def actorRefFactory = context
+class CollectorService(collectorConfig: CollectorConfig, sinks: CollectorSinks) {
+  val responseHandler = new ResponseHandler(collectorConfig, sinks)
 
-  val cookieName = collectorConfig.cookieName
+  // format: OFF
+  val routes = {
+    val cookieName = collectorConfig.cookieName
+    path(Segment / Segment) { (path1, path2) =>
+      post {
+        getRequestDetails(cookieName) {
+          case (reqCookie, userAgent, refererURI, rawRequest, host, ip, request) =>
+            entity(as[String]) { body =>
+              complete(
+                responseHandler.cookie(null, body, reqCookie, userAgent, host, ip, request, refererURI, "/" + path1 + "/" + path2, false)._1
+              )
+            }
+          }
+        }
+      }
+      // get {
+      //   path("""ice\.png""".r | "i".r) { path =>
+      //     cookieIfWanted(cookieName) { reqCookie =>
+      //       optionalHeaderValueByName("User-Agent") { userAgent =>
+      //         optionalHeaderValueByName("Referer") { refererURI =>
+      //           headerValueByName("Raw-Request-URI") { rawRequest =>
+      //             hostName { host =>
+      //               clientIP { ip =>
+      //                 requestInstance { request =>
+      //                   complete(
+      //                     responseHandler
+      //                       .cookie(
+      //                         rawRequest match {
+      //                           case CollectorService.QuerystringExtractor(
+      //                               qs) =>
+      //                             qs
+      //                           case _ => ""
+      //                         },
+      //                         null,
+      //                         reqCookie,
+      //                         userAgent,
+      //                         host,
+      //                         ip,
+      //                         request,
+      //                         refererURI,
+      //                         "/" + path,
+      //                         true
+      //                       )
+      //                       ._1
+      //                   )
+      //                 }
+      //               }
+      //             }
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // } ~
+      // get {
+      //   path("health".r) { path =>
+      //     complete(responseHandler.healthy)
+      //   }
+      // } ~
+      // get {
+      //   path(Segment / Segment) { (path1, path2) =>
+      //     cookieIfWanted(cookieName) { reqCookie =>
+      //       optionalHeaderValueByName("User-Agent") { userAgent =>
+      //         optionalHeaderValueByName("Referer") { refererURI =>
+      //           headerValueByName("Raw-Request-URI") { rawRequest =>
+      //             hostName { host =>
+      //               clientIP { ip =>
+      //                 requestInstance { request =>
+      //                   complete(
+      //                     responseHandler
+      //                       .cookie(
+      //                         rawRequest match {
+      //                           case CollectorService.QuerystringExtractor(
+      //                               qs) =>
+      //                             qs
+      //                           case _ => ""
+      //                         },
+      //                         null,
+      //                         reqCookie,
+      //                         userAgent,
+      //                         host,
+      //                         ip,
+      //                         request,
+      //                         refererURI,
+      //                         "/" + path1 + "/" + path2,
+      //                         true
+      //                       )
+      //                       ._1
+      //                   )
+      //                 }
+      //               }
+      //             }
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // } ~
+      // options {
+      //   requestInstance { request =>
+      //     complete(responseHandler.preflightResponse(request))
+      //   }
+      // } ~
+      // get {
+      //   path("""crossdomain\.xml""".r) { path =>
+      //     complete(responseHandler.flashCrossDomainPolicy)
+      //   }
+      // } ~
+      // complete(responseHandler.notFound)
+  }
+  // format: ON
 
-  // TODO: reduce code duplication here
-  val collectorRoute = {
-    post {
-      path(Segment / Segment) { (path1, path2) =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      entity(as[String]) { body =>
-                        complete(
-                          responseHandler.cookie(
-                            null,
-                            body,
-                            reqCookie,
-                            userAgent,
-                            host,
-                            ip,
-                            request,
-                            refererURI,
-                            "/" + path1 + "/" + path2,
-                            false
-                          )._1
-                        )
-                      }
-                    }
-                  }
+  private def getRequestDetails(
+      cookieName: Option[String]): Directive1[(Option[HttpCookiePair],
+                                               Option[String],
+                                               Option[String],
+                                               String,
+                                               String,
+                                               RemoteAddress,
+                                               HttpRequest)] = {
+    cookieIfWanted(cookieName).flatMap { reqCookie =>
+      optionalHeaderValueByName("User-Agent").flatMap { userAgent =>
+        optionalHeaderValueByName("Referer").flatMap { refererURI =>
+          headerValueByName("Raw-Request-URI").flatMap { rawRequest =>
+            extractHost.flatMap { host =>
+              extractClientIP.flatMap { ip =>
+                extractRequest.flatMap { request =>
+                  provide(
+                    (reqCookie,
+                     userAgent,
+                     refererURI,
+                     rawRequest,
+                     host,
+                     ip,
+                     request))
                 }
               }
             }
           }
         }
       }
-    } ~
-    get {
-      path("""ice\.png""".r | "i".r) { path =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    get {
-      path("health".r) { path =>
-        complete(responseHandler.healthy)
-      }
-    } ~
-    get {
-      path(Segment / Segment) { (path1, path2) =>
-        cookieIfWanted(cookieName) { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path1 + "/" + path2,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    options {
-      requestInstance { request =>
-        complete(responseHandler.preflightResponse(request))
-      }
-    } ~
-    get {
-      path("""crossdomain\.xml""".r) { path =>
-        complete(responseHandler.flashCrossDomainPolicy)
-      }
-    } ~
-    complete(responseHandler.notFound)
+    }
   }
 
   /**
-   * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
-   * 
-   * @param name Optionally configured cookie name
-   * @return Directive1[Option[HttpCookie]]
-   */
-  def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookie]] = name match {
-    case Some(n) => optionalCookie(n)
-    case None => optionalHeaderValue(x => None)
+    * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
+    *
+    * @param name Optionally configured cookie name
+    * @return Directive1[Option[HttpCookie]]
+    */
+  def cookieIfWanted(
+      name: Option[String]): Directive1[Option[HttpCookiePair]] = {
+    name match {
+      case Some(n) => optionalCookie(n)
+      case None => provide(None)
+    }
   }
 }

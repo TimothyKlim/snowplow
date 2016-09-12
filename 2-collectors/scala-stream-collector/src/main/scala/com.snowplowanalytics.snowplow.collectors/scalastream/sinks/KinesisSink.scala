@@ -45,7 +45,7 @@ import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future,Await,TimeoutException}
+import scala.concurrent.{Future, Await, TimeoutException}
 import scala.concurrent.duration._
 
 // Logging
@@ -59,28 +59,31 @@ import scala.collection.JavaConverters._
 import CollectorPayload.thrift.model1.CollectorPayload
 
 /**
- * KinesisSink companion object with factory method
- */
+  * KinesisSink companion object with factory method
+  */
 object KinesisSink {
 
   @volatile var shuttingDown = false
 
   /**
-   * Create a KinesisSink and schedule a task to flush its EventStorage
-   * Exists so that no threads can get a reference to the KinesisSink
-   * during its construction
-   *
-   * @param config
-   * @param inputType
-   */
-  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType, executorService: ScheduledExecutorService): KinesisSink = {
+    * Create a KinesisSink and schedule a task to flush its EventStorage
+    * Exists so that no threads can get a reference to the KinesisSink
+    * during its construction
+    *
+    * @param config
+    * @param inputType
+    */
+  def createAndInitialize(
+      config: CollectorConfig,
+      inputType: InputType.InputType,
+      executorService: ScheduledExecutorService): KinesisSink = {
     val ks = new KinesisSink(config, inputType, executorService)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
     // and send all stored events
     Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run() {
+      override def run(): Unit = {
         shuttingDown = true
         ks.EventStorage.flush()
         ks.executorService.shutdown()
@@ -92,9 +95,12 @@ object KinesisSink {
 }
 
 /**
- * Kinesis Sink for the Scala collector.
- */
-class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends AbstractSink {
+  * Kinesis Sink for the Scala collector.
+  */
+class KinesisSink private (config: CollectorConfig,
+                           inputType: InputType.InputType,
+                           val executorService: ScheduledExecutorService)
+    extends AbstractSink {
 
   import log.{error, debug, info, trace}
 
@@ -113,19 +119,20 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
 
   info("Creating thread pool of size " + config.threadpoolSize)
 
-  implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
+  implicit lazy val ec =
+    concurrent.ExecutionContext.fromExecutorService(executorService)
 
   /**
-   * Recursively schedule a task to send everthing in EventStorage
-   * Even if the incoming event flow dries up, all stored events will eventually get sent
-   *
-   * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
-   *
-   * @param interval When to schedule the next flush
-   */
-  def scheduleFlush(interval: Long = TimeThreshold) {
+    * Recursively schedule a task to send everthing in EventStorage
+    * Even if the incoming event flow dries up, all stored events will eventually get sent
+    *
+    * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
+    *
+    * @param interval When to schedule the next flush
+    */
+  def scheduleFlush(interval: Long = TimeThreshold): Unit = {
     executorService.schedule(new Thread {
-      override def run() {
+      override def run(): Unit = {
         val lastFlushed = EventStorage.getLastFlushTime()
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastFlushed >= TimeThreshold) {
@@ -144,17 +151,17 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   // The output stream for this sink.
   private val streamName = inputType match {
     case InputType.Good => config.streamGoodName
-    case InputType.Bad  => config.streamBadName
+    case InputType.Bad => config.streamBadName
   }
-  private val sinkStream = loadStream( streamName )
+  private val sinkStream = loadStream(streamName)
 
   /**
-   * Check whether a Kinesis stream exists
-   *
-   * @param name Name of the stream
-   * @param timeout How long to wait before timing out
-   * @return Whether the stream exists
-   */
+    * Check whether a Kinesis stream exists
+    *
+    * @param name Name of the stream
+    * @param timeout How long to wait before timing out
+    * @return Whether the stream exists
+    */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
 
     val exists: Boolean = try {
@@ -162,7 +169,8 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
         s <- Kinesis.stream(name).describe
       } yield s
 
-      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+      val description =
+        Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
       description.isActive
 
     } catch {
@@ -179,42 +187,46 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   }
 
   /**
-   * Loads a Kinesis stream if it exists
-   *
-   * @return The stream
-   */
+    * Loads a Kinesis stream if it exists
+    *
+    * @return The stream
+    */
   def loadStream(name: String): Stream = {
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      error(s"Cannot write because stream $name doesn't exist or is not active")
+      error(
+        s"Cannot write because stream $name doesn't exist or is not active")
       System.exit(1)
       throw new RuntimeException("System.exit should never fail")
     }
   }
 
   /**
-   * Creates a new Kinesis client from provided AWS access key and secret
-   * key. If both are set to "cpf", then authenticate using the classpath
-   * properties file.
-   *
-   * @return the initialized AmazonKinesisClient
-   */
+    * Creates a new Kinesis client from provided AWS access key and secret
+    * key. If both are set to "cpf", then authenticate using the classpath
+    * properties file.
+    *
+    * @return the initialized AmazonKinesisClient
+    */
   private def createKinesisClient: Client = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
     val client = if (isDefault(accessKey) && isDefault(secretKey)) {
       new AmazonKinesisClient(new EnvironmentVariableCredentialsProvider())
     } else if (isDefault(accessKey) || isDefault(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
+      throw new RuntimeException(
+        "access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
       new AmazonKinesisClient(InstanceProfile)
     } else if (isIam(accessKey) || isIam(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
+      throw new RuntimeException(
+        "access-key and secret-key must both be set to 'iam', or neither of them")
     } else if (isEnv(accessKey) && isEnv(secretKey)) {
       new AmazonKinesisClient()
     } else if (isEnv(accessKey) || isEnv(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither of them")
+      throw new RuntimeException(
+        "access-key and secret-key must both be set to 'env', or neither of them")
     } else {
       new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey))
     }
@@ -232,7 +244,8 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
       val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
+        error(
+          s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -259,25 +272,28 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   }
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
-    events foreach {
-      e => EventStorage.store(e, key)
+    events foreach { e =>
+      EventStorage.store(e, key)
     }
     Nil
   }
 
-  def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff) {
+  def scheduleBatch(batch: List[(ByteBuffer, String)],
+                    lastBackoff: Long = minBackoff): Unit = {
     val nextBackoff = getNextBackoff(lastBackoff)
     executorService.schedule(new Thread {
-      override def run() {
+      override def run(): Unit = {
         sendBatch(batch, nextBackoff)
       }
     }, lastBackoff, MILLISECONDS)
   }
 
   // TODO: limit max retries?
-  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff) {
+  def sendBatch(batch: List[(ByteBuffer, String)],
+                nextBackoff: Long = minBackoff): Unit = {
     if (batch.size > 0) {
-      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
+      info(
+        s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
         p <- sinkStream.multiPut(batch)
       } yield p
@@ -285,11 +301,18 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
       putData onComplete {
         case Success(s) => {
           val results = s.result.getRecords.asScala.toList
-          val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
-          info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          val failurePairs = batch zip results filter {
+            _._2.getErrorMessage != null
+          }
+          info(
+            s"Successfully wrote ${batch.size - failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
-            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error(s"Retrying all failed records in $nextBackoff milliseconds...")
+            failurePairs foreach { f =>
+              error(
+                s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]")
+            }
+            error(
+              s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }
@@ -304,37 +327,39 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   }
 
   /**
-   * How long to wait before sending the next request
-   *
-   * @param lastBackoff The previous backoff time
-   * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
-   */
-  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+    * How long to wait before sending the next request
+    *
+    * @param lastBackoff The previous backoff time
+    * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
+    */
+  private def getNextBackoff(lastBackoff: Long): Long =
+    (minBackoff + randomGenerator
+      .nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
   /**
-   * Is the access/secret key set to the special value "default" i.e. use
-   * the standard provider chain for credentials.
-   *
-   * @param key The key to check
-   * @return true if key is default, false otherwise
-   */
+    * Is the access/secret key set to the special value "default" i.e. use
+    * the standard provider chain for credentials.
+    *
+    * @param key The key to check
+    * @return true if key is default, false otherwise
+    */
   private def isDefault(key: String): Boolean = (key == "default")
 
   /**
-   * Is the access/secret key set to the special value "iam" i.e. use
-   * the IAM role to get credentials.
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
+    * Is the access/secret key set to the special value "iam" i.e. use
+    * the IAM role to get credentials.
+    *
+    * @param key The key to check
+    * @return true if key is iam, false otherwise
+    */
   private def isIam(key: String): Boolean = (key == "iam")
 
   /**
-   * Is the access/secret key set to the special value "env" i.e. get
-   * the credentials from environment variables
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
+    * Is the access/secret key set to the special value "env" i.e. get
+    * the credentials from environment variables
+    *
+    * @param key The key to check
+    * @return true if key is iam, false otherwise
+    */
   private def isEnv(key: String): Boolean = (key == "env")
 }

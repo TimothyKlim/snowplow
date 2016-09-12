@@ -33,36 +33,12 @@ import scala.util.control.NonFatal
 import scalaz._
 import Scalaz._
 
-// Spray
-import spray.http.{
-  DateTime,
-  HttpRequest,
-  HttpResponse,
-  HttpEntity,
-  HttpCookie,
-  SomeOrigins,
-  AllOrigins,
-  ContentType,
-  MediaTypes,
-  HttpCharsets,
-  RemoteAddress
-}
-import spray.http.HttpHeaders.{
-  `Location`,
-  `Set-Cookie`,
-  `Remote-Address`,
-  `Raw-Request-URI`,
-  `Content-Type`,
-  `Origin`,
-  `Access-Control-Allow-Origin`,
-  `Access-Control-Allow-Credentials`,
-  `Access-Control-Allow-Headers`,
-  RawHeader
-}
-import spray.http.MediaTypes.`image/gif`
-
 // Akka
-import akka.actor.ActorRefFactory
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.model.MediaTypes.`image/gif`
 
 // Typesafe config
 import com.typesafe.config.Config
@@ -81,152 +57,171 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
-  val pixel = Base64.decodeBase64(
-    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-  )
+  lazy val pixel = Base64.decodeBase64(
+    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
 }
 
 // Receive requests and store data into an output sink.
-class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit context: ActorRefFactory) {
-
-  import context.dispatcher
-
+class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
   val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
 
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
-  def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
-      userAgent: Option[String], hostname: String, ip: RemoteAddress,
-      request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
-      (HttpResponse, List[Array[Byte]]) = {
+  def cookie(queryParams: String,
+             body: String,
+             requestCookie: Option[HttpCookiePair],
+             userAgent: Option[String],
+             hostname: String,
+             ip: RemoteAddress,
+             request: HttpRequest,
+             refererUri: Option[String],
+             path: String,
+             pixelExpected: Boolean): (HttpResponse, List[Array[Byte]]) = {
 
-      // Make a Tuple2 with the ip address and the shard partition key
-      val (ipAddress, partitionKey) = ip.toOption.map(_.getHostAddress) match {
-        case None     => ("unknown", UUID.randomUUID.toString)
-        case Some(ip) => (ip, if (config.useIpAddressAsPartitionKey) ip else UUID.randomUUID.toString)
-      }
-
-      // Use the same UUID if the request cookie contains `sp`.
-      val networkUserId: String = requestCookie match {
-        case Some(rc) => rc.content
-        case None => UUID.randomUUID.toString
-      }
-
-      // Construct an event object from the request.
-      val timestamp: Long = System.currentTimeMillis
-
-      val event = new CollectorPayload(
-        "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-        ipAddress,
-        timestamp,
-        "UTF-8",
-        Collector
-      )
-
-      event.path = path
-      event.querystring = queryParams
-      event.body = body
-      event.hostname = hostname
-      event.networkUserId = networkUserId
-
-      userAgent.foreach(event.userAgent = _)
-      refererUri.foreach(event.refererUri = _)
-      event.headers = request.headers.flatMap {
-        case _: `Remote-Address` | _: `Raw-Request-URI` => None
-        case other => Some(other.toString)
-      }
-
-      // Set the content type
-      request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
-
-        // toLowerCase called because Spray seems to convert "utf" to "UTF"
-        ct => event.contentType = ct.value.toLowerCase
-      }
-
-      // Only send to Kinesis if we aren't shutting down
-      val sinkResponse = if (!KinesisSink.shuttingDown) {
-
-        // Split events into Good and Bad
-        val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
-
-        // Send events to respective sinks
-        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
-        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
-
-        // Sink Responses for Test Sink
-        sinkResponseGood ++ sinkResponseBad
-      } else {
-        null
-      }
-
-      val policyRef = config.p3pPolicyRef
-      val CP = config.p3pCP
-
-      val headersWithoutCookie = List(
-        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-        getAccessControlAllowOriginHeader(request),
-        `Access-Control-Allow-Credentials`(true)
-      )
-
-      val headers = config.cookieConfig match {
-        case Some(cookieConfig) =>
-          val responseCookie = HttpCookie(
-            cookieConfig.name, networkUserId,
-            expires=Some(DateTime.now + cookieConfig.expiration),
-            domain=cookieConfig.domain
-          )
-          `Set-Cookie`(responseCookie) :: headersWithoutCookie
-        case None => headersWithoutCookie
-      }
-
-      val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
-        // A click redirect
-        try {
-          // TODO: log errors to Kinesis as BadRows
-          val target = URLEncodedUtils.parse(URI.create("?" + queryParams), "UTF-8")
-            .find(_.getName == "u")
-            .map(_.getValue)
-          target match {
-            case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
-            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), partitionKey)
-            case None => {
-              val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
-              badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), partitionKey)
-            }
-          }
-        } catch {
-          case NonFatal(e) => {
-            val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
-            badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), partitionKey)
-          }
-        }
-      } else if (KinesisSink.shuttingDown) {
-        // So that the tracker knows the request failed and can try to resend later
-        notFound -> Nil
-      } else (if (pixelExpected) {
-        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-      } else {
-        // See https://github.com/snowplow/snowplow-javascript-tracker/issues/482
-        HttpResponse(entity = "ok")
-      }).withHeaders(headers) -> Nil
-
-      (httpResponse, badQsResponse ++ sinkResponse)
+    // Make a Tuple2 with the ip address and the shard partition key
+    val (ipAddress, partitionKey) = ip.toOption.map(_.getHostAddress) match {
+      case None => ("unknown", UUID.randomUUID.toString)
+      case Some(ip) =>
+        val pk =
+          if (config.useIpAddressAsPartitionKey) ip
+          else UUID.randomUUID.toString
+        (ip, pk)
     }
 
+    // Use the same UUID if the request cookie contains `sp`.
+    val networkUserId: String = requestCookie match {
+      case Some(rc) => rc.value
+      case None => UUID.randomUUID.toString
+    }
+
+    // Construct an event object from the request.
+    val timestamp: Long = System.currentTimeMillis
+
+    val event = new CollectorPayload(
+      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+      ipAddress,
+      timestamp,
+      "UTF-8",
+      Collector
+    )
+
+    event.path = path
+    event.querystring = queryParams
+    event.body = body
+    event.hostname = hostname
+    event.networkUserId = networkUserId
+
+    userAgent.foreach(event.userAgent = _)
+    refererUri.foreach(event.refererUri = _)
+    event.headers = request.headers.flatMap {
+      case _: `Remote-Address` | _: `Raw-Request-URI` => None
+      case other => Some(other.toString)
+    }
+
+    // Set the content type
+    request.headers.collectFirst { case `Content-Type`(ct) => ct.value.toLowerCase }
+
+    // Only send to Kinesis if we aren't shutting down
+    val sinkResponse = if (!KinesisSink.shuttingDown) {
+
+      // Split events into Good and Bad
+      val eventSplit =
+        SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+
+      // Send events to respective sinks
+      val sinkResponseGood =
+        sinks.good.storeRawEvents(eventSplit.good, partitionKey)
+      val sinkResponseBad =
+        sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
+
+      // Sink Responses for Test Sink
+      sinkResponseGood ++ sinkResponseBad
+    } else {
+      null
+    }
+
+    val policyRef = config.p3pPolicyRef
+    val CP = config.p3pCP
+
+    val headersWithoutCookie = List(
+      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
+      getAccessControlAllowOriginHeader(request),
+      `Access-Control-Allow-Credentials`(true)
+    )
+
+    val headers = config.cookieConfig match {
+      case Some(cookieConfig) =>
+        val responseCookie = HttpCookie(
+          cookieConfig.name,
+          networkUserId,
+          expires = Some(DateTime.now + cookieConfig.expiration),
+          domain = cookieConfig.domain
+        )
+        `Set-Cookie`(responseCookie) :: headersWithoutCookie
+      case None => headersWithoutCookie
+    }
+
+    val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
+      // A click redirect
+      try {
+        // TODO: log errors to Kinesis as BadRows
+        val target = URLEncodedUtils
+          .parse(URI.create("?" + queryParams), "UTF-8")
+          .find(_.getName == "u")
+          .map(_.getValue)
+        target match {
+          case Some(t) =>
+            HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
+          // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), partitionKey)
+          case None => {
+            val everythingSerialized = new String(
+              SplitBatch.ThriftSerializer.get().serialize(event))
+            badRequest -> sinks.bad.storeRawEvents(
+              List(
+                createBadRow(event,
+                             s"Redirect failed due to lack of u parameter")),
+              partitionKey)
+          }
+        }
+      } catch {
+        case NonFatal(e) => {
+          val everythingSerialized = new String(
+            SplitBatch.ThriftSerializer.get().serialize(event))
+          badRequest -> sinks.bad.storeRawEvents(
+            List(createBadRow(event, s"Redirect failed due to error $e")),
+            partitionKey)
+        }
+      }
+    } else if (KinesisSink.shuttingDown) {
+      // So that the tracker knows the request failed and can try to resend later
+      notFound -> Nil
+    } else
+      (if (pixelExpected) {
+         HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+       } else {
+         // See https://github.com/snowplow/snowplow-javascript-tracker/issues/482
+         HttpResponse(entity = "ok")
+       }).withHeaders(headers) -> Nil
+
+    (httpResponse, badQsResponse ++ sinkResponse)
+  }
+
   /**
-   * Creates a response to the CORS preflight Options request
-   *
-   * @param request Incoming preflight Options request
-   * @return Response granting permissions to make the actual request
-   */
-  def preflightResponse(request: HttpRequest) = HttpResponse().withHeaders(List(
-    getAccessControlAllowOriginHeader(request),
-    `Access-Control-Allow-Credentials`(true),
-    `Access-Control-Allow-Headers`( "Content-Type")))
+    * Creates a response to the CORS preflight Options request
+    *
+    * @param request Incoming preflight Options request
+    * @return Response granting permissions to make the actual request
+    */
+  def preflightResponse(request: HttpRequest) =
+    HttpResponse().withHeaders(
+      List(getAccessControlAllowOriginHeader(request),
+           `Access-Control-Allow-Credentials`(true),
+           `Access-Control-Allow-Headers`("Content-Type")))
 
   def flashCrossDomainPolicy = HttpEntity(
     contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
-    string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
+    string =
+      "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
   )
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
@@ -235,29 +230,29 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 
   /**
-   * Creates an Access-Control-Allow-Origin header which specifically
-   * allows the domain which made the request
-   *
-   * @param request Incoming request
-   * @return Header
-   */
-  private def getAccessControlAllowOriginHeader(request: HttpRequest) =
-    `Access-Control-Allow-Origin`(request.headers.find(_ match {
-      case `Origin`(origin) => true
-      case _ => false
-    }) match {
-      case Some(`Origin`(origin)) => SomeOrigins(origin)
-      case _ => AllOrigins
-    })
+    * Creates an Access-Control-Allow-Origin header which specifically
+    * allows the domain which made the request
+    *
+    * @param request Incoming request
+    * @return Header
+    */
+  private def getAccessControlAllowOriginHeader(request: HttpRequest) = {
+    val value: HttpOriginRange = request.headers.collectFirst {
+      case `Origin`(origins) => HttpOriginRange(origins: _*)
+    }.getOrElse(HttpOriginRange.`*`)
+    `Access-Control-Allow-Origin`(value)
+  }
 
   /**
-   * Put together a bad row ready for sinking to Kinesis
-   *
-   * @param event
-   * @param message
-   * @return Bad row
-   */
-  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] = {
-    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message)).toCompactJson.getBytes(UTF_8)
+    * Put together a bad row ready for sinking to Kinesis
+    *
+    * @param event
+    * @param message
+    * @return Bad row
+    */
+  private def createBadRow(event: CollectorPayload,
+                           message: String): Array[Byte] = {
+    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)),
+           NonEmptyList(message)).toCompactJson.getBytes(UTF_8)
   }
 }

@@ -91,13 +91,13 @@ object SnowplowTracking {
     trackApplicationInitialization(tracker)
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run() {
+      override def run(): Unit = {
         trackApplicationShutdown(tracker)
       }
     })
 
     val heartbeatThread = new Thread {
-      override def run() {
+      override def run(): Unit = {
         while (true) {
           trackApplicationHeartbeat(tracker, HeartbeatInterval)
           Thread.sleep(HeartbeatInterval)
