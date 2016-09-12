@@ -16,8 +16,6 @@ package com.snowplowanalytics.snowplow
 package collectors
 package scalastream
 
-import java.net.InetAddress
-
 // Scala
 import scala.collection.mutable.MutableList
 import scala.collection.immutable
@@ -47,7 +45,8 @@ import CollectorPayload.thrift.model1.CollectorPayload
 class CollectorServiceSpec
     extends WordSpec
     with Matchers
-    with ScalatestRouteTest {
+    with ScalatestRouteTest
+    with HelpersSpec {
   val testConf: Config =
     ConfigFactory.parseString("""
 collector {
@@ -113,9 +112,6 @@ collector {
     cookie.foreach(headers += Cookie(_))
     Get(uri).withHeaders(headers.toList)
   }
-
-  private def remoteAddress(ip: String) =
-    RemoteAddress(InetAddress.getByName(ip))
 
   "Snowplow's Scala collector" should {
     "return an invisible pixel" in {
