@@ -16,6 +16,8 @@ package enrich
 package common
 package outputs
 
+import java.time.{Instant, ZoneOffset}
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -24,10 +26,6 @@ import Scalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
 
 // Iglu Scala Client
 import iglu.client.ProcessingMessageNel
@@ -71,15 +69,7 @@ object BadRow {
  * 2. A non-empty list of our Validation errors
  * 3. A timestamp
  */
-case class BadRow(
-  val line: String,
-  val errors: ProcessingMessageNel,
-  val tstamp: Long = System.currentTimeMillis()
-  ) {
-
-  // An ISO valid timestamp formatter
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
-
+case class BadRow(line: String, errors: ProcessingMessageNel, tstamp: Long = System.currentTimeMillis()) {
   /**
    * Converts a TypeHierarchy into a JSON containing
    * each element.
@@ -89,7 +79,7 @@ case class BadRow(
   def toJValue: JValue =
     ("line"           -> line) ~
     ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
-    ("failure_tstamp" -> this.getTimestamp(tstamp))
+    ("failure_tstamp" -> getTimestamp(tstamp))
 
   /**
    * Converts our BadRow into a single JSON encapsulating
@@ -98,7 +88,7 @@ case class BadRow(
    * @return this BadRow as a compact stringified JSON
    */
   def toCompactJson: String =
-    compact(this.toJValue)
+    compact(toJValue)
 
   /**
    * Returns an ISO valid timestamp
@@ -106,8 +96,6 @@ case class BadRow(
    * @param tstamp The Timestamp to convert
    * @return the formatted Timestamp
    */
-  def getTimestamp(tstamp: Long): String = {
-    val dt = new DateTime(tstamp)
-    TstampFormat.print(dt)
-  }
+  private def getTimestamp(tstamp: Long): String =
+    Instant.ofEpochSecond(tstamp).atOffset(ZoneOffset.UTC).toString()
 }

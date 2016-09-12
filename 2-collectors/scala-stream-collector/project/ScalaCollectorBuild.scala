@@ -36,8 +36,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.akkaHttp,
         Libraries.akkaHttpTestkit,
         Libraries.akkaSlf4j,
-        Libraries.yodaTime,
-        Libraries.yodaConvert,
         Libraries.logback,
         Libraries.mimepull,
         Libraries.commonsCodec,

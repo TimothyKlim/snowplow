@@ -30,8 +30,6 @@ object Dependencies {
     // Java
     val mimepull = "1.9.6"
     val awsSdk = "1.11.33"
-    val yodaTime = "2.9.4"
-    val yodaConvert = "1.8.1"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient = "0.3.2"
@@ -52,8 +50,6 @@ object Dependencies {
     // Java
     val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
     val awsSdk = "com.amazonaws" % "aws-java-sdk" % V.awsSdk
-    val yodaTime = "joda-time" % "joda-time" % V.yodaTime
-    val yodaConvert = "org.joda" % "joda-convert" % V.yodaConvert
 
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
