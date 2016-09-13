@@ -62,7 +62,7 @@ object ResponseHandler {
 }
 
 // Receive requests and store data into an output sink.
-class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
+final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
   val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
 
   // When `/i` is requested, this is called and stores an event in the

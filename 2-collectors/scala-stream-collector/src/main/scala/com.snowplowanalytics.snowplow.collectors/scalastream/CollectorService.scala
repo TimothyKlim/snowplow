@@ -39,7 +39,8 @@ object CollectorService {
   private val querystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
 
-class CollectorService(collectorConfig: CollectorConfig, sinks: CollectorSinks) {
+final class CollectorService(collectorConfig: CollectorConfig,
+                             sinks: CollectorSinks) {
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
   val cookieName = collectorConfig.cookieName
 

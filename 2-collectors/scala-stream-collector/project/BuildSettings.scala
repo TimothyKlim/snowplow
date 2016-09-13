@@ -15,6 +15,7 @@
  */
 import sbt._
 import Keys._
+import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 
 object BuildSettings {
 
@@ -75,17 +76,17 @@ object BuildSettings {
           Seq(file)
       })
 
+  import sbtassembly.AssemblyPlugin._
+  import sbtassembly.AssemblyKeys._
+
   // sbt-assembly settings for building an executable
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+  lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
       // Executable jarfile
-      assemblyOption in assembly ~= {
-      _.copy(prependShellScript = Some(defaultShellScript))
-    },
+      assemblyOption in assembly := (assemblyOption in assembly).value
+        .copy(prependShellScript = Some(defaultShellScript)),
       // Name it as an executable
-      jarName in assembly := { s"${name.value}-${version.value}" }
+      assemblyJarName in assembly := s"${name.value}-${version.value}"
     )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ sbtAssemblySettings
 }
