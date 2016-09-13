@@ -30,6 +30,7 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // This project
 import adapters.{RawEvent, AdapterRegistry}
@@ -68,34 +69,21 @@ object EtlPipeline {
                     etlTstamp: DateTime,
                     input: ValidatedMaybeCollectorPayload)(
       implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
-
-    def flattenToList[A](
-        v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]])
-      : List[Validated[A]] = v match {
-      case Success(Some(Success(nel))) => nel.toList
-      case Success(Some(Failure(f))) => List(f.failure)
-      case Failure(f) => List(f.failure)
-      case Success(None) => Nil
-    }
-
     try {
-      val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
-        for {
-          maybePayload <- input
-        } yield
-          for {
-            payload <- maybePayload
-          } yield
-            for {
-              events <- AdapterRegistry.toRawEvents(payload)
-            } yield
-              for {
-                event <- events
-                enriched = EnrichmentManager
-                  .enrichEvent(registry, etlVersion, etlTstamp, event)
-              } yield enriched
-
-      flattenToList[EnrichedEvent](e)
+      input match {
+        case Success(Some(payload)) =>
+          AdapterRegistry
+            .toRawEvents(payload)
+            .map(_.map { event =>
+              EnrichmentManager
+                .enrichEvent(registry, etlVersion, etlTstamp, event)
+            }) match {
+            case Success(nel) => nel.toList
+            case Failure(f) => List(f.failure)
+          }
+        case Success(None) => Nil
+        case Failure(f) => List(f.failure)
+      }
     } catch {
       case NonFatal(nf) => {
         val errorWriter = new StringWriter

@@ -63,7 +63,7 @@ trait EtlExceptionConstructors[E <: EtlException] {
     *         type E
     */
   def apply(errs: NonEmptyList[String]): E =
-    apply(errs.list.toList)
+    apply(errs.toList)
 
   /**
     * Alternative constructor for
@@ -115,7 +115,7 @@ object FatalEtlException extends EtlExceptionConstructors[FatalEtlException] {
 object FatalEtlError {
 
   def apply(errs: NonEmptyList[String]): FatalEtlError =
-    apply(errs.list.toList)
+    apply(errs.toList)
 
   def apply(errs: List[String]): FatalEtlError =
     FatalEtlError(formatErrors(errs))
