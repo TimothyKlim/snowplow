@@ -36,7 +36,7 @@ object SpecHelpers {
 
   // Standard Iglu configuration
   private val igluConfig =
-     """|{
+    """|{
           |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
           |"data": {
             |"cacheSize": 500,
@@ -53,51 +53,53 @@ object SpecHelpers {
               |}
             |]
           |}
-        |}""".stripMargin.replaceAll("[\n\r]","")
+        |}""".stripMargin.replaceAll("[\n\r]", "")
 
   /**
-   * Builds an Iglu resolver from
-   * the above Iglu configuration.
-   */
+    * Builds an Iglu resolver from
+    * the above Iglu configuration.
+    */
   val IgluResolver = (for {
     json <- JsonUtils.extractJson(igluConfigField, igluConfig)
     reso <- Resolver.parse(json)
-  } yield reso).getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
+  } yield reso).getOrElse(
+    throw new RuntimeException(
+      "Could not build an Iglu resolver, should never happen"))
 
   private type NvPair = Tuple2[String, String]
 
   /**
-   * Converts an NvPair into a
-   * BasicNameValuePair
-   *
-   * @param pair The Tuple2[String, String] name-value
-   * pair to convert
-   * @return the basic name value pair 
-   */
+    * Converts an NvPair into a
+    * BasicNameValuePair
+    *
+    * @param pair The Tuple2[String, String] name-value
+    * pair to convert
+    * @return the basic name value pair
+    */
   private def toNvPair(pair: NvPair): BasicNameValuePair =
     new BasicNameValuePair(pair._1, pair._2)
 
   /**
-   * Converts the supplied NvPairs into a 
-   * a NameValueNel.
-   *
-   * @param head The first NvPair to convert
-   * @param tail The rest of the NvPairs to
-   * convert
-   * @return the populated NvGetPayload
-   */
+    * Converts the supplied NvPairs into a
+    * a NameValueNel.
+    *
+    * @param head The first NvPair to convert
+    * @param tail The rest of the NvPairs to
+    * convert
+    * @return the populated NvGetPayload
+    */
   def toNameValuePairs(pairs: NvPair*): List[NameValuePair] =
     List(pairs.map(toNvPair(_)): _*)
 
   /**
-   * Builds a self-describing JSON by
-   * wrapping the supplied JSON with
-   * schema and data properties
-   *
-   * @param json The JSON to use as the request body
-   * @param schema The name of the schema to insert
-   * @return a self-describing JSON
-   */
+    * Builds a self-describing JSON by
+    * wrapping the supplied JSON with
+    * schema and data properties
+    *
+    * @param json The JSON to use as the request body
+    * @param schema The name of the schema to insert
+    * @return a self-describing JSON
+    */
   def toSelfDescJson(json: String, schema: String): String =
     s"""{"schema":"iglu:com.snowplowanalytics.snowplow/${schema}/jsonschema/1-0-0","data":${json}}"""
 }

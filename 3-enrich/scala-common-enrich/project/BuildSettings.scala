@@ -15,26 +15,56 @@
  */
 import sbt._
 import Keys._
+import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 
 object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "com.snowplowanalytics",
-    version               :=  "0.24.0",
-    description           :=  "Common functionality for enriching raw Snowplow events",
-    scalaVersion          :=  "2.10.6",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature",
-                                  "-target:jvm-1.7"),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
-    resolvers             ++= Dependencies.resolutionRepos
+    organization := "com.snowplowanalytics",
+    version := "0.25.0",
+    description := "Common functionality for enriching raw Snowplow events",
+    scalaVersion := "2.11.8",
+    scalacOptions := Seq("-encoding",
+                         "UTF-8",
+                         "-target:jvm-1.8",
+                         "-unchecked",
+                         "-deprecation",
+                         "-feature",
+                         "-language:higherKinds",
+                         "-language:existentials",
+                         "-language:postfixOps",
+                         "-Xexperimental",
+                         "-Xlint",
+                         // "-Xfatal-warnings",
+                         "-Xfuture",
+                         "-Ybackend:GenBCode",
+                         "-Ydelambdafy:method",
+                         "-Yno-adapted-args",
+                         "-Yopt-warnings",
+                         "-Yopt:l:classpath",
+                         "-Yopt:unreachable-code" /*,
+                         "-Ywarn-dead-code",
+                         "-Ywarn-infer-any",
+                         "-Ywarn-numeric-widen",
+                         "-Ywarn-unused",
+                         "-Ywarn-unused-import",
+                         "-Ywarn-value-discard"*/ ),
+    scalacOptions in Test := Seq("-Yrangepos"),
+    resolvers ++= Dependencies.resolutionRepos
   )
 
   // Makes our SBT app settings available from within the ETL
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile <+= (sourceManaged in Compile,
+                                     version,
+                                     name,
+                                     organization,
+                                     scalaVersion) map { (d, v, n, o, sv) =>
+      val file = d / "settings.scala"
+      IO.write(
+        file,
+        """package com.snowplowanalytics.snowplow.enrich.common.generated
       |object ProjectSettings {
       |  val version = "%s"
       |  val name = "%s"
@@ -42,8 +72,8 @@ object BuildSettings {
       |  val scalaVersion = "%s"
       |}
       |""".stripMargin.format(v, n, o, sv))
-    Seq(file)
-  })
+      Seq(file)
+    })
 
   // For MaxMind support in the test suite
   import Dependencies._
@@ -51,15 +81,16 @@ object BuildSettings {
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
-   
     crossPaths := false,
     publishTo <<= version { version =>
       val basePath = "target/repo/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
       }
-      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
+      Some(
+        Resolver
+          .file("Local Maven repository", file(basePath)) transactional ())
     }
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ publishSettings
 }

@@ -17,9 +17,9 @@ object Dependencies {
   val resolutionRepos = Seq(
     // Required for our json4s snapshot
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-     // For some misc Scalding and Twitter libs
+    // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
-     // For Twitter's util functions
+    // For Twitter's util functions
     "Twitter Maven Repo" at "http://maven.twttr.com/",
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
@@ -30,84 +30,81 @@ object Dependencies {
 
   object V {
     // Java
-    val http             = "4.3.3"
-    val commonsLang      = "3.4"
-    val commonsIo        = "2.4"
-    val commonsCodec     = "1.10"
-    val yodaTime         = "2.2"
-    val yodaConvert      = "1.2"
-    val useragent        = "1.19"
-    val jacksonDatabind  = "2.2.3"
-    val jsonValidator    = "2.2.3"
-    val mavenArtifact    = "3.2.2"
-    val uaParser         = "1.3.0"
-    val postgresDriver   = "9.4.1208.jre7"
-    val mysqlConnector   = "5.1.39"
+    val commonsCodec = "1.10"
+    val commonsIo = "2.5"
+    val commonsLang = "3.4"
+    val http = "4.5.2"
+    val jacksonDatabind = "2.8.2"
+    val jsonValidator = "2.2.6"
+    val mavenArtifact = "3.3.9"
+    val mysqlConnector = "6.0.4"
+    val postgresDriver = "9.4.1210"
+    val uaParser = "1.3.0"
+    val useragent = "1.20"
+    val yodaConvert = "1.8.1"
+    val yodaTime = "2.9.4"
     // Scala
-    val scalaz7          = "7.0.0"
-    val snowplowRawEvent = "0.1.0"
+    val akka = "2.4.10"
     val collectorPayload = "0.0.0"
-    val schemaSniffer    = "0.0.0"
-    val scalaUtil        = "0.1.0"
-    val refererParser    = "0.3.0"
+    val gatlingJsonpath = "0.6.8"
+    val igluClient = "0.4.0"
+    val json4s = "3.4.0"
     val maxmindIplookups = "0.3.0"
-    val json4s           = "3.2.11"
-    val igluClient       = "0.4.0"
-    val scalaForex       = "0.4.0"
-    val scalaWeather     = "0.2.0"
-    val akka             = "2.3.14"
-    val akkaStreams      = "2.0.2"
-    val gatlingJsonpath  = "0.6.4"
+    val refererParser = "0.3.0"
+    val scalaForex = "0.4.0"
+    val scalaWeather = "0.2.0"
+    val scalaz7 = "7.2.6"
+    val schemaSniffer = "0.0.0"
+    val snowplowRawEvent = "0.1.0"
     // Scala (test only)
-    val specs2           = "2.2.3"
-    val scalazSpecs2     = "0.1.2"
-    val scalaCheck       = "1.10.0"
-    val scalaUri         = "0.4.3"
-    val scaldingArgs     = "0.11.2"
-    val mockito          = "1.10.19"
+    val mockito = "1.10.19"
+    val scalaCheck = "1.13.2"
+    val scalaUri = "0.4.14"
+    val scalazSpecs2 = "0.4.0"
+    val scaldingArgs = "0.16.0"
+    val specs2 = "3.7"
   }
 
   object Libraries {
     // Java
-    val httpClient       = "org.apache.httpcomponents"  %  "httpclient"                % V.http
-    val commonsLang      = "org.apache.commons"         %  "commons-lang3"             % V.commonsLang
-    val commonsIo        = "commons-io"                 %  "commons-io"                % V.commonsIo
-    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec
-    val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
-    val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
-    val useragent        = "eu.bitwalker"               %  "UserAgentUtils"            % V.useragent
-    val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
-    val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
-    val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
-    val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
-    val postgresDriver   = "org.postgresql"             %  "postgresql"                % V.postgresDriver
-    val mysqlConnector   = "mysql"                      %  "mysql-connector-java"      % V.mysqlConnector
+    val httpClient = "org.apache.httpcomponents" % "httpclient" % V.http
+    val commonsLang = "org.apache.commons" % "commons-lang3" % V.commonsLang
+    val commonsIo = "commons-io" % "commons-io" % V.commonsIo
+    val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
+    val yodaTime = "joda-time" % "joda-time" % V.yodaTime
+    val yodaConvert = "org.joda" % "joda-convert" % V.yodaConvert
+    val useragent = "eu.bitwalker" % "UserAgentUtils" % V.useragent
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % V.jacksonDatabind
+    val jsonValidator = "com.github.fge" % "json-schema-validator" % V.jsonValidator
+    val mavenArtifact = "org.apache.maven" % "maven-artifact" % V.mavenArtifact
+    val uaParser = "org.clojars.timewarrior" % "ua-parser" % V.uaParser
+    val postgresDriver = "org.postgresql" % "postgresql" % V.postgresDriver
+    val mysqlConnector = "mysql" % "mysql-connector-java" % V.mysqlConnector
 
     // Scala
-    val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
-    val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
-    val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"       % V.collectorPayload
-    val schemaSniffer    = "com.snowplowanalytics"      %  "schema-sniffer-1"          % V.schemaSniffer
-    val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
-    val refererParser    = "com.snowplowanalytics"      %% "referer-parser"            % V.refererParser
-    val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
-    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
-    val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
-    val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
-    val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
-    val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
-    val akka             = "com.typesafe.akka"          %% "akka-actor"                  % V.akka
-    val akkaStreams      = "com.typesafe.akka"          %% "akka-stream-experimental"    % V.akkaStreams
-    val akkaHttpCore     = "com.typesafe.akka"          %% "akka-http-core-experimental" % V.akkaStreams
-    val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
-    val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                  % V.gatlingJsonpath
+    val scalaForex = "com.snowplowanalytics" %% "scala-forex" % V.scalaForex
+    val scalaz7 = "org.scalaz" %% "scalaz-core" % V.scalaz7
+    val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics" % "collector-payload-1" % V.collectorPayload
+    val schemaSniffer = "com.snowplowanalytics" % "schema-sniffer-1" % V.schemaSniffer
+    val refererParser = "com.snowplowanalytics" %% "referer-parser" % V.refererParser
+    val maxmindIplookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % V.maxmindIplookups
+    val json4sJackson = "org.json4s" %% "json4s-jackson" % V.json4s
+    val json4sScalaz = "org.json4s" %% "json4s-scalaz" % V.json4s
+    val igluClient = "com.snowplowanalytics" %% "iglu-scala-client" % V.igluClient
+    val scalaUri = "com.netaporter" %% "scala-uri" % V.scalaUri
+    val scalaWeather = "com.snowplowanalytics" %% "scala-weather" % V.scalaWeather
+    val akka = "com.typesafe.akka" %% "akka-actor" % V.akka
+    val akkaStreams = "com.typesafe.akka" %% "akka-stream" % V.akka
+    val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % V.akka
+    val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % V.akka
+    val gatlingJsonpath = "io.gatling" %% "jsonpath" % V.gatlingJsonpath
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
-    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
-    val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scaldingArgs   % "test"
-    val mockito          = "org.mockito"                % "mockito-core"               % V.mockito        % "test"
+    val specs2 = "org.specs2" %% "specs2" % V.specs2 % "test"
+    val scalazSpecs2 = "org.typelevel" %% "scalaz-specs2" % V.scalazSpecs2 % "test"
+    val scalaCheck = "org.scalacheck" %% "scalacheck" % V.scalaCheck % "test"
+    val scaldingArgs = "com.twitter" %% "scalding-args" % V.scaldingArgs % "test"
+    val mockito = "org.mockito" % "mockito-core" % V.mockito % "test"
   }
 
 }

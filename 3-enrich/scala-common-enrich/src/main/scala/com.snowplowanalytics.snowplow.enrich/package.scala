@@ -38,130 +38,130 @@ import common.outputs.EnrichedEvent
 import common.enrichments.registry.Enrichment
 
 /**
- * Scala package object to hold types,
- * helper methods etc.
- *
- * See:
- * http://www.artima.com/scalazine/articles/package_objects.html
- */
+  * Scala package object to hold types,
+  * helper methods etc.
+  *
+  * See:
+  * http://www.artima.com/scalazine/articles/package_objects.html
+  */
 package object common {
 
   /**
-   * Capture a client's
-   * screen resolution
-   */
+    * Capture a client's
+    * screen resolution
+    */
   type ViewDimensionsTuple = (JInteger, JInteger) // Height, width.
 
   /**
-   * Type alias for HTTP headers
-   */
+    * Type alias for HTTP headers
+    */
   type HttpHeaders = List[String]
 
   /**
-   * Type alias for a map whose
-   * keys are enrichment names and
-   * whose values are enrichments
-   */
+    * Type alias for a map whose
+    * keys are enrichment names and
+    * whose values are enrichments
+    */
   type EnrichmentMap = Map[String, Enrichment]
 
   /**
-   * Type alias for a `ValidationNel`
-   * containing Strings for `Failure`
-   * or any type of `Success`.
-   *
-   * @tparam A the type of `Success`
-   */
+    * Type alias for a `ValidationNel`
+    * containing Strings for `Failure`
+    * or any type of `Success`.
+    *
+    * @tparam A the type of `Success`
+    */
   type Validated[A] = ValidationNel[String, A]
 
   /**
-   * Type alias for a `Validation`
-   * containing either an error
-   * `String` or a success `String`.
-   */
+    * Type alias for a `Validation`
+    * containing either an error
+    * `String` or a success `String`.
+    */
   type ValidatedString = Validation[String, String]
 
   /**
-   * Type alias for a `Validation`
-   * containing either error `String`s
-   * or a `NameValueNel`.
-   */
+    * Type alias for a `Validation`
+    * containing either error `String`s
+    * or a `NameValueNel`.
+    */
   type ValidatedNameValuePairs = Validation[String, List[NameValuePair]] // Note not Validated[]
 
   /**
-   * Type alias for an `Option`-boxed String
-   */
+    * Type alias for an `Option`-boxed String
+    */
   type MaybeString = Option[String]
 
   /**
-   * Type alias for an `Option`-boxed
-   * `CollectorPayload`.
-   */
+    * Type alias for an `Option`-boxed
+    * `CollectorPayload`.
+    */
   type MaybeCollectorPayload = Option[CollectorPayload]
 
   /**
-   * Type alias for either a `ValidationNel`
-   * containing `String`s for `Failure`
-   * or a `MaybeCanonicalInput` for `Success`.
-   */
+    * Type alias for either a `ValidationNel`
+    * containing `String`s for `Failure`
+    * or a `MaybeCanonicalInput` for `Success`.
+    */
   type ValidatedMaybeCollectorPayload = Validated[MaybeCollectorPayload]
 
   /**
-   * Type alias for either a `ValidationNel`
-   * containing `String`s for `Failure`
-   * or a `List` of `RawEvent`s for `Success`.
-   */
+    * Type alias for either a `ValidationNel`
+    * containing `String`s for `Failure`
+    * or a `List` of `RawEvent`s for `Success`.
+    */
   type ValidatedRawEvents = Validated[NonEmptyList[RawEvent]]
 
   /**
-   * Type alias for an `Option`-boxed
-   * `CanonicalOutput`.
-   */
+    * Type alias for an `Option`-boxed
+    * `CanonicalOutput`.
+    */
   type MaybeEnrichedEvent = Option[EnrichedEvent]
 
   /**
-   * Type alias for an `Option`-boxed
-   * `IpLocation`.
-   */
+    * Type alias for an `Option`-boxed
+    * `IpLocation`.
+    */
   type MaybeIpLocation = Option[IpLocation]
 
   /**
-   * Type alias for either a `ValidationNel`
-   * containing `String`s for `Failure`
-   * or a CanonicalOutput for `Success`.
-   */
+    * Type alias for either a `ValidationNel`
+    * containing `String`s for `Failure`
+    * or a CanonicalOutput for `Success`.
+    */
   type ValidatedEnrichedEvent = Validated[EnrichedEvent]
 
   /**
-   * Type alias for a `Validation`
-   * containing ProcessingMessages
-   * for `Failure` or any type for
-   * `Success`
-   *
-   * @tparam A the type of `Success`
-   */
+    * Type alias for a `Validation`
+    * containing ProcessingMessages
+    * for `Failure` or any type for
+    * `Success`
+    *
+    * @tparam A the type of `Success`
+    */
   type ValidatedMessage[A] = Validation[ProcessingMessage, A]
 
   /**
-   * Type alias for a `ValidationNel`
-   * containing ProcessingMessage
-   * for `Failure` or any type for
-   * `Success`
-   */
+    * Type alias for a `ValidationNel`
+    * containing ProcessingMessage
+    * for `Failure` or any type for
+    * `Success`
+    */
   type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
 
   /**
-   * Parameters inside of a raw event
-   */
+    * Parameters inside of a raw event
+    */
   type RawEventParameters = Map[String, String]
 
   /**
-   * A (possibly empty) list of JsonSchemaPairs
-   */
+    * A (possibly empty) list of JsonSchemaPairs
+    */
   type JsonSchemaPairs = List[JsonSchemaPair]
 
   /**
-   * Type alias for either [[Throwable]] or successful value
-   * It has [[Monad]] instance unlike [[Validation]]
-   */
+    * Type alias for either [[Throwable]] or successful value
+    * It has [[Monad]] instance unlike [[Validation]]
+    */
   type ThrowableXor[+A] = Throwable \/ A
 }

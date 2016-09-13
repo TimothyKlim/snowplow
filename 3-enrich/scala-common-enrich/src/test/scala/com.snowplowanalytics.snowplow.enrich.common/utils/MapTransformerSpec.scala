@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
 // Scala
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 
 // Scalaz
 import scalaz._
@@ -25,7 +25,6 @@ import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
 // Utils
-import com.snowplowanalytics.util.Tap._
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -61,22 +60,23 @@ final class TargetBean {
 }
 
 /**
- * Tests the MapTransformer.
- */
+  * Tests the MapTransformer.
+  */
 class MapTransformerSpec extends Specification with ValidationMatchers {
 
-  val sourceMap = Map("p"       -> "web",
-                      "f_pdf"   -> "1",
-                      "vid"     -> "1",
-                      "tv"      -> "no-js-0.1.1",
-                      "res"     -> "720x1080",
+  val sourceMap = Map("p" -> "web",
+                      "f_pdf" -> "1",
+                      "vid" -> "1",
+                      "tv" -> "no-js-0.1.1",
+                      "res" -> "720x1080",
                       "missing" -> "Not in the transformation map")
 
-  val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
-                                       ("f_pdf"  , (ConversionUtils.stringToBooleanlikeJByte, "br_features_pdf")),
-                                       ("vid"    , (ConversionUtils.stringToJInteger, "visit_id")),
-                                       ("tv"     , (MiscEnrichments.identity, "tracker_v")),
-                                       ("res"    , (ClientEnrichments.extractViewDimensions, ("width", "height"))))
+  val transformMap: TransformMap = Map(
+    ("p", (MiscEnrichments.extractPlatform, "platform")),
+    ("f_pdf", (ConversionUtils.stringToBooleanlikeJByte, "br_features_pdf")),
+    ("vid", (ConversionUtils.stringToJInteger, "visit_id")),
+    ("tv", (MiscEnrichments.identity, "tracker_v")),
+    ("res", (ClientEnrichments.extractViewDimensions, ("width", "height"))))
 
   val expected = new TargetBean().tap { t =>
     t.platform = "web"

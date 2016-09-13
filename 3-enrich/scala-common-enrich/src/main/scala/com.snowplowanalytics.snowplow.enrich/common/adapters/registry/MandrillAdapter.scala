@@ -42,20 +42,17 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{SchemaKey, Resolver}
 
 // This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the Mandrill Tracking webhook
- * into raw events.
- */
+  * Transforms a collector payload which conforms to
+  * a known version of the Mandrill Tracking webhook
+  * into raw events.
+  */
 object MandrillAdapter extends Adapter {
 
   // Vendor name for Failure Message
@@ -68,116 +65,160 @@ object MandrillAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "hard_bounce" -> SchemaKey("com.mandrill", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "click"       -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
-    "deferral"    -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-0").toSchemaUri,
-    "spam"        -> SchemaKey("com.mandrill", "message_marked_as_spam", "jsonschema", "1-0-0").toSchemaUri,
-    "open"        -> SchemaKey("com.mandrill", "message_opened", "jsonschema", "1-0-0").toSchemaUri,
-    "reject"      -> SchemaKey("com.mandrill", "message_rejected", "jsonschema", "1-0-0").toSchemaUri,
-    "send"        -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
-    "soft_bounce" -> SchemaKey("com.mandrill", "message_soft_bounced", "jsonschema", "1-0-0").toSchemaUri,
-    "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
+  private val EventSchemaMap = Map(
+    "hard_bounce" -> SchemaKey("com.mandrill",
+                               "message_bounced",
+                               "jsonschema",
+                               "1-0-0").toSchemaUri,
+    "click" -> SchemaKey("com.mandrill",
+                         "message_clicked",
+                         "jsonschema",
+                         "1-0-0").toSchemaUri,
+    "deferral" -> SchemaKey("com.mandrill",
+                            "message_delayed",
+                            "jsonschema",
+                            "1-0-0").toSchemaUri,
+    "spam" -> SchemaKey("com.mandrill",
+                        "message_marked_as_spam",
+                        "jsonschema",
+                        "1-0-0").toSchemaUri,
+    "open" -> SchemaKey("com.mandrill",
+                        "message_opened",
+                        "jsonschema",
+                        "1-0-0").toSchemaUri,
+    "reject" -> SchemaKey("com.mandrill",
+                          "message_rejected",
+                          "jsonschema",
+                          "1-0-0").toSchemaUri,
+    "send" -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
+    "soft_bounce" -> SchemaKey("com.mandrill",
+                               "message_soft_bounced",
+                               "jsonschema",
+                               "1-0-0").toSchemaUri,
+    "unsub" -> SchemaKey("com.mandrill",
+                         "recipient_unsubscribed",
+                         "jsonschema",
+                         "1-0-0").toSchemaUri
   )
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   *
-   * A Mandrill Tracking payload contains many events in 
-   * the body of the payload, stored within a HTTP encoded
-   * string.
-   * We expect the event parameter of these events to be 
-   * 1 of 9 options otherwise we have an unsupported event 
-   * type.
-   *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
-   */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+    * Converts a CollectorPayload instance into raw events.
+    *
+    * A Mandrill Tracking payload contains many events in
+    * the body of the payload, stored within a HTTP encoded
+    * string.
+    * We expect the event parameter of these events to be
+    * 1 of 9 options otherwise we have an unsupported event
+    * type.
+    *
+    * @param payload The CollectorPayload containing one or more
+    *        raw events as collected by a Snowplow collector
+    * @param resolver (implicit) The Iglu resolver used for
+    *        schema lookup and validation. Not used
+    * @return a Validation boxing either a NEL of RawEvents on
+    *         Success, or a NEL of Failure Strings
+    */
+  def toRawEvents(payload: CollectorPayload)(
+      implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(body),_)                     => {
+      case (None, _) =>
+        s"Request body is empty: no ${VendorName} events to process".failureNel
+      case (_, None) =>
+        s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
+      case (_, Some(ct)) if ct != ContentType =>
+        s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
+      case (Some(body), _) => {
 
         payloadBodyToEvents(body) match {
-          case Failure(str)  => str.failNel
+          case Failure(str) => str.failureNel
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validated[RawEvent]] = 
-              for { 
+            val rawEventsList: List[Validated[RawEvent]] =
+              for {
                 (event, index) <- list.zipWithIndex
               } yield {
 
-                val eventOpt: Option[String] = (event \ "event").extractOpt[String]
+                val eventOpt: Option[String] =
+                  (event \ "event").extractOpt[String]
                 for {
-                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
+                  schema <- lookupSchema(eventOpt,
+                                         VendorName,
+                                         index,
+                                         EventSchemaMap)
                 } yield {
-                  
-                  val formattedEvent = cleanupJsonEventValues(event,
-                                                             eventOpt match { case Some(x) => ("event", x).some case None => None },
-                                                             "ts",
-                                                             _ * 1000
-                                                             )
+
+                  val formattedEvent =
+                    cleanupJsonEventValues(event, eventOpt match {
+                      case Some(x) => ("event", x).some
+                      case None => None
+                    }, "ts", _ * 1000)
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
-                    api          = payload.api,
-                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
-                    contentType  = payload.contentType,
-                    source       = payload.source,
-                    context      = payload.context
+                    api = payload.api,
+                    parameters = toUnstructEventParams(TrackerVersion,
+                                                       qsParams,
+                                                       schema,
+                                                       formattedEvent,
+                                                       "srv"),
+                    contentType = payload.contentType,
+                    source = payload.source,
+                    context = payload.context
                   )
                 }
               }
-            
+
             // Processes the List for Failures and Successes and returns ValidatedRawEvents
             rawEventsListProcessor(rawEventsList)
           }
         }
       }
     }
-  
-  /**
-   * Returns a list of events from the payload 
-   * body of a Mandrill Event.  Each event will
-   * be formatted as an individual JSON of type
-   * JValue.
-   * 
-   * NOTE:
-   * The payload.body string must adhere to UTF-8
-   * encoding standards.
-   *
-   * @param rawEventString The encoded string 
-   *        from the Mandrill payload body
-   * @return a list of single events formatted as 
-   *         json4s JValue JSONs or a Failure String
-   */
-  private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String,List[JValue]] = {
 
-    val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
+  /**
+    * Returns a list of events from the payload
+    * body of a Mandrill Event.  Each event will
+    * be formatted as an individual JSON of type
+    * JValue.
+    *
+    * NOTE:
+    * The payload.body string must adhere to UTF-8
+    * encoding standards.
+    *
+    * @param rawEventString The encoded string
+    *        from the Mandrill payload body
+    * @return a list of single events formatted as
+    *         json4s JValue JSONs or a Failure String
+    */
+  private[registry] def payloadBodyToEvents(
+      rawEventString: String): Validation[String, List[JValue]] = {
+
+    val bodyMap = toMap(
+      URLEncodedUtils
+        .parse(URI.create("http://localhost/?" + rawEventString), "UTF-8")
+        .toList)
 
     bodyMap match {
-      case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".fail
-      case map                  => {
+      case map if map.size != 1 =>
+        s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".failure
+      case map => {
         map.get("mandrill_events") match {
-          case None       => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
-          case Some("")   => s"${VendorName} events string is empty: nothing to process".fail
+          case None =>
+            s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".failure
+          case Some("") =>
+            s"${VendorName} events string is empty: nothing to process".failure
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)
               parsed match {
                 case JArray(list) => list.success
-                case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
+                case _ =>
+                  s"Could not resolve ${VendorName} payload into a JSON array of events".failure
               }
             } catch {
               case e: JsonParseException => {
                 val exception = JU.stripInstanceEtc(e.toString).orNull
-                s"${VendorName} events string failed to parse into JSON: [${exception}]".fail
+                s"${VendorName} events string failed to parse into JSON: [${exception}]".failure
               }
             }
           }

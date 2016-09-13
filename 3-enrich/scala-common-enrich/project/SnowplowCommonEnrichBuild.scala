@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -22,7 +22,9 @@ object SnowplowCommonEnrichBuild extends Build {
 
   // Configure prompt to show current project.
   override lazy val settings = super.settings :+ {
-    shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+    shellPrompt := { s =>
+      Project.extract(s).currentProject.id + " > "
+    }
   }
 
   // Define our project, with basic project information and library
@@ -50,7 +52,6 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.snowplowRawEvent,
         Libraries.collectorPayload,
         Libraries.schemaSniffer,
-        Libraries.scalaUtil,
         Libraries.refererParser,
         Libraries.maxmindIplookups,
         Libraries.json4sJackson,

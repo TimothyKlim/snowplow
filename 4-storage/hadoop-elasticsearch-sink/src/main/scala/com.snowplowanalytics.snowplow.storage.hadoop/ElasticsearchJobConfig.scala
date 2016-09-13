@@ -55,7 +55,7 @@ object ElasticsearchJobConfig {
         portString.toInt.success
       } catch {
         case nfe: NumberFormatException =>
-          s"Couldn't parse port $portString as int: [$nfe]".toProcessingMessage.fail
+          s"Couldn't parse port $portString as int: [$nfe]".toProcessingMessage.failure
       }
     } yield portInt).toValidationNel
     val inputArg = args.requiredz("input").toValidationNel
@@ -67,7 +67,7 @@ object ElasticsearchJobConfig {
         delayString.map(_.toLong).success
       } catch  {
         case nfe: NumberFormatException =>
-          s"Couldn't parse delay $delayString as int: [$nfe]".toProcessingMessage.fail
+          s"Couldn't parse delay $delayString as int: [$nfe]".toProcessingMessage.failure
       }
     } yield delayInt).toValidationNel
 
@@ -77,7 +77,7 @@ object ElasticsearchJobConfig {
         esProperties.success
       case None | Some("false") =>
         esProperties.success
-      case Some(other) => s"es_nodes_wan_only must be true or false, not $other".toProcessingMessage.fail
+      case Some(other) => s"es_nodes_wan_only must be true or false, not $other".toProcessingMessage.failure
     }).toValidationNel
 
     (

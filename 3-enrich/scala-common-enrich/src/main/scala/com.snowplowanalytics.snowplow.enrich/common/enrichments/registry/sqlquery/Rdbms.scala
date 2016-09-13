@@ -21,47 +21,49 @@ import Scalaz._
 import java.sql._
 
 /**
- * Common trait for all Databases
- * Contains exception-free logic wrapping JDBC to acquire DB-connection
- * and handle its lifecycle
- */
+  * Common trait for all Databases
+  * Contains exception-free logic wrapping JDBC to acquire DB-connection
+  * and handle its lifecycle
+  */
 trait Rdbms {
 
   /**
-   * Placeholder for database driver (not used)
-   */
+    * Placeholder for database driver (not used)
+    */
   val driver: Class[_]
 
   /**
-   * Correctly generated connection URI specific for database
-   */
+    * Correctly generated connection URI specific for database
+    */
   val connectionString: String
 
   /**
-   * Cached connection, it persist until it is open. After closing [[getConnection]]
-   * will try to reinitilize it
-   */
+    * Cached connection, it persist until it is open. After closing [[getConnection]]
+    * will try to reinitilize it
+    */
   private[this] var lastConnection: ThrowableXor[Connection] =
-    InvalidStateException("SQL Query Enrichment: Connection hasn't been initialized").left
+    InvalidStateException(
+      "SQL Query Enrichment: Connection hasn't been initialized").left
 
   /**
-   * Try to initialize new connection if cached one is closed or wasn't
-   * acquired successfully
-   *
-   * @return successful connection if it was in cache or initialized or
-   *         [[Throwable]] as failure
-   */
+    * Try to initialize new connection if cached one is closed or wasn't
+    * acquired successfully
+    *
+    * @return successful connection if it was in cache or initialized or
+    *         [[Throwable]] as failure
+    */
   def getConnection: ThrowableXor[Connection] = lastConnection match {
     case \/-(c) if !c.isClosed => c.right
     case _ =>
-      try { lastConnection = DriverManager.getConnection(connectionString).right }
-      catch { case e: SQLException => lastConnection = e.left }
+      try {
+        lastConnection = DriverManager.getConnection(connectionString).right
+      } catch { case e: SQLException => lastConnection = e.left }
       lastConnection
   }
 
   /**
-   * Execute filled [[PreparedStatement]]
-   */
+    * Execute filled [[PreparedStatement]]
+    */
   def execute(preparedStatement: PreparedStatement): ThrowableXor[ResultSet] =
     try {
       preparedStatement.executeQuery().right
@@ -70,48 +72,56 @@ trait Rdbms {
     }
 
   /**
-   * Get amount of placeholders (?-signs) in [[PreparedStatement]]
-   */
-  def getPlaceholderCount(preparedStatement: PreparedStatement): ThrowableXor[Int] =
-    \/ fromTryCatch preparedStatement.getParameterMetaData.getParameterCount
+    * Get amount of placeholders (?-signs) in [[PreparedStatement]]
+    */
+  def getPlaceholderCount(
+      preparedStatement: PreparedStatement): ThrowableXor[Int] =
+    \/.fromTryCatchNonFatal(
+      preparedStatement.getParameterMetaData.getParameterCount)
 
   /**
-   * Transform SQL-string with placeholders (?-signs) into [[PreparedStatement]]
-   */
+    * Transform SQL-string with placeholders (?-signs) into [[PreparedStatement]]
+    */
   def createEmptyStatement(sql: String): ThrowableXor[PreparedStatement] =
     for { connection <- getConnection } yield connection.prepareStatement(sql)
 }
 
 /**
- * Class representing connection configuration for databases speaking PostgreSQL dialect
- */
+  * Class representing connection configuration for databases speaking PostgreSQL dialect
+  */
 case class PostgresqlDb(
-  host: String,
-  port: Int,
-  sslMode: Boolean,
-  username: String,
-  password: String,
-  database: String
+    host: String,
+    port: Int,
+    sslMode: Boolean,
+    username: String,
+    password: String,
+    database: String
 ) extends Rdbms {
 
-  val driver: Class[_] = Class.forName("org.postgresql.Driver")  // Load class
+  val driver: Class[_] = Class.forName("org.postgresql.Driver") // Load class
 
-  val connectionString = s"jdbc:postgresql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode) "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory" else "")
+  val connectionString = s"jdbc:postgresql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
+                                                                                                            "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory"
+                                                                                                          else
+                                                                                                            "")
 }
 
 /**
- * Class representing connection configuration for databases speaking MySQL dialect
- */
+  * Class representing connection configuration for databases speaking MySQL dialect
+  */
 case class MysqlDb(
-  host: String,
-  port: Int,
-  sslMode: Boolean,
-  username: String,
-  password: String,
-  database: String
+    host: String,
+    port: Int,
+    sslMode: Boolean,
+    username: String,
+    password: String,
+    database: String
 ) extends Rdbms {
 
-  val driver: Class[_] = Class.forName("com.mysql.jdbc.Driver")  // Load class
+  val driver: Class[_] = Class.forName("com.mysql.jdbc.Driver") // Load class
 
-  val connectionString = s"jdbc:mysql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode) "&useSsl=true&verifyServerCertificate=false" else "")
+  val connectionString = s"jdbc:mysql://$host:$port/$database?user=$username&password=$password" ++ (if (sslMode)
+                                                                                                       "&useSsl=true&verifyServerCertificate=false"
+                                                                                                     else
+                                                                                                       "")
 }

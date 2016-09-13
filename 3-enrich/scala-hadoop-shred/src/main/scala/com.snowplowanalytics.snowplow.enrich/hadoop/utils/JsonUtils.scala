@@ -49,7 +49,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, ValidationExceptions.stripInstanceEtc(e.getMessage)).fail
+      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, ValidationExceptions.stripInstanceEtc(e.getMessage)).failure
     }
 
   /**

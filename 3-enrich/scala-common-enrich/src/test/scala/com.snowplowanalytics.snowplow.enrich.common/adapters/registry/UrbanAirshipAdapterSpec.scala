@@ -13,7 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common.adapters.registry
 
 import com.snowplowanalytics.snowplow.enrich.common.SpecHelpers
-import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
+import com.snowplowanalytics.snowplow.enrich.common.loaders.{
+  CollectorApi,
+  CollectorContext,
+  CollectorPayload,
+  CollectorSource
+}
 import org.joda.time.DateTime
 
 // Scalaz
@@ -28,7 +33,6 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-
 class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -37,12 +41,19 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
   object Shared {
     val api = CollectorApi("com.urbanairship.connect", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(None, "37.157.33.123".some, None, None, Nil, None)  // NB the collector timestamp is set to None!
+    val context = CollectorContext(
+      None,
+      "37.157.33.123".some,
+      None,
+      None,
+      Nil,
+      None) // NB the collector timestamp is set to None!
   }
 
   "toRawEvents" should {
 
-    val validPayload = """
+    val validPayload =
+      """
                          |{
                          |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
                          |  "offset": "1",
@@ -58,7 +69,8 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
                          |}
                          |""".stripMargin
 
-    val invalidEvent = """
+    val invalidEvent =
+      """
                          |{
                          |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
                          |  "offset": "1",
@@ -74,10 +86,16 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
                          |}
                          |""".stripMargin
 
-    val payload = CollectorPayload(Shared.api, Nil, None, validPayload.some, Shared.cljSource, Shared.context)
+    val payload = CollectorPayload(Shared.api,
+                                   Nil,
+                                   None,
+                                   validPayload.some,
+                                   Shared.cljSource,
+                                   Shared.context)
     val actual = UrbanAirshipAdapter.toRawEvents(payload)
 
-    val expectedUnstructEventJson = """|{
+    val expectedUnstructEventJson =
+      """|{
                                |  "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
                                |  "data":{
                                |    "schema":"iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0",
@@ -98,7 +116,8 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
                                |}
                              """.stripMargin
 
-    val expectedCompactedUnstructEvent = compact(parse(expectedUnstructEventJson))
+    val expectedCompactedUnstructEvent =
+      compact(parse(expectedUnstructEventJson))
 
     "return the correct number of events (1)" in {
       actual must beSuccessful
@@ -113,52 +132,81 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
       val items = actual.toList.head.toList
       val sentSchema = (parse(items.head.parameters("ue_pr")) \ "data") \ "schema"
-      sentSchema.extract[String] must beEqualTo("""iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0""")
+      sentSchema.extract[String] must beEqualTo(
+        """iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0""")
     }
 
     "fail on unknown event types" in {
-      val payload = CollectorPayload(Shared.api, Nil, None, invalidEvent.some, Shared.cljSource, Shared.context)
+      val payload = CollectorPayload(Shared.api,
+                                     Nil,
+                                     None,
+                                     invalidEvent.some,
+                                     Shared.cljSource,
+                                     Shared.context)
       UrbanAirshipAdapter.toRawEvents(payload) must beFailing
     }
 
     "reject unparsable json" in {
-      val payload = CollectorPayload(Shared.api, Nil, None, """{ """.some, Shared.cljSource, Shared.context)
+      val payload = CollectorPayload(Shared.api,
+                                     Nil,
+                                     None,
+                                     """{ """.some,
+                                     Shared.cljSource,
+                                     Shared.context)
       UrbanAirshipAdapter.toRawEvents(payload) must beFailing
     }
 
     "reject badly formatted json" in {
-      val payload = CollectorPayload(Shared.api, Nil, None, """{ "value": "str" }""".some, Shared.cljSource, Shared.context)
+      val payload = CollectorPayload(Shared.api,
+                                     Nil,
+                                     None,
+                                     """{ "value": "str" }""".some,
+                                     Shared.cljSource,
+                                     Shared.context)
       UrbanAirshipAdapter.toRawEvents(payload) must beFailing
     }
 
     "reject content types" in {
-      val payload = CollectorPayload(Shared.api, Nil, "a/type".some, validPayload.some, Shared.cljSource, Shared.context)
+      val payload = CollectorPayload(Shared.api,
+                                     Nil,
+                                     "a/type".some,
+                                     validPayload.some,
+                                     Shared.cljSource,
+                                     Shared.context)
       val res = UrbanAirshipAdapter.toRawEvents(payload)
 
-      res must beFailing(NonEmptyList("Content type of a/type provided, expected None for UrbanAirship"))
+      res must beFailing(
+        NonEmptyList(
+          "Content type of a/type provided, expected None for UrbanAirship"))
     }
 
     "populate content-type as None (it's not applicable)" in {
-      val contentType = actual.getOrElse(throw new IllegalStateException).head.contentType
+      val contentType =
+        actual.getOrElse(throw new IllegalStateException).head.contentType
       contentType must beEqualTo(None)
     }
 
     "have the correct collector source" in {
-      val source = actual.getOrElse(throw new IllegalStateException).head.source
-      source must beEqualTo (Shared.cljSource)
+      val source =
+        actual.getOrElse(throw new IllegalStateException).head.source
+      source must beEqualTo(Shared.cljSource)
     }
 
     "have the correct context, including setting the correct collector timestamp" in {
-      val context = actual.getOrElse(throw new IllegalStateException).head.context
+      val context =
+        actual.getOrElse(throw new IllegalStateException).head.context
       Shared.context.timestamp mustEqual None
-      context mustEqual Shared.context.copy(timestamp = DateTime.parse("2015-11-13T16:31:52.393Z").some) // it should be set to the "processed" field by the adapter
+      context mustEqual Shared.context.copy(timestamp = DateTime
+        .parse("2015-11-13T16:31:52.393Z")
+        .some) // it should be set to the "processed" field by the adapter
     }
 
     "return the correct unstruct_event json" in {
       actual match {
         case Success(successes) => {
           val event = successes.head
-          compact(parse(event.parameters("ue_pr"))) must beEqualTo(expectedCompactedUnstructEvent)
+          compact(parse(event.parameters("ue_pr"))) must beEqualTo(
+            expectedCompactedUnstructEvent)
         }
         case _ => ko("payload was not accepted")
       }
@@ -178,7 +226,8 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       actual match {
         case Success(successes) => {
           val event = successes.head
-          event.parameters("eid") must beEqualTo("e3314efb-9058-dbaf-c4bb-b754fca73613") // id field value
+          event.parameters("eid") must beEqualTo(
+            "e3314efb-9058-dbaf-c4bb-b754fca73613") // id field value
         }
         case _ => ko("payload was not populated")
       }

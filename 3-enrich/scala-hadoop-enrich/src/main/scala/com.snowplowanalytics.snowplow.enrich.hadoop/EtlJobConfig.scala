@@ -121,7 +121,7 @@ object EtlJobConfig {
     
     val igluConfig = args.requiredz("iglu_config")
     val igluResolver: ValidatedNelMessage[Resolver] = igluConfig match {
-      case Failure(e) => e.toString.toProcessingMessage.failNel[Resolver]
+      case Failure(e) => e.toString.toProcessingMessage.failureNel[Resolver]
       case Success(s) => for {
         node <- base64ToJsonNode(s)
         reso <- Resolver.parse(node)
@@ -235,6 +235,6 @@ object EtlJobConfig {
     new DateTime(tstampString.toLong).success
   } catch {
     case nfe: NumberFormatException =>
-      s"NumberFormatException parsing etl_tstamp [$tstampString]: $nfe".toProcessingMessage.fail
+      s"NumberFormatException parsing etl_tstamp [$tstampString]: $nfe".toProcessingMessage.failure
   }
 }

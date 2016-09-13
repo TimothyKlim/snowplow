@@ -59,7 +59,7 @@ class SnowplowElasticsearchEmitterSpec extends Specification with ValidationMatc
       val eem = new SnowplowElasticsearchEmitter(kcc, Some(new StdouterrSink), new StdouterrSink)
 
       val validInput: EmitterInput = "good" -> new ElasticsearchObject("index", "type", "{}").success
-      val invalidInput: EmitterInput = "bad" -> List("malformed event").fail
+      val invalidInput: EmitterInput = "bad" -> List("malformed event").failure
 
       val input = List(validInput, invalidInput)
 

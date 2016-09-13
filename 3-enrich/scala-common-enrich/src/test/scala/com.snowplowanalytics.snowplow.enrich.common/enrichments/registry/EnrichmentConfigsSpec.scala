@@ -42,8 +42,8 @@ import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
 /**
- * Tests enrichmentConfigs
- */
+  * Tests enrichmentConfigs
+  */
 class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
   "Parsing a valid anon_ip enrichment JSON" should {
@@ -56,7 +56,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "anon_ip",
+                                "jsonschema",
+                                "1-0-0")
 
       val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
       result must beSuccessful(AnonIpEnrichment(AnonOctets(2)))
@@ -67,7 +70,8 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   "Parsing a valid ip_lookups enrichment JSON" should {
     "successfully construct a GeoIpEnrichment case class" in {
 
-      val ipToGeoJson = parse("""{
+      val ipToGeoJson = parse(
+        """{
         "enabled": true,
         "parameters": {
           "geo": {
@@ -81,11 +85,26 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "ip_lookups",
+                                "jsonschema",
+                                "1-0-0")
 
-      val expected = IpLookupsEnrichment(Some("geo", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"), "GeoIPCity.dat"),
-                                         Some("isp", new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"), "GeoIPISP.dat"),
-                                         None, None, None, true)
+      val expected = IpLookupsEnrichment(
+        Some(
+          "geo",
+          new URI(
+            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"),
+          "GeoIPCity.dat"),
+        Some(
+          "isp",
+          new URI(
+            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),
+          "GeoIPISP.dat"),
+        None,
+        None,
+        None,
+        true)
 
       val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
       result must beSuccessful(expected)
@@ -106,20 +125,26 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "referer_parser",
+                                "jsonschema",
+                                "1-0-0")
 
-      val expected = RefererParserEnrichment(List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
+      val expected = RefererParserEnrichment(
+        List("www.subdomain1.snowplowanalytics.com",
+             "www.subdomain2.snowplowanalytics.com"))
 
       val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid campaign_attribution enrichment JSON" should {
     "successfully construct a CampaignAttributionEnrichment case class" in {
 
-      val campaignAttributionEnrichmentJson = parse("""{
+      val campaignAttributionEnrichmentJson = parse(
+        """{
         "enabled": true,
         "parameters": {
           "mapping": "static",
@@ -137,14 +162,19 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "campaign_attribution",
+                                "jsonschema",
+                                "1-0-0")
 
       val expected = CampaignAttributionEnrichment(
         List("utm_medium", "medium"),
         List("utm_source", "source"),
         List("utm_term"),
         List(),
-        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
+        List("utm _ campaign",
+             "CID",
+             "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
         List(
           "gclid" -> "Override",
           "msclkid" -> "Microsoft",
@@ -153,41 +183,52 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         )
       )
 
-      val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
+      val result =
+        CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson,
+                                            schemaKey)
       result must beSuccessful(expected)
 
-    }      
+    }
   }
 
   "Parsing a valid user_agent_utils_config enrichment JSON" should {
     "successfully construct a UserAgentUtilsEnrichment case object" in {
 
-      val  userAgentUtilsEnrichmentJson = parse("""{
+      val userAgentUtilsEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "user_agent_utils_config",
+                                "jsonschema",
+                                "1-0-0")
 
-      val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
+      val result =
+        UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson,
+                                             schemaKey)
       result must beSuccessful(UserAgentUtilsEnrichment)
 
     }
   }
 
-    "Parsing a valid ua_parser_config enrichment JSON" should {
+  "Parsing a valid ua_parser_config enrichment JSON" should {
     "successfully construct a UaParserEnrichment case object" in {
 
-      val  uaParserEnrichmentJson = parse("""{
+      val uaParserEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "ua_parser_config",
+                                "jsonschema",
+                                "1-0-0")
 
-      val result = UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
+      val result =
+        UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
       result must beSuccessful(UaParserEnrichment)
 
     }
@@ -196,7 +237,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   "Parsing a valid currency_convert_config enrichment JSON" should {
     "successfully construct a CurrencyConversionEnrichment case object" in {
 
-      val  currencyConversionEnrichmentJson = parse("""{
+      val currencyConversionEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "accountType": "DEVELOPER",
@@ -206,10 +247,18 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "currency_conversion_config",
+                                "jsonschema",
+                                "1-0-0")
 
-      val result = CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
-      result must beSuccessful(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
+      val result = CurrencyConversionEnrichmentConfig
+        .parse(currencyConversionEnrichmentJson, schemaKey)
+      result must beSuccessful(
+        CurrencyConversionEnrichment(DeveloperAccount,
+                                     "---",
+                                     "EUR",
+                                     "EOD_PRIOR"))
 
     }
   }
@@ -234,15 +283,19 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }""")
       }
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "javascript_script_config",
+                                "jsonschema",
+                                "1-0-0")
 
       // val expected = JavascriptScriptEnrichment(JavascriptScriptEnrichmentConfig.compile(script).toOption.get)
 
-      val result = JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson, schemaKey)
+      val result =
+        JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson,
+                                               schemaKey)
       result must beSuccessful // TODO: check the result's contents by evaluating some JavaScript
     }
   }
-
 
   "Parsing a valid event_fingerprint_config enrichment JSON" should {
     "successfully construct a EventFingerprintEnrichmentConfig case class" in {
@@ -255,31 +308,41 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "event_fingerprint_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "event_fingerprint_config",
+                                "jsonschema",
+                                "1-0-0")
 
       val expectedExcludedParameters = List("stm")
 
-      val result = EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
+      val result =
+        EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
       result must beSuccessful.like {
-        case enr => enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
+        case enr =>
+          enr.algorithm("sample") must beEqualTo(
+            "5e8ff9bf55ba3508199d22e984129be6")
       }
     }
   }
 
-
   "Parsing a valid cookie_extractor_config enrichment JSON" should {
     "successfully construct a CookieExtractorEnrichment case object" in {
 
-      val  cookieExtractorEnrichmentJson = parse("""{
+      val cookieExtractorEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
           "cookies": ["foo", "bar"]
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
+                                "cookie_extractor_config",
+                                "jsonschema",
+                                "1-0-0")
 
-      val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
+      val result =
+        CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson,
+                                              schemaKey)
       result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
     }
   }

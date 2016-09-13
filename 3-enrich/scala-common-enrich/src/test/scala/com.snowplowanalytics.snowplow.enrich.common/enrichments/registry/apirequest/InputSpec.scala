@@ -31,24 +31,47 @@ import org.json4s.jackson.parseJson
 // This project
 import outputs.EnrichedEvent
 
-class InputSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the Inputs and template context building of API Request Enrichment" ^
-                                                                      p^
-    "Create template context from POJO inputs"                        ! e1^
-    "Create template context from JSON inputs"                        ! e2^
-    "Colliding inputs from JSON and POJO didn't get merged"           ! e3^
-    "Collect failures"                                                ! e4^
-    "POJO null value return successful None"                          ! e5^
-    "POJO invalid key return failure"                                 ! e6^
-    "Skip lookup on missing (in event) key"                           ! e7^
-    "Match modelless criterion (*-*-*)"                               ! e8^
-                                                                      end
+class InputSpec extends Specification with ValidationMatchers {
+  def is =
+    "This is a specification to test the Inputs and template context building of API Request Enrichment" ^
+      p ^
+      "Create template context from POJO inputs" ! e1 ^
+      "Create template context from JSON inputs" ! e2 ^
+      "Colliding inputs from JSON and POJO didn't get merged" ! e3 ^
+      "Collect failures" ! e4 ^
+      "POJO null value return successful None" ! e5 ^
+      "POJO invalid key return failure" ! e6 ^
+      "Skip lookup on missing (in event) key" ! e7 ^
+      "Match modelless criterion (*-*-*)" ! e8 ^
+      end
 
   object ContextCase {
-    val ccInput = Input("nullableValue", pojo = None, json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)
-    val derInput = Input("overridenValue", pojo = None, json = JsonInput("derived_contexts", "iglu:org.openweathermap/weather/jsonschema/1-0-*", "$.main.humidity").some)
-    val unstructInput = Input("unstructValue", pojo = None, json = JsonInput("unstruct_event", "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0", "$.state").some)
-    val overrideHumidityInput = Input("overridenValue", pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.latitude").some)
+    val ccInput = Input(
+      "nullableValue",
+      pojo = None,
+      json = JsonInput("contexts",
+                       "iglu:org.ietf/http_cookie/jsonschema/1-*-*",
+                       "$.value").some)
+    val derInput = Input(
+      "overridenValue",
+      pojo = None,
+      json = JsonInput("derived_contexts",
+                       "iglu:org.openweathermap/weather/jsonschema/1-0-*",
+                       "$.main.humidity").some)
+    val unstructInput = Input(
+      "unstructValue",
+      pojo = None,
+      json = JsonInput(
+        "unstruct_event",
+        "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0",
+        "$.state").some)
+    val overrideHumidityInput = Input(
+      "overridenValue",
+      pojo = None,
+      json = JsonInput(
+        "contexts",
+        "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+        "$.latitude").some)
 
     val derivedContext1 = parseJson(
       """
@@ -104,12 +127,15 @@ class InputSpec extends Specification with ValidationMatchers { def is =
 
   def e1 = {
     val input1 = Input("user", pojo = PojoInput("user_id").some, json = None)
-    val input2 = Input("time", pojo = PojoInput("true_tstamp").some, json = None)
+    val input2 =
+      Input("time", pojo = PojoInput("true_tstamp").some, json = None)
     val event = new EnrichedEvent
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
-    val templateContext = Input.buildTemplateContext(List(input1, input2), event, Nil, Nil, None)
-    templateContext must beSuccessful(Some(Map("user" -> "chuwy", "time" -> "20")))
+    val templateContext =
+      Input.buildTemplateContext(List(input1, input2), event, Nil, Nil, None)
+    templateContext must beSuccessful(
+      Some(Map("user" -> "chuwy", "time" -> "20")))
   }
 
   def e2 = {
@@ -121,12 +147,23 @@ class InputSpec extends Specification with ValidationMatchers { def is =
       derivedContexts = List(derivedContext1),
       customContexts = List(cookieContext, overriderContext),
       unstructEvent = Some(unstructEvent))
-    templateContext must beSuccessful(Some(Map("nullableValue" -> "null", "overridenValue" -> "43.1", "unstructValue" -> "COMPLETED")))
+    templateContext must beSuccessful(
+      Some(
+        Map("nullableValue" -> "null",
+            "overridenValue" -> "43.1",
+            "unstructValue" -> "COMPLETED")))
   }
 
   def e3 = {
-    val jsonLatitudeInput = Input("latitude", pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.latitude").some)
-    val pojoLatitudeInput = Input("latitude", pojo = PojoInput("geo_latitude").some, json = None)
+    val jsonLatitudeInput = Input(
+      "latitude",
+      pojo = None,
+      json = JsonInput(
+        "contexts",
+        "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+        "$.latitude").some)
+    val pojoLatitudeInput =
+      Input("latitude", pojo = PojoInput("geo_latitude").some, json = None)
     val jsonLatitudeContext = parseJson(
       """
         |{
@@ -147,9 +184,22 @@ class InputSpec extends Specification with ValidationMatchers { def is =
   }
 
   def e4 = {
-    val invalidJsonPathInput = Input("latitude", pojo = None, json = JsonInput("contexts", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "*.invalidJsonPath").some)
-    val invalidJsonFieldInput = Input("latitude", pojo = None, json = JsonInput("invalid_field", "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*", "$.validJsonPath").some)
-    val pojoInput = Input("latitude", pojo = PojoInput("app_id").some, json = None)
+    val invalidJsonPathInput = Input(
+      "latitude",
+      pojo = None,
+      json = JsonInput(
+        "contexts",
+        "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+        "*.invalidJsonPath").some)
+    val invalidJsonFieldInput = Input(
+      "latitude",
+      pojo = None,
+      json = JsonInput(
+        "invalid_field",
+        "iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-1-*",
+        "$.validJsonPath").some)
+    val pojoInput =
+      Input("latitude", pojo = PojoInput("app_id").some, json = None)
 
     val templateContext = Input.buildTemplateContext(
       List(invalidJsonPathInput, pojoInput, invalidJsonFieldInput),
@@ -158,14 +208,16 @@ class InputSpec extends Specification with ValidationMatchers { def is =
       customContexts = List(JObject(Nil)),
       unstructEvent = None)
     templateContext must beFailing.like {
-      case errors => errors.toList must have length(3)
+      case errors => errors.toList must have length (3)
     }
   }
 
   def e5 = {
     val event = new EnrichedEvent
-    val pojoInput = Input("someKey", pojo = PojoInput("app_id").some, json = None)
-    val templateContext: ValidationNel[String, Option[Any]] = pojoInput.getFromEvent(event)
+    val pojoInput =
+      Input("someKey", pojo = PojoInput("app_id").some, json = None)
+    val templateContext: ValidationNel[String, Option[Any]] =
+      pojoInput.getFromEvent(event)
     templateContext must beSuccessful.like {
       case map => map must beNone
     }
@@ -173,15 +225,18 @@ class InputSpec extends Specification with ValidationMatchers { def is =
 
   def e6 = {
     val event = new EnrichedEvent
-    val pojoInput = Input("someKey", pojo = PojoInput("unknown_property").some, json = None)
-    val templateContext: ValidationNel[String, Option[Any]] = pojoInput.getFromEvent(event)
+    val pojoInput =
+      Input("someKey", pojo = PojoInput("unknown_property").some, json = None)
+    val templateContext: ValidationNel[String, Option[Any]] =
+      pojoInput.getFromEvent(event)
     templateContext must beFailing
   }
 
   def e7 = {
     val input1 = Input("user", Some(PojoInput("user_id")), None)
     val input2 = Input("time", Some(PojoInput("true_tstamp")), None)
-    val uriTemplate = "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}"
+    val uriTemplate =
+      "http://thishostdoesntexist31337:8123/{{  user }}/foo/{{ time}}/{{user}}"
     val enrichment = ApiRequestEnrichment(
       List(input1, input2),
       HttpApi("GET", uriTemplate, 1000, Authentication(None)),
@@ -197,7 +252,13 @@ class InputSpec extends Specification with ValidationMatchers { def is =
   }
 
   def e8 = {
-    val input = Input("permissive", None, Some(JsonInput("contexts", "iglu:com.snowplowanalytics/some_schema/jsonschema/*-*-*", "$.somekey")))
+    val input = Input(
+      "permissive",
+      None,
+      Some(
+        JsonInput("contexts",
+                  "iglu:com.snowplowanalytics/some_schema/jsonschema/*-*-*",
+                  "$.somekey")))
 
     val obj: JObject = parseJson(
       """
@@ -210,9 +271,11 @@ class InputSpec extends Specification with ValidationMatchers { def is =
       """.stripMargin).asInstanceOf[JObject]
 
     input.getFromJson(Nil, List(obj), None) must beSuccessful.like {
-      case option => option must beSome.like {
-        case context => context must beEqualTo(Map("permissive" -> "somevalue"))
-      }
+      case option =>
+        option must beSome.like {
+          case context =>
+            context must beEqualTo(Map("permissive" -> "somevalue"))
+        }
     }
   }
 }

@@ -26,15 +26,13 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow referer-parser
@@ -48,26 +46,33 @@ import utils.MapTransformer._
 import utils.ScalazJson4sUtils
 
 /**
- * Companion object. Lets us create a
- * RefererParserEnrichment from a JValue
- */
+  * Companion object. Lets us create a
+  * RefererParserEnrichment from a JValue
+  */
 object RefererParserEnrichment extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
+                                        "referer_parser",
+                                        "jsonschema",
+                                        1,
+                                        0)
 
   /**
-   * Creates a RefererParserEnrichment instance from a JValue.
-   * 
-   * @param config The referer_parser enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment   
-   * @return a configured RefererParserEnrichment instance
-   */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+    * Creates a RefererParserEnrichment instance from a JValue.
+    *
+    * @param config The referer_parser enrichment JSON
+    * @param schemaKey The SchemaKey provided for the enrichment
+    *        Must be a supported SchemaKey for this enrichment
+    * @return a configured RefererParserEnrichment instance
+    */
+  def parse(
+      config: JValue,
+      schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
-        enrich =  RefererParserEnrichment(param)
+        param <- ScalazJson4sUtils
+          .extract[List[String]](config, "parameters", "internalDomains")
+        enrich = RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })
   }
@@ -75,36 +80,37 @@ object RefererParserEnrichment extends ParseableEnrichment {
 }
 
 /**
- * Config for a referer_parser enrichment
- *
- * @param domains List of internal domains
- */
+  * Config for a referer_parser enrichment
+  *
+  * @param domains List of internal domains
+  */
 case class RefererParserEnrichment(
-  domains: List[String]
-  ) extends Enrichment {
+    domains: List[String]
+) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
   /**
-   * A Scalaz Lens to update the term within
-   * a Referer object.
-   */
-  private val termLens: Lens[Referer, MaybeString] = Lens.lensu((r, newTerm) => r.copy(term = newTerm), _.term)
+    * A Scalaz Lens to update the term within
+    * a Referer object.
+    */
+  private val termLens: Lens[Referer, MaybeString] =
+    Lens.lensu((r, newTerm) => r.copy(term = newTerm), _.term)
 
   /**
-   * Extract details about the referer (sic).
-   *
-   * Uses the referer-parser library. 
-   *
-   * @param uri The referer URI to extract
-   *            referer details from
-   * @param pageHost The host of the current
-   *                 page (used to determine
-   *                 if this is an internal
-   *                 referer)
-   * @return a Tuple3 containing referer medium,
-   *         source and term, all Strings
-   */
+    * Extract details about the referer (sic).
+    *
+    * Uses the referer-parser library.
+    *
+    * @param uri The referer URI to extract
+    *            referer details from
+    * @param pageHost The host of the current
+    *                 page (used to determine
+    *                 if this is an internal
+    *                 referer)
+    * @return a Tuple3 containing referer medium,
+    *         source and term, all Strings
+    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
     for {
       r <- RefererParser.parse(uri, pageHost, domains)

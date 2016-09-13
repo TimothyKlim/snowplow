@@ -32,48 +32,50 @@ import scala.util.control.NonFatal
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import outputs.EnrichedEvent
-import utils.{
-  ScalazJson4sUtils,
-  ConversionUtils,
-  JsonUtils => JU
-}
+import utils.{ScalazJson4sUtils, ConversionUtils, JsonUtils => JU}
 
 /**
- * Lets us create a JavascriptScriptEnrichment from a JValue.
- */
+  * Lets us create a JavascriptScriptEnrichment from a JValue.
+  */
 object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", 1, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
+                                        "javascript_script_config",
+                                        "jsonschema",
+                                        1,
+                                        0)
 
   /**
-   * Creates a JavascriptScriptEnrichment instance from a JValue.
-   *
-   * @param config The JavaScript script enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
-   * @return a configured JavascriptScriptEnrichment instance
-   */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+    * Creates a JavascriptScriptEnrichment instance from a JValue.
+    *
+    * @param config The JavaScript script enrichment JSON
+    * @param schemaKey The SchemaKey provided for the enrichment
+    *        Must be a supported SchemaKey for this enrichment
+    * @return a configured JavascriptScriptEnrichment instance
+    */
+  def parse(config: JValue, schemaKey: SchemaKey)
+    : ValidatedNelMessage[JavascriptScriptEnrichment] = {
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        encoded  <- ScalazJson4sUtils.extract[String](config, "parameters", "script")
-        raw      <- ConversionUtils.decodeBase64Url("script", encoded).toProcessingMessage // TODO: shouldn't be URL-safe
+        encoded <- ScalazJson4sUtils
+          .extract[String](config, "parameters", "script")
+        raw <- ConversionUtils
+          .decodeBase64Url("script", encoded)
+          .toProcessingMessage // TODO: shouldn't be URL-safe
         compiled <- JavascriptScriptEnrichment.compile(raw).toProcessingMessage
-        enrich    = JavascriptScriptEnrichment(compiled)
+        enrich = JavascriptScriptEnrichment(compiled)
       } yield enrich).toValidationNel
     })
   }
@@ -81,28 +83,28 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
 }
 
 /**
- * Companion object for working with JavaScript scripts.
- */
+  * Companion object for working with JavaScript scripts.
+  */
 object JavascriptScriptEnrichment {
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
-    val In  = s"${prefix}In"
+    val In = s"${prefix}In"
     val Out = s"${prefix}Out"
   }
 
   /**
-   * Appends an invocation to the script and
-   * then attempts to compile it.
-   *
-   * @param script the JavaScript process()
-   *        function as a String
-   */
+    * Appends an invocation to the script and
+    * then attempts to compile it.
+    *
+    * @param script the JavaScript process()
+    *        function as a String
+    */
   private[registry] def compile(script: String): Validation[String, Script] = {
 
     // Script mustn't be null
     if (Option(script).isEmpty) {
-      return "JavaScript script for evaluation is null".fail
+      return "JavaScript script for evaluation is null".failure
     }
 
     val invoke =
@@ -120,24 +122,27 @@ object JavascriptScriptEnrichment {
     try {
       cx.compileString(invoke, "user-defined-script", 0, null).success
     } catch {
-      case NonFatal(se) => s"Error compiling JavaScript script: [${se}]".fail
+      case NonFatal(se) =>
+        s"Error compiling JavaScript script: [${se}]".failure
     }
   }
 
   /**
-   * Run the process function as stored in the CompiledScript
-   * against the supplied EnrichedEvent.
-   *
-   * @param script the JavaScript process()
-   *        function as a CompiledScript
-   * @param event The enriched event to
-   *        pass into our process function
-   * @return a Validation boxing either a
-   *         JSON array of contexts on Success,
-   *         or an error String on Failure
-   */
+    * Run the process function as stored in the CompiledScript
+    * against the supplied EnrichedEvent.
+    *
+    * @param script the JavaScript process()
+    *        function as a CompiledScript
+    * @param event The enriched event to
+    *        pass into our process function
+    * @return a Validation boxing either a
+    *         JSON array of contexts on Success,
+    *         or an error String on Failure
+    */
   implicit val formats = DefaultFormats
-  private[registry] def process(script: Script, event: EnrichedEvent): Validation[String, List[JObject]] = {
+  private[registry] def process(
+      script: Script,
+      event: EnrichedEvent): Validation[String, List[JObject]] = {
 
     val cx = Context.enter()
     val scope = cx.initStandardObjects
@@ -146,11 +151,11 @@ object JavascriptScriptEnrichment {
       scope.put(Variables.In, scope, Context.javaToJS(event, scope))
       val retVal = script.exec(cx, scope)
       if (Option(retVal).isDefined) {
-        return s"Evaluated JavaScript script should not return a value; returned: [${retVal}]".fail
+        return s"Evaluated JavaScript script should not return a value; returned: [${retVal}]".failure
       }
     } catch {
       case NonFatal(nf) =>
-        return s"Evaluating JavaScript script threw an exception: [${nf}]".fail
+        return s"Evaluating JavaScript script threw an exception: [${nf}]".failure
     } finally {
       Context.exit()
     }
@@ -160,54 +165,59 @@ object JavascriptScriptEnrichment {
       case Some(obj) => {
         try {
           JsonMethods.parse(obj.asInstanceOf[String]) match {
-            case JArray(elements) => failFastCast(List[JObject](), elements).success
-            case _ => s"JavaScript script must return an Array; got [${obj}]".fail
+            case JArray(elements) =>
+              failFastCast(List[JObject](), elements).success
+            case _ =>
+              s"JavaScript script must return an Array; got [${obj}]".failure
           }
         } catch {
           case NonFatal(nf) =>
-            s"Could not convert object returned from JavaScript script to JValue AST: [${nf}]".fail
+            s"Could not convert object returned from JavaScript script to JValue AST: [${nf}]".failure
         }
       }
     }
   }
 
   /**
-   * Åttempt to fail fast for our cast to List[].
-   *
-   * Taken from http://stackoverflow.com/a/6690611/255627
-   */
+    * Åttempt to fail fast for our cast to List[].
+    *
+    * Taken from http://stackoverflow.com/a/6690611/255627
+    */
   import scala.language.higherKinds
-  private def failFastCast[A: Manifest, T[A] <: Traversable[A]](as: T[A], any: Any) = {
+  private def failFastCast[A: Manifest, T[A] <: Traversable[A]](as: T[A],
+                                                                any: Any) = {
     val res = any.asInstanceOf[T[A]]
     if (res.isEmpty) res
     else {
-      manifest[A].newArray(1).update(0, res.head) // force exception on wrong type
+      manifest[A]
+        .newArray(1)
+        .update(0, res.head) // force exception on wrong type
       res
     }
   }
 }
 
 /**
- * Config for an JavaScript script enrichment
- *
- * @param script The compiled script ready for
- */
+  * Config for an JavaScript script enrichment
+  *
+  * @param script The compiled script ready for
+  */
 case class JavascriptScriptEnrichment(
-  script: Script
-  ) extends Enrichment {
+    script: Script
+) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
   /**
-   * Run the process function as stored in the CompiledScript
-   * against the supplied EnrichedEvent.
-   *
-   * @param event The enriched event to
-   *        pass into our process function
-   * @return a Validation boxing either a
-   *         JSON array of contexts on Success,
-   *         or an error String on Failure
-   */
+    * Run the process function as stored in the CompiledScript
+    * against the supplied EnrichedEvent.
+    *
+    * @param event The enriched event to
+    *        pass into our process function
+    * @return a Validation boxing either a
+    *         JSON array of contexts on Success,
+    *         or an error String on Failure
+    */
   def process(event: EnrichedEvent): Validation[String, List[JObject]] =
     JavascriptScriptEnrichment.process(script, event)
 

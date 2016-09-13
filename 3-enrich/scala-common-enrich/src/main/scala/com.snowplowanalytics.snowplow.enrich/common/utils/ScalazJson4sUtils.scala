@@ -21,12 +21,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.{
-  DefaultFormats,
-  JValue,
-  JNothing,
-  MappingException
-}
+import org.json4s.{DefaultFormats, JValue, JNothing, MappingException}
 import org.json4s.JsonDSL._
 
 // Iglu
@@ -37,44 +32,54 @@ object ScalazJson4sUtils {
   implicit val formats = DefaultFormats
 
   /**
-   * Returns a field of type A at the end of a
-   * JSON path
-   *
-   * @tparam A Type of the field to extract
-   * @param head The first field in the JSON path
-   *        Exists to ensure the path is nonempty
-   * @param tail The rest of the fields in the
-   *        JSON path
-   * @return the list extracted from the JSON on
-   *         success or an error String on failure
-   */
-  def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
-    
+    * Returns a field of type A at the end of a
+    * JSON path
+    *
+    * @tparam A Type of the field to extract
+    * @param head The first field in the JSON path
+    *        Exists to ensure the path is nonempty
+    * @param tail The rest of the fields in the
+    *        JSON path
+    * @return the list extracted from the JSON on
+    *         success or an error String on failure
+    */
+  def extract[A: Manifest](config: JValue,
+                           head: String,
+                           tail: String*): ValidatedMessage[A] = {
+
     val path = head +: tail
 
-    // This check is necessary because attempting to follow 
+    // This check is necessary because attempting to follow
     // an invalid path yields a JNothing, which would be
     // interpreted as an empty list if type A is List[String]
     if (fieldExists(config, head, tail: _*)) {
       try {
         path.foldLeft(config)(_ \ _).extract[A].success
       } catch {
-        case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
+        case me: MappingException =>
+          s"Could not extract %s as %s from supplied JSON"
+            .format(path.mkString("."), manifest[A])
+            .toProcessingMessage
+            .failure
       }
-    } else s"JSON path %s not found".format(path.mkString(".")).toProcessingMessage.fail
+    } else
+      s"JSON path %s not found"
+        .format(path.mkString("."))
+        .toProcessingMessage
+        .failure
   }
 
   /**
-   * Determines whether a JSON contains a specific
-   * JSON path
-   *
-   * @param head The first field in the JSON path
-   *        Exists to ensure the path is nonempty
-   * @param tail The rest of the fields in the
-   *        JSON path
-   * @return Whether the path is valid
-   */
-  def fieldExists(config: JValue, head: String, tail: String*): Boolean = 
+    * Determines whether a JSON contains a specific
+    * JSON path
+    *
+    * @param head The first field in the JSON path
+    *        Exists to ensure the path is nonempty
+    * @param tail The rest of the fields in the
+    *        JSON path
+    * @return Whether the path is valid
+    */
+  def fieldExists(config: JValue, head: String, tail: String*): Boolean =
     (head +: tail).foldLeft(config)(_ \ _) match {
       case JNothing => false
       case s => true

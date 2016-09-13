@@ -18,7 +18,6 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-
 class NdjsonLoaderSpec extends Specification with ValidationMatchers {
 
   "toCollectorPayload" should {
@@ -29,17 +28,20 @@ class NdjsonLoaderSpec extends Specification with ValidationMatchers {
     }
 
     "return success on parsable json" in {
-      val valid = NdjsonLoader("com.abc/v1").toCollectorPayload("""{ "key": "value" } """")
+      val valid = NdjsonLoader("com.abc/v1").toCollectorPayload(
+        """{ "key": "value" } """")
       valid must beSuccessful
     }
 
     "return success with no content for empty rows" in {
-      NdjsonLoader("com.abc/v1").toCollectorPayload("\r\n") must beSuccessful(None)
+      NdjsonLoader("com.abc/v1").toCollectorPayload("\r\n") must beSuccessful(
+        None)
     }
 
     "fail if multiple lines passed in as one line" in {
       val lines = List("""{"key":"value1"}""", """{"key":"value2"}""")
-      NdjsonLoader("com.abc/v1").toCollectorPayload(lines.mkString("\n")) must beFailing(NonEmptyList("Too many lines! Expected single line"))
+      NdjsonLoader("com.abc/v1").toCollectorPayload(lines.mkString("\n")) must beFailing(
+        NonEmptyList("Too many lines! Expected single line"))
     }
 
   }

@@ -162,7 +162,7 @@ class ElasticsearchSenderHTTP(
           if (failure.contains("DocumentAlreadyExistsException") || failure.contains("VersionConflictEngineException")) {
             None
           } else {
-            Some(record._1 -> List("Elasticsearch rejected record with message: %s".format(failure)).fail)
+            Some(record._1 -> List("Elasticsearch rejected record with message: %s".format(failure)).failure)
           }
         })
 

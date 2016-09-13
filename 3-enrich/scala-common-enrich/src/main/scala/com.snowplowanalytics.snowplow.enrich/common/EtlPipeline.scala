@@ -16,10 +16,7 @@ package enrich
 package common
 
 // Java
-import java.io.{
-  PrintWriter,
-  StringWriter
-}
+import java.io.{PrintWriter, StringWriter}
 
 // Joda
 import org.joda.time.DateTime
@@ -35,71 +32,75 @@ import scalaz._
 import Scalaz._
 
 // This project
-import adapters.{
-  RawEvent,
-  AdapterRegistry
-}
-import enrichments.{
-  EnrichmentRegistry,
-  EnrichmentManager
-}
+import adapters.{RawEvent, AdapterRegistry}
+import enrichments.{EnrichmentRegistry, EnrichmentManager}
 import outputs.EnrichedEvent
 
 /**
- * Expresses the end-to-end event pipeline
- * supported by the Scala Common Enrich
- * project.
- */
+  * Expresses the end-to-end event pipeline
+  * supported by the Scala Common Enrich
+  * project.
+  */
 object EtlPipeline {
 
   /**
-   * A helper method to take a ValidatedMaybeCanonicalInput
-   * and transform it into a List (possibly empty) of
-   * ValidatedCanonicalOutputs.
-   *
-   * We have to do some unboxing because enrichEvent
-   * expects a raw CanonicalInput as its argument, not
-   * a MaybeCanonicalInput.
-   *
-   * @param registry Contains configuration for all
-   *        enrichments to apply
-   * @param etlVersion The ETL version
-   * @param etlTstamp The ETL timestamp
-   * @param input The ValidatedMaybeCanonicalInput
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return the ValidatedMaybeCanonicalOutput. Thanks to
-   *         flatMap, will include any validation errors
-   *         contained within the ValidatedMaybeCanonicalInput
-   */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: DateTime, input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
+    * A helper method to take a ValidatedMaybeCanonicalInput
+    * and transform it into a List (possibly empty) of
+    * ValidatedCanonicalOutputs.
+    *
+    * We have to do some unboxing because enrichEvent
+    * expects a raw CanonicalInput as its argument, not
+    * a MaybeCanonicalInput.
+    *
+    * @param registry Contains configuration for all
+    *        enrichments to apply
+    * @param etlVersion The ETL version
+    * @param etlTstamp The ETL timestamp
+    * @param input The ValidatedMaybeCanonicalInput
+    * @param resolver (implicit) The Iglu resolver used for
+    *        schema lookup and validation
+    * @return the ValidatedMaybeCanonicalOutput. Thanks to
+    *         flatMap, will include any validation errors
+    *         contained within the ValidatedMaybeCanonicalInput
+    */
+  def processEvents(registry: EnrichmentRegistry,
+                    etlVersion: String,
+                    etlTstamp: DateTime,
+                    input: ValidatedMaybeCollectorPayload)(
+      implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
 
-    def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
+    def flattenToList[A](
+        v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]])
+      : List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
-      case Success(Some(Failure(f)))   => List(f.fail)
-      case Failure(f)                  => List(f.fail)
-      case Success(None)               => Nil
+      case Success(Some(Failure(f))) => List(f.failure)
+      case Failure(f) => List(f.failure)
+      case Success(None) => Nil
     }
 
     try {
       val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
         for {
-          maybePayload  <- input
-        } yield for {
-          payload       <- maybePayload
-        } yield for {
-          events        <- AdapterRegistry.toRawEvents(payload)
-        } yield for {
-          event         <- events
-          enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
-        } yield enriched
+          maybePayload <- input
+        } yield
+          for {
+            payload <- maybePayload
+          } yield
+            for {
+              events <- AdapterRegistry.toRawEvents(payload)
+            } yield
+              for {
+                event <- events
+                enriched = EnrichmentManager
+                  .enrichEvent(registry, etlVersion, etlTstamp, event)
+              } yield enriched
 
       flattenToList[EnrichedEvent](e)
     } catch {
       case NonFatal(nf) => {
         val errorWriter = new StringWriter
         nf.printStackTrace(new PrintWriter(errorWriter))
-        List(s"Unexpected error processing events: $errorWriter".failNel)
+        List(s"Unexpected error processing events: $errorWriter".failureNel)
       }
     }
   }

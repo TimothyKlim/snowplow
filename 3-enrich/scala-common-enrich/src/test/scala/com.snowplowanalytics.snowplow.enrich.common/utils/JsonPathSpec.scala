@@ -20,16 +20,17 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s._
 import org.json4s.jackson.parseJson
 
-class JsonPathSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the JSONPath utils"                     ^
-    "Test JSONPath query"                                             ! e1 ^
-    "Test query of non-exist value"                                   ! e2 ^
-    "Test query of empty array"                                       ! e3 ^
-    "Test primtive JSON type (JString)"                               ! e6 ^
-    "Invalid JSONPath (JQ syntax) must fail"                          ! e4 ^
-    "Invalid JSONPath must fail"                                      ! e5 ^
-    "JNothing must fail"                                              ! e7 ^
-                                                                      end
+class JsonPathSpec extends Specification with ValidationMatchers {
+  def is =
+    "This is a specification to test the JSONPath utils" ^
+      "Test JSONPath query" ! e1 ^
+      "Test query of non-exist value" ! e2 ^
+      "Test query of empty array" ! e3 ^
+      "Test primtive JSON type (JString)" ! e6 ^
+      "Invalid JSONPath (JQ syntax) must fail" ! e4 ^
+      "Invalid JSONPath must fail" ! e5 ^
+      "JNothing must fail" ! e7 ^
+      end
 
   val someJson = parseJson("""
       |{ "store": {
@@ -66,15 +67,16 @@ class JsonPathSpec extends Specification with ValidationMatchers { def is =
       |}
     """.stripMargin)
 
-
   def e1 =
-    JsonPath.query("$.store.book[1].price", someJson) must beSuccessful(List(JDouble(12.99)))
+    JsonPath.query("$.store.book[1].price", someJson) must beSuccessful(
+      List(JDouble(12.99)))
 
   def e2 =
     JsonPath.query("$.store.book[5].price", someJson) must beSuccessful(Nil)
 
   def e3 =
-    JsonPath.query("$.store.unicorns", someJson) must beSuccessful(List(JArray(Nil)))
+    JsonPath.query("$.store.unicorns", someJson) must beSuccessful(
+      List(JArray(Nil)))
 
   def e4 =
     JsonPath.query(".notJsonPath", someJson) must beFailing.like {
@@ -87,7 +89,8 @@ class JsonPathSpec extends Specification with ValidationMatchers { def is =
     }
 
   def e6 =
-    JsonPath.query("$.store.book[2]", JString("somestring")) must beSuccessful(List())
+    JsonPath.query("$.store.book[2]", JString("somestring")) must beSuccessful(
+      List())
 
   def e7 =
     JsonPath.query("$..", JNothing) must beFailing.like {

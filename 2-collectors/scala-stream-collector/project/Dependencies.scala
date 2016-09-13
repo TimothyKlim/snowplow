@@ -31,7 +31,7 @@ object Dependencies {
     val mimepull = "1.9.6"
     val awsSdk = "1.11.33"
     // Scala
-    val snowplowCommonEnrich = "0.22.0"
+    val snowplowCommonEnrich = "0.25.0"
     val igluClient = "0.3.2"
     val scalaz7 = "7.2.6"
     val snowplowRawEvent = "0.1.0"

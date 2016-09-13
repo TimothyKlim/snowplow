@@ -22,26 +22,29 @@ import java.sql.Date
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-class OutputSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the Output of SQL Query Enrichment" ^
-                                                                      p^
-    "Parse Inetger without type hint"                       ! e1^
-    "Parse Double without type hint"                        ! e2^
-    "Handle null"                                           ! e3^
-    "Handle java.sql.Date as ISO8601 string"                ! e4^
-    end
+class OutputSpec extends Specification with ValidationMatchers {
+  def is =
+    "This is a specification to test the Output of SQL Query Enrichment" ^
+      p ^
+      "Parse Inetger without type hint" ! e1 ^
+      "Parse Double without type hint" ! e2 ^
+      "Handle null" ! e3 ^
+      "Handle java.sql.Date as ISO8601 string" ! e4 ^
+      end
 
   def e1 =
     JsonOutput.getValue(1: Integer, "") must beEqualTo(JInt(1))
 
   def e2 =
-    JsonOutput.getValue(32.2: java.lang.Double, "") must beEqualTo(JDouble(32.2))
+    JsonOutput.getValue(32.2: java.lang.Double, "") must beEqualTo(
+      JDouble(32.2))
 
   def e3 =
     JsonOutput.getValue(null, "") must beEqualTo(JNull)
 
   def e4 = {
     val date = new Date(1465558727000L)
-    JsonOutput.getValue(date, "java.sql.Date") must beEqualTo(JString("2016-06-10T11:38:47.000Z"))
+    JsonOutput.getValue(date, "java.sql.Date") must beEqualTo(
+      JString("2016-06-10T11:38:47.000Z"))
   }
 }

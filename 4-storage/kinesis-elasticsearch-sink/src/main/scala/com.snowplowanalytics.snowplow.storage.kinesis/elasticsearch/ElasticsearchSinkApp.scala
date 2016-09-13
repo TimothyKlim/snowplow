@@ -171,7 +171,7 @@ object ElasticsearchSinkApp extends App {
       }
     }.success
 
-    case _ => "Source must be set to 'stdin' or 'kinesis'".fail
+    case _ => "Source must be set to 'stdin' or 'kinesis'".failure
   }
 
   executor.fold(

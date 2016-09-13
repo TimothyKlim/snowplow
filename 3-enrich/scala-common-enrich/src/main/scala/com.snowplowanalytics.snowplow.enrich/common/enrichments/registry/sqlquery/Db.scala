@@ -26,48 +26,53 @@ import org.json4s.MappingException
 import Input.ExtractedValue
 
 /**
- * Class-container for chosen DB's configuration
- * Exactly one configuration must be provided
- *
- * @param postgresql optional container for PostgreSQL configuration
- * @param mysql optional container for MySQL configuration
- */
-case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = None) {
+  * Class-container for chosen DB's configuration
+  * Exactly one configuration must be provided
+  *
+  * @param postgresql optional container for PostgreSQL configuration
+  * @param mysql optional container for MySQL configuration
+  */
+case class Db(postgresql: Option[PostgresqlDb] = None,
+              mysql: Option[MysqlDb] = None) {
   private val realDb: Rdbms = (postgresql, mysql) match {
     case (Some(_), Some(_)) =>
-      throw new MappingException("SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. Both present")
+      throw new MappingException(
+        "SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. Both present")
     case (None, None) =>
-      throw new MappingException("SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. None present")
+      throw new MappingException(
+        "SQL Query Enrichment Configuration: db must represent either postgresql OR mysql. None present")
     case _ =>
       List(postgresql, mysql).flatten.head
   }
 
   /**
-   * Create [[PreparedStatement]] and fill all its placeholders
-   * This function expects `placeholderMap` contains exact same amount of placeholders
-   * as `sql`, otherwise it will result in error downstream
-   *
-   * @param sql prepared SQL statement with some unfilled placeholders (?-signs)
-   * @param placeholderMap IntMap with input values
-   * @return filled placeholder or error (unlikely)
-   */
-  def createStatement(sql: String, placeholderMap: IntMap[ExtractedValue]): ThrowableXor[PreparedStatement] =
+    * Create [[PreparedStatement]] and fill all its placeholders
+    * This function expects `placeholderMap` contains exact same amount of placeholders
+    * as `sql`, otherwise it will result in error downstream
+    *
+    * @param sql prepared SQL statement with some unfilled placeholders (?-signs)
+    * @param placeholderMap IntMap with input values
+    * @return filled placeholder or error (unlikely)
+    */
+  def createStatement(sql: String, placeholderMap: IntMap[ExtractedValue])
+    : ThrowableXor[PreparedStatement] =
     realDb.createEmptyStatement(sql).map { preparedStatement =>
-      placeholderMap.foreach { case (index, value) =>
-        value.set(preparedStatement, index)
+      placeholderMap.foreach {
+        case (index, value) =>
+          value.set(preparedStatement, index)
       }
       preparedStatement
     }
 
   /**
-   * Get amount of placeholders (?-signs) in Prepared Statement
-   */
+    * Get amount of placeholders (?-signs) in Prepared Statement
+    */
   def getPlaceholderCount(sql: String): ThrowableXor[Int] =
     realDb.createEmptyStatement(sql).flatMap(realDb.getPlaceholderCount)
 
   /**
-   * Execute [[PreparedStatement]]
-   */
+    * Execute [[PreparedStatement]]
+    */
   def execute(preparedStatement: PreparedStatement): ThrowableXor[ResultSet] =
     realDb.execute(preparedStatement)
 }

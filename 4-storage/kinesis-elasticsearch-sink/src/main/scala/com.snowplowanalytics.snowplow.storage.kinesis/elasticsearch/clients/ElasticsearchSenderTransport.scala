@@ -226,7 +226,7 @@ class ElasticsearchSenderTransport(
           if (failure.getMessage.contains("DocumentAlreadyExistsException") || failure.getMessage.contains("VersionConflictEngineException")) {
             None
           } else {
-            Some(record._1 -> List("Elasticsearch rejected record with message: %s".format(failure.getMessage)).fail)
+            Some(record._1 -> List("Elasticsearch rejected record with message: %s".format(failure.getMessage)).failure)
           }
         })
 

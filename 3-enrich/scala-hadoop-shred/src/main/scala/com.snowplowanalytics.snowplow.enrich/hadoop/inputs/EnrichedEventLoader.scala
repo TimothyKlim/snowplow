@@ -28,9 +28,6 @@ import scala.util.Try
 import scalaz._
 import Scalaz._
 
-// Snowplow Utils
-import com.snowplowanalytics.util.Tap._
-
 // Snowplow Common Enrich
 import common._
 import outputs.EnrichedEvent
@@ -73,7 +70,7 @@ object EnrichedEventLoader {
     val fields = line.split("\t", -1).map(f => if (f == "") null else f)
     val len = fields.length
     if (len < FieldCount)
-      return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failNel[EnrichedEvent]
+      return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failureNel[EnrichedEvent]
 
     val event = new EnrichedEvent().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
@@ -118,7 +115,7 @@ object EnrichedEventLoader {
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.success
-      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+      case None    => s"Field [$field]: [$str] is not a valid UUID".failure
     }
   }
 
@@ -139,6 +136,6 @@ object EnrichedEventLoader {
       str.success
     } catch {
       case e: Throwable =>
-        s"Field [$field]: [$str] is not in the expected Redshift/Postgres timestamp format".fail
+        s"Field [$field]: [$str] is not in the expected Redshift/Postgres timestamp format".failure
     }
 }

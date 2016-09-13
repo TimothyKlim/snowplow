@@ -595,7 +595,7 @@ object JobSpecHelpers {
    */
   def removeTstamp(badRow: String): String = {
     val badRowJson = parse(badRow)
-    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ (("errors", (badRowJson \ "errors")))
     compact(badRowWithoutTimestamp)
   }
 }

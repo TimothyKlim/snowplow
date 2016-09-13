@@ -23,16 +23,14 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
 import org.json4s.JsonDSL._
 
 // Iglu
-import iglu.client.{ 
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 
 // HttpClient
 import org.apache.http.message.BasicHeaderValueParser
@@ -41,34 +39,41 @@ import org.apache.http.message.BasicHeaderValueParser
 import utils.ScalazJson4sUtils
 
 object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", 1, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
+                                        "cookie_extractor_config",
+                                        "jsonschema",
+                                        1,
+                                        0)
 
   /**
-   * Creates a CookieExtractorEnrichment instance from a JValue.
-   *
-   * @param config The cookie_extractor enrichment JSON
-   * @param schemaKey The SchemaKey provided for the enrichment
-   *        Must be a supported SchemaKey for this enrichment
-   * @return a configured CookieExtractorEnrichment instance
-   */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] = {
-    isParseable(config, schemaKey).flatMap( conf => {
+    * Creates a CookieExtractorEnrichment instance from a JValue.
+    *
+    * @param config The cookie_extractor enrichment JSON
+    * @param schemaKey The SchemaKey provided for the enrichment
+    *        Must be a supported SchemaKey for this enrichment
+    * @return a configured CookieExtractorEnrichment instance
+    */
+  def parse(
+      config: JValue,
+      schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] = {
+    isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        cookieNames  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "cookies")
-        enrich =  CookieExtractorEnrichment(cookieNames)
+        cookieNames <- ScalazJson4sUtils
+          .extract[List[String]](config, "parameters", "cookies")
+        enrich = CookieExtractorEnrichment(cookieNames)
       } yield enrich).toValidationNel
     })
   }
 }
 
 /**
- * Enrichment extracting certain cookies from headers.
- *
- * @param cookieNames Names of the cookies to be extracted
- */
+  * Enrichment extracting certain cookies from headers.
+  *
+  * @param cookieNames Names of the cookies to be extracted
+  */
 case class CookieExtractorEnrichment(
-  cookieNames: List[String]
-  ) extends Enrichment {
+    cookieNames: List[String]
+) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
@@ -78,10 +83,13 @@ case class CookieExtractorEnrichment(
     val cookies = headers.flatMap { header =>
       header.split(":", 2) match {
         case Array("Cookie", value) =>
-          val nameValuePairs = BasicHeaderValueParser.
-            parseParameters(value, BasicHeaderValueParser.INSTANCE)
+          val nameValuePairs = BasicHeaderValueParser.parseParameters(
+            value,
+            BasicHeaderValueParser.INSTANCE)
 
-          val filtered = nameValuePairs.filter { nvp => cookieNames.contains(nvp.getName) }
+          val filtered = nameValuePairs.filter { nvp =>
+            cookieNames.contains(nvp.getName)
+          }
 
           Some(filtered)
         case _ => None
@@ -89,12 +97,10 @@ case class CookieExtractorEnrichment(
     }.flatten
 
     cookies.map { cookie =>
-      ( ("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
+      (("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
         ("data" ->
           ("name" -> cookie.getName) ~
-          ("value" -> cookie.getValue)
-        )
-      )
+            ("value" -> cookie.getValue)))
     }
   }
 }

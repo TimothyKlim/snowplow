@@ -32,6 +32,7 @@ import scala.collection.JavaConversions._
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // Iglu
 import iglu.client.{SchemaKey, SchemaCriterion}
@@ -44,25 +45,30 @@ import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 /**
- * Loader for Thrift SnowplowRawEvent objects.
- */
+  * Loader for Thrift SnowplowRawEvent objects.
+  */
 object ThriftLoader extends Loader[Array[Byte]] {
-  
+
   private val thriftDeserializer = new TDeserializer
 
-  private val ExpectedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
+  private val ExpectedSchema = SchemaCriterion(
+    "com.snowplowanalytics.snowplow",
+    "CollectorPayload",
+    "thrift",
+    1,
+    0)
 
   /**
-   * Converts the source string into a ValidatedMaybeCollectorPayload.
-   * Checks the version of the raw event and calls the appropriate method.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
-   */
+    * Converts the source string into a ValidatedMaybeCollectorPayload.
+    * Checks the version of the raw event and calls the appropriate method.
+    *
+    * @param line A serialized Thrift object Byte array mapped to a String.
+    *   The method calling this should encode the serialized object
+    *   with `snowplowRawEventBytes.map(_.toChar)`.
+    *   Reference: http://stackoverflow.com/questions/5250324/
+    * @return either a set of validation errors or an Option-boxed
+    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+    */
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
     try {
@@ -77,15 +83,16 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
 
       if (schema.isSetSchema) {
-        val actualSchema = SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
+        val actualSchema =
+          SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
 
         for {
           as <- actualSchema
           res <- if (ExpectedSchema.matches(as)) {
-              convertSchema1(line)
-            } else {
-              s"Verifying record as $ExpectedSchema failed: found $as".failNel
-            }
+            convertSchema1(line)
+          } else {
+            s"Verifying record as $ExpectedSchema failed: found $as".failureNel
+          }
         } yield res
 
       } else {
@@ -94,22 +101,24 @@ object ThriftLoader extends Loader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case e: Throwable =>
-        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
+        s"Error deserializing raw event: ${e.getMessage}"
+          .failureNel[Option[CollectorPayload]]
     }
   }
 
   /**
-   * Converts the source string into a ValidatedMaybeCollectorPayload.
-   * Assumes that the byte array is a serialized CollectorPayload, version 1.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
-   */
-  private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+    * Converts the source string into a ValidatedMaybeCollectorPayload.
+    * Assumes that the byte array is a serialized CollectorPayload, version 1.
+    *
+    * @param line A serialized Thrift object Byte array mapped to a String.
+    *   The method calling this should encode the serialized object
+    *   with `snowplowRawEventBytes.map(_.toChar)`.
+    *   Reference: http://stackoverflow.com/questions/5250324/
+    * @return either a set of validation errors or an Option-boxed
+    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+    */
+  private def convertSchema1(
+      line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
     var collectorPayload = new CollectorPayload1
     this.synchronized {
@@ -129,18 +138,20 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val refererUri = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
 
-    val headers = Option(collectorPayload.headers)
-      .map(_.toList).getOrElse(Nil)
+    val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
 
-    val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
+    val ip = IpAddressExtractor
+      .extractIpAddress(headers, collectorPayload.ipAddress)
+      .some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".fail
+      case None => "Request does not contain a path".failure
       case Some(p) => CollectorApi.parse(p)
     }
 
     (querystring.toValidationNel |@|
-      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) => CollectorPayload(
+      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) =>
+      CollectorPayload(
         q,
         collectorPayload.collector,
         collectorPayload.encoding,
@@ -154,23 +165,24 @@ object ThriftLoader extends Loader[Array[Byte]] {
         a,
         Option(collectorPayload.contentType),
         Option(collectorPayload.body)
-        ).some
+      ).some
     }
   }
 
   /**
-   * Converts the source string into a ValidatedMaybeCollectorPayload.
-   * Assumes that the byte array is an old serialized SnowplowRawEvent
-   * which is not self-describing.
-   *
-   * @param line A serialized Thrift object Byte array mapped to a String.
-   *   The method calling this should encode the serialized object
-   *   with `snowplowRawEventBytes.map(_.toChar)`.
-   *   Reference: http://stackoverflow.com/questions/5250324/
-   * @return either a set of validation errors or an Option-boxed
-   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
-   */
-  private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+    * Converts the source string into a ValidatedMaybeCollectorPayload.
+    * Assumes that the byte array is an old serialized SnowplowRawEvent
+    * which is not self-describing.
+    *
+    * @param line A serialized Thrift object Byte array mapped to a String.
+    *   The method calling this should encode the serialized object
+    *   with `snowplowRawEventBytes.map(_.toChar)`.
+    *   Reference: http://stackoverflow.com/questions/5250324/
+    * @return either a set of validation errors or an Option-boxed
+    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+    */
+  private def convertOldSchema(
+      line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
     var snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
@@ -190,10 +202,11 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val refererUri = Option(snowplowRawEvent.refererUri)
     val networkUserId = Option(snowplowRawEvent.networkUserId)
 
-    val headers = Option(snowplowRawEvent.headers)
-      .map(_.toList).getOrElse(Nil)
+    val headers = Option(snowplowRawEvent.headers).map(_.toList).getOrElse(Nil)
 
-    val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
+    val ip = IpAddressExtractor
+      .extractIpAddress(headers, snowplowRawEvent.ipAddress)
+      .some // Required
 
     (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
       Some(
@@ -210,7 +223,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           networkUserId,
           CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
           None, // No way of storing content type in Thrift yet
-          None  // No way of storing request body in Thrift yet
+          None // No way of storing request body in Thrift yet
         )
       )
     }

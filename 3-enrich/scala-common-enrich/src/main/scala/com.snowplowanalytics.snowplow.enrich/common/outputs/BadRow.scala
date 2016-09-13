@@ -32,70 +32,76 @@ import iglu.client.ProcessingMessageNel
 import iglu.client.validation.ProcessingMessageMethods._
 
 /**
- * Alternate BadRow constructors
- */
+  * Alternate BadRow constructors
+  */
 object BadRow {
 
   /**
-   * Constructor using Strings instead of ProcessingMessages
-   *
-   * @param line
-   * @param errors
-   * @return a BadRow
-   */
+    * Constructor using Strings instead of ProcessingMessages
+    *
+    * @param line
+    * @param errors
+    * @return a BadRow
+    */
   def apply(line: String, errors: NonEmptyList[String]): BadRow =
     BadRow(line, errors.map(_.toProcessingMessage), System.currentTimeMillis())
 
   /**
-   * For rows which are so too long to send to Kinesis and so cannot contain their own original line
-   *
-   * @param line
-   * @param errors
-   * @param tstamp
-   * @return a BadRow
-   */
-  def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
+    * For rows which are so too long to send to Kinesis and so cannot contain their own original line
+    *
+    * @param line
+    * @param errors
+    * @param tstamp
+    * @return a BadRow
+    */
+  def oversizedRow(size: Long,
+                   errors: NonEmptyList[String],
+                   tstamp: Long = System.currentTimeMillis()): String =
     compact(
       ("size" -> size) ~
-      ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
-      ("failure_tstamp" -> tstamp)
+        ("errors" -> errors.toList.map(e =>
+          fromJsonNode(e.toProcessingMessage.asJson))) ~
+        ("failure_tstamp" -> tstamp)
     )
 }
 
 /**
- * Models our report on a bad row. Consists of:
- * 1. Our original input line (which was meant
- *    to be a Snowplow enriched event)
- * 2. A non-empty list of our Validation errors
- * 3. A timestamp
- */
-case class BadRow(line: String, errors: ProcessingMessageNel, tstamp: Long = System.currentTimeMillis()) {
-  /**
-   * Converts a TypeHierarchy into a JSON containing
-   * each element.
-   *
-   * @return the TypeHierarchy as a json4s JValue
-   */
-  def toJValue: JValue =
-    ("line"           -> line) ~
-    ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
-    ("failure_tstamp" -> getTimestamp(tstamp))
+  * Models our report on a bad row. Consists of:
+  * 1. Our original input line (which was meant
+  *    to be a Snowplow enriched event)
+  * 2. A non-empty list of our Validation errors
+  * 3. A timestamp
+  */
+case class BadRow(line: String,
+                  errors: ProcessingMessageNel,
+                  tstamp: Long = System.currentTimeMillis()) {
 
   /**
-   * Converts our BadRow into a single JSON encapsulating
-   * both the input line and errors.
-   *
-   * @return this BadRow as a compact stringified JSON
-   */
+    * Converts a TypeHierarchy into a JSON containing
+    * each element.
+    *
+    * @return the TypeHierarchy as a json4s JValue
+    */
+  def toJValue: JValue =
+    ("line" -> line) ~
+      ("errors" -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
+      ("failure_tstamp" -> getTimestamp(tstamp))
+
+  /**
+    * Converts our BadRow into a single JSON encapsulating
+    * both the input line and errors.
+    *
+    * @return this BadRow as a compact stringified JSON
+    */
   def toCompactJson: String =
     compact(toJValue)
 
   /**
-   * Returns an ISO valid timestamp
-   *
-   * @param tstamp The Timestamp to convert
-   * @return the formatted Timestamp
-   */
+    * Returns an ISO valid timestamp
+    *
+    * @param tstamp The Timestamp to convert
+    * @return the formatted Timestamp
+    */
   private def getTimestamp(tstamp: Long): String =
     Instant.ofEpochSecond(tstamp).atOffset(ZoneOffset.UTC).toString()
 }

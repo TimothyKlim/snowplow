@@ -51,7 +51,7 @@ object FileUtils {
     fileUri.getScheme match {
       case "http"   | "https"    => FileUtils.downloadToHdfs(conf, fileUri).toUri.success
       case "s3" | "s3n" | "hdfs" => fileUri.success
-      case s => "Scheme [%s] for file [%s] not supported".format(s, fileUri).fail
+      case s => "Scheme [%s] for file [%s] not supported".format(s, fileUri).failure
     }
   }
 

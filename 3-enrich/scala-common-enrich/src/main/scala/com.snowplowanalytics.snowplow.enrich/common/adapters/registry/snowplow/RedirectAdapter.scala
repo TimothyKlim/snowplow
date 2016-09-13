@@ -28,16 +28,13 @@ import com.fasterxml.jackson.databind.JsonNode
 import scala.collection.JavaConversions._
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  Resolver,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, Resolver, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // Scalaz
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 // json4s
 import org.json4s._
@@ -50,15 +47,15 @@ import utils.{JsonUtils => JU}
 import utils.{ConversionUtils => CU}
 
 /**
- * The Redirect Adapter is essentially a pre-processor for
- * Snowplow Tracker Protocol v2 above (although it doesn't
- * use the TP2 code above directly).
- *
- * The &u= parameter used for a redirect is converted into
- * a URI Redirect entity and then either stored as an
- * unstructured event, added to an existing contexts array
- * or used to initialize a new contexts array.
- */
+  * The Redirect Adapter is essentially a pre-processor for
+  * Snowplow Tracker Protocol v2 above (although it doesn't
+  * use the TP2 code above directly).
+  *
+  * The &u= parameter used for a redirect is converted into
+  * a URI Redirect entity and then either stored as an
+  * unstructured event, added to an existing contexts array
+  * or used to initialize a new contexts array.
+  */
 object RedirectAdapter extends Adapter {
 
   // Tracker version for an Iglu-compatible webhook
@@ -70,128 +67,141 @@ object RedirectAdapter extends Adapter {
   // Schema for a URI redirect. Could end up being an event or a context
   // depending on what else is in the payload
   private object SchemaUris {
-    val UriRedirect = SchemaKey("com.snowplowanalytics.snowplow", "uri_redirect", "jsonschema", "1-0-0").toSchemaUri
+    val UriRedirect = SchemaKey("com.snowplowanalytics.snowplow",
+                                "uri_redirect",
+                                "jsonschema",
+                                "1-0-0").toSchemaUri
   }
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * Assumes we have a GET querystring with a u parameter
-   * for the URI redirect and other parameters per the
-   * Snowplow Tracker Protocol.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
-   */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+    * Converts a CollectorPayload instance into raw events.
+    * Assumes we have a GET querystring with a u parameter
+    * for the URI redirect and other parameters per the
+    * Snowplow Tracker Protocol.
+    *
+    * @param payload The CollectorPaylod containing one or more
+    *        raw events as collected by a Snowplow collector
+    * @param resolver (implicit) The Iglu resolver used for
+    *        schema lookup and validation. Not used
+    * @return a Validation boxing either a NEL of RawEvents on
+    *         Success, or a NEL of Failure Strings
+    */
+  def toRawEvents(payload: CollectorPayload)(
+      implicit resolver: Resolver): ValidatedRawEvents = {
 
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
-      "Querystring is empty: cannot be a valid URI redirect".failNel
+      "Querystring is empty: cannot be a valid URI redirect".failureNel
     } else {
       originalParams.get("u") match {
-        case None    => "Querystring does not contain u parameter: not a valid URI redirect".failNel
+        case None =>
+          "Querystring does not contain u parameter: not a valid URI redirect".failureNel
         case Some(u) => {
-
           val json = buildUriRedirect(u)
-          val newParams =
+          val newParams: Validation[
+            NonEmptyList[String],
+            scala.collection.immutable.Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
-              def newCo = Map("co" -> compact(toContexts(json))).successNel
+              def newCo =
+                Map("co" -> compact(toContexts(json)))
+                  .success[NonEmptyList[String]]
               (originalParams.get("cx"), originalParams.get("co")) match {
-                case (None, None)                 => newCo
+                case (None, None) => newCo
                 case (None, Some(co)) if co == "" => newCo
-                case (None, Some(co))             => addToExistingCo(json, co)
-                                                       .map(str => Map("co" -> str))
-                case (Some(cx), _)                => addToExistingCx(json, cx)
-                                                       .map(str => Map("cx" -> str))
+                case (None, Some(co)) =>
+                  addToExistingCo(json, co).map(str => Map("co" -> str))
+                case (Some(cx), _) =>
+                  addToExistingCx(json, cx).map(str => Map("cx" -> str))
               }
             } else {
-              // Add URI redirect as an unstructured event 
-              Map("e"     -> "ue",
-                  "ue_pr" -> compact(toUnstructEvent(json))
-                ).successNel
+              // Add URI redirect as an unstructured event
+              Map("e" -> "ue", "ue_pr" -> compact(toUnstructEvent(json))).successNel
             }
 
           val fixedParams = Map(
             "tv" -> TrackerVersion,
-            "p"  -> originalParams.getOrElse("p", TrackerPlatform) // Required field
-            )
+            "p" -> originalParams
+              .getOrElse("p", TrackerPlatform) // Required field
+          )
 
-          for {
-            np <- newParams
-            ev = NonEmptyList(RawEvent(
-              api          = payload.api,
-              parameters   = (originalParams - "u") ++ np ++ fixedParams,
-              contentType  = payload.contentType,
-              source       = payload.source,
-              context      = payload.context
+          newParams.map { np =>
+            NonEmptyList(
+              RawEvent(
+                api = payload.api,
+                parameters = (originalParams - "u") ++ np ++ fixedParams,
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
               ))
-          } yield ev
+          }
         }
       }
     }
   }
 
   /**
-   * Builds a self-describing JSON representing a
-   * URI redirect entity.
-   *
-   * @param uri The URI we are redirecting to
-   * @return a URI redirect as a self-describing
-   *         JValue
-   */
+    * Builds a self-describing JSON representing a
+    * URI redirect entity.
+    *
+    * @param uri The URI we are redirecting to
+    * @return a URI redirect as a self-describing
+    *         JValue
+    */
   private def buildUriRedirect(uri: String): JValue =
     ("schema" -> SchemaUris.UriRedirect) ~
-    ("data" -> (
-      ("uri" -> uri)
-    ))
+      ("data" -> (
+        ("uri" -> uri)
+      ))
 
   /**
-   * Adds a context to an existing non-Base64-encoded
-   * self-describing contexts stringified JSON.
-   *
-   * Does the minimal amount of validation required
-   * to ensure the context can be safely added, or
-   * returns a Failure.
-   *
-   * @param new The context to add to the
-   *        existing list of contexts
-   * @param existing The existing contexts as a
-   *        non-Base64-encoded stringified JSON
-   * @return an updated non-Base64-encoded self-
-   *         describing contexts stringified JSON
-   */
-  private def addToExistingCo(newContext: JValue, existing: String): Validated[String] =
+    * Adds a context to an existing non-Base64-encoded
+    * self-describing contexts stringified JSON.
+    *
+    * Does the minimal amount of validation required
+    * to ensure the context can be safely added, or
+    * returns a Failure.
+    *
+    * @param new The context to add to the
+    *        existing list of contexts
+    * @param existing The existing contexts as a
+    *        non-Base64-encoded stringified JSON
+    * @return an updated non-Base64-encoded self-
+    *         describing contexts stringified JSON
+    */
+  private def addToExistingCo(newContext: JValue,
+                              existing: String): Validated[String] =
     for {
-      node   <- JU.extractJson("co|cx", existing).toValidationNel: Validated[JsonNode]
-      jvalue  = fromJsonNode(node)
-      merged  = jvalue merge render("data" -> List(newContext))
+      node <- JU
+        .extractJson("co|cx", existing)
+        .toValidationNel: Validated[JsonNode]
+      jvalue = fromJsonNode(node)
+      merged = jvalue merge render("data" -> List(newContext))
     } yield compact(merged)
 
   /**
-   * Adds a context to an existing Base64-encoded
-   * self-describing contexts stringified JSON.
-   *
-   * Does the minimal amount of validation required
-   * to ensure the context can be safely added, or
-   * returns a Failure.
-   *
-   * @param new The context to add to the
-   *        existing list of contexts
-   * @param existing The existing contexts as a
-   *        non-Base64-encoded stringified JSON
-   * @return an updated non-Base64-encoded self-
-   *         describing contexts stringified JSON
-   */
-  private def addToExistingCx(newContext: JValue, existing: String): Validated[String] =
+    * Adds a context to an existing Base64-encoded
+    * self-describing contexts stringified JSON.
+    *
+    * Does the minimal amount of validation required
+    * to ensure the context can be safely added, or
+    * returns a Failure.
+    *
+    * @param new The context to add to the
+    *        existing list of contexts
+    * @param existing The existing contexts as a
+    *        non-Base64-encoded stringified JSON
+    * @return an updated non-Base64-encoded self-
+    *         describing contexts stringified JSON
+    */
+  private def addToExistingCx(newContext: JValue,
+                              existing: String): Validated[String] =
     for {
-      decoded <- CU.decodeBase64Url("cx", existing).toValidationNel: Validated[String]
-      added   <- addToExistingCo(newContext, decoded)
-      recoded  = CU.encodeBase64Url(added)
+      decoded <- CU
+        .decodeBase64Url("cx", existing)
+        .toValidationNel: Validated[String]
+      added <- addToExistingCo(newContext, decoded)
+      recoded = CU.encodeBase64Url(added)
     } yield recoded
 
 }

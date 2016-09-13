@@ -19,22 +19,22 @@ import java.lang.{Float => JFloat}
 import java.lang.{Byte => JByte}
 
 // Scala
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 
 /**
- * The canonical output format for enriched events.
- *
- * For simplicity, we are using our Redshift format
- * as the canonical format, i.e. the below is
- * equivalent to the redshift-etl.q HiveQL script
- * used by the Hive ETL.
- *
- * When we move to Avro, we will
- * probably review some of these
- * types (e.g. move back to
- * Array for browser features, and
- * switch remaining Bytes to Booleans).
- */
+  * The canonical output format for enriched events.
+  *
+  * For simplicity, we are using our Redshift format
+  * as the canonical format, i.e. the below is
+  * equivalent to the redshift-etl.q HiveQL script
+  * used by the Hive ETL.
+  *
+  * When we move to Avro, we will
+  * probably review some of these
+  * types (e.g. move back to
+  * Array for browser features, and
+  * switch remaining Bytes to Booleans).
+  */
 // TODO: make the EnrichedEvent Avro-format, not Redshift-specific
 class EnrichedEvent {
 
@@ -87,20 +87,20 @@ class EnrichedEvent {
   @BeanProperty var page_referrer: String = _
 
   // Page URL components
-  @BeanProperty var page_urlscheme: String = _  
-  @BeanProperty var page_urlhost: String = _   
-  @BeanProperty var page_urlport: JInteger = _ 
+  @BeanProperty var page_urlscheme: String = _
+  @BeanProperty var page_urlhost: String = _
+  @BeanProperty var page_urlport: JInteger = _
   @BeanProperty var page_urlpath: String = _
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
 
   // Referrer URL components
-  @BeanProperty var refr_urlscheme: String = _  
-  @BeanProperty var refr_urlhost: String = _   
-  @BeanProperty var refr_urlport: JInteger = _ 
+  @BeanProperty var refr_urlscheme: String = _
+  @BeanProperty var refr_urlhost: String = _
+  @BeanProperty var refr_urlport: JInteger = _
   @BeanProperty var refr_urlpath: String = _
   @BeanProperty var refr_urlquery: String = _
-  @BeanProperty var refr_urlfragment: String = _  
+  @BeanProperty var refr_urlfragment: String = _
 
   // Referrer details
   @BeanProperty var refr_medium: String = _
@@ -150,7 +150,7 @@ class EnrichedEvent {
   @BeanProperty var pp_xoffset_max: JInteger = _
   @BeanProperty var pp_yoffset_min: JInteger = _
   @BeanProperty var pp_yoffset_max: JInteger = _
-  
+
   // User Agent
   @BeanProperty var useragent: String = _
 

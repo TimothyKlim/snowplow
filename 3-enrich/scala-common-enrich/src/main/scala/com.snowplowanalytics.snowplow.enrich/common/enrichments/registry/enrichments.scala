@@ -28,45 +28,45 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.{
-  SchemaCriterion,
-  SchemaKey
-}
+import iglu.client.{SchemaCriterion, SchemaKey}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import utils.ScalazJson4sUtils
 
 /**
- * Trait inherited by every enrichment config case class
- */
+  * Trait inherited by every enrichment config case class
+  */
 trait Enrichment {
   val version: DefaultArtifactVersion
 }
 
 /**
- * Trait to hold helpers relating to enrichment config
- */
+  * Trait to hold helpers relating to enrichment config
+  */
 trait ParseableEnrichment {
 
   val supportedSchema: SchemaCriterion
 
   /**
-   * Tests whether a JSON is parseable by a
-   * specific EnrichmentConfig constructor
-   *
-   * @param config The JSON
-   * @param schemaKey The schemaKey which needs
-   *        to be checked
-   * @return The JSON or an error message, boxed
-   */
-  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
+    * Tests whether a JSON is parseable by a
+    * specific EnrichmentConfig constructor
+    *
+    * @param config The JSON
+    * @param schemaKey The schemaKey which needs
+    *        to be checked
+    * @return The JSON or an error message, boxed
+    */
+  def isParseable(config: JValue,
+                  schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
     if (supportedSchema matches schemaKey) {
       config.success
     } else {
       ("Schema key %s is not supported. A '%s' enrichment must have schema '%s'.")
         .format(schemaKey, supportedSchema.name, supportedSchema)
-        .toProcessingMessage.fail.toValidationNel
+        .toProcessingMessage
+        .failure
+        .toValidationNel
     }
   }
 }

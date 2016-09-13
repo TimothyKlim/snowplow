@@ -32,16 +32,18 @@ import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
 /**
- * Tests the anonymzeIp function
- */
-class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the JavascriptScriptEnrichment"     ^
-                                                                      p^
-    "Compiling an invalid JavaScript script should fail"               ! e1^
-    "A JavaScript script should be able to throw an exception safely"  ! e2^
-    "A JavaScript script should successfully generate a new context"   ! e3^
-                                                                       end
+  * Tests the anonymzeIp function
+  */
+class JavascriptScriptEnrichmentSpec
+    extends Specification
+    with ValidationMatchers {
+  def is =
+    "This is a specification to test the JavascriptScriptEnrichment" ^
+      p ^
+      "Compiling an invalid JavaScript script should fail" ! e1 ^
+      "A JavaScript script should be able to throw an exception safely" ! e2 ^
+      "A JavaScript script should successfully generate a new context" ! e3 ^
+      end
 
   val PreparedEnrichment = {
     val script =
@@ -88,9 +90,13 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
     val event = buildEvent("secret")
 
     val actual = PreparedEnrichment.process(event)
-    val expected = """{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
+    val expected =
+      """{"schema":"iglu:com.acme/foo/jsonschema/1-0-0","data":{"appIdUpper":"SECRET"}}"""
 
-    actual must beSuccessful.like { case head :: Nil => compact(render(head)) must_== compact(render(parse(expected))) }
+    actual must beSuccessful.like {
+      case head :: Nil =>
+        compact(render(head)) must_== compact(render(parse(expected)))
+    }
   }
 
 }

@@ -28,8 +28,8 @@ import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
 /**
- * Tests ScalazJson4sUtils
- */
+  * Tests ScalazJson4sUtils
+  */
 class JsonExtractionSpec extends Specification with ValidationMatchers {
 
   val testJson = parse("""{

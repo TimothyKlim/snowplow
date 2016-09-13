@@ -28,84 +28,94 @@ import scalaz._
 import Scalaz._
 
 /**
- * Companion object to the CollectorLoader.
- * Contains factory methods.
- */
+  * Companion object to the CollectorLoader.
+  * Contains factory methods.
+  */
 object Loader {
 
   private val TsvRegex = "^tsv/(.*)$".r
   private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
-   * Factory to return a CollectorLoader
-   * based on the supplied collector
-   * identifier (e.g. "cloudfront" or
-   * "clj-tomcat").
-   *
-   * @param collector Identifier for the
-   *        event collector
-   * @return a CollectorLoader object, or
-   *         an an error message, boxed
-   *         in a Scalaz Validation
-   */
-  def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
-    case "cloudfront"   => CloudfrontLoader.success
-    case "clj-tomcat"   => CljTomcatLoader.success
-    case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
-    case TsvRegex(f)    => TsvLoader(f).success
-    case NdjsonRegex(f) => NdjsonLoader(f).success
-    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
-  }
+    * Factory to return a CollectorLoader
+    * based on the supplied collector
+    * identifier (e.g. "cloudfront" or
+    * "clj-tomcat").
+    *
+    * @param collector Identifier for the
+    *        event collector
+    * @return a CollectorLoader object, or
+    *         an an error message, boxed
+    *         in a Scalaz Validation
+    */
+  def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] =
+    collectorOrProtocol match {
+      case "cloudfront" => CloudfrontLoader.success
+      case "clj-tomcat" => CljTomcatLoader.success
+      case "thrift" =>
+        ThriftLoader.success // Finally - a data protocol rather than a piece of software
+      case TsvRegex(f) => TsvLoader(f).success
+      case NdjsonRegex(f) => NdjsonLoader(f).success
+      case c =>
+        "[%s] is not a recognised Snowplow event collector".format(c).failure
+    }
 }
 
 /**
- * All loaders must implement this
- * abstract base class.
- */
+  * All loaders must implement this
+  * abstract base class.
+  */
 abstract class Loader[T] {
-  
+
   import CollectorPayload._
 
   /**
-   * Converts the source string into a 
-   * CanonicalInput.
-   *
-   * TODO: need to change this to
-   * handling some sort of validation
-   * object.
-   *
-   * @param line A line of data to convert
-   * @return a CanonicalInput object, Option-
-   *         boxed, or None if no input was
-   *         extractable.
-   */
+    * Converts the source string into a
+    * CanonicalInput.
+    *
+    * TODO: need to change this to
+    * handling some sort of validation
+    * object.
+    *
+    * @param line A line of data to convert
+    * @return a CanonicalInput object, Option-
+    *         boxed, or None if no input was
+    *         extractable.
+    */
   def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
 
   /**
-   * Converts a querystring String
-   * into a non-empty list of NameValuePairs.
-   *
-   * Returns a non-empty list of 
-   * NameValuePairs on Success, or a Failure
-   * String.
-   *
-   * @param qs Option-boxed querystring
-   *        String to extract name-value
-   *        pairs from, or None
-   * @param encoding The encoding used
-   *        by this querystring
-   * @return either a NonEmptyList of
-   *         NameValuePairs or an error
-   *         message, boxed in a Scalaz
-   *         Validation
-   */
-  protected[loaders] def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
+    * Converts a querystring String
+    * into a non-empty list of NameValuePairs.
+    *
+    * Returns a non-empty list of
+    * NameValuePairs on Success, or a Failure
+    * String.
+    *
+    * @param qs Option-boxed querystring
+    *        String to extract name-value
+    *        pairs from, or None
+    * @param encoding The encoding used
+    *        by this querystring
+    * @return either a NonEmptyList of
+    *         NameValuePairs or an error
+    *         message, boxed in a Scalaz
+    *         Validation
+    */
+  protected[loaders] def parseQuerystring(
+      qs: Option[String],
+      enc: String): ValidatedNameValuePairs = qs match {
     case Some(q) => {
       try {
-        URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
+        URLEncodedUtils
+          .parse(URI.create("http://localhost/?" + q), enc)
+          .toList
+          .success
       } catch {
         case NonFatal(e) =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]"
+            .format(q, enc, e.getMessage)
+            .failure
       }
     }
     case None => Nil.success

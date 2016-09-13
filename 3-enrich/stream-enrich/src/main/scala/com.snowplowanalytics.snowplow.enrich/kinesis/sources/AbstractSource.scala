@@ -195,7 +195,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
           }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
-          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
+          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).failure
         }
       }
     })

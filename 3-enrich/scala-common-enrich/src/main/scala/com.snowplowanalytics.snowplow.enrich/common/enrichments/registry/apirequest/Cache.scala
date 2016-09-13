@@ -28,22 +28,23 @@ import org.joda.time.DateTime
 import com.twitter.util.SynchronizedLruMap
 
 /**
- * Just LRU cache
- *
- * @param size amount of objects
- * @param ttl time in seconds to live
- */
+  * Just LRU cache
+  *
+  * @param size amount of objects
+  * @param ttl time in seconds to live
+  */
 case class Cache(size: Int, ttl: Int) {
 
   // URI -> Validated[JSON]
-  private val cache = new SynchronizedLruMap[String, (Validation[Throwable, JValue], Int)](size)
+  private val cache =
+    new SynchronizedLruMap[String, (Validation[Throwable, JValue], Int)](size)
 
   /**
-   * Get a value if it's not outdated
-   *
-   * @param url HTTP URL
-   * @return validated JSON as it was returned from API server
-   */
+    * Get a value if it's not outdated
+    *
+    * @param url HTTP URL
+    * @return validated JSON as it was returned from API server
+    */
   def get(url: String): Option[Validation[Throwable, JValue]] = {
     cache.get(url) match {
       case Some((value, created)) if ttl == 0 => Some(value)
@@ -60,20 +61,20 @@ case class Cache(size: Int, ttl: Int) {
   }
 
   /**
-   * Put a value into cache with current timestamp
-   *
-   * @param key all inputs Map
-   * @param value context object (with Iglu URI, not just plain JSON)
-   */
+    * Put a value into cache with current timestamp
+    *
+    * @param key all inputs Map
+    * @param value context object (with Iglu URI, not just plain JSON)
+    */
   def put(key: String, value: Validation[Throwable, JValue]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
   }
 
   /**
-   * Get actual size of cache
-   *
-   * @return number of elements in
-   */
+    * Get actual size of cache
+    *
+    * @return number of elements in
+    */
   private[apirequest] def actualLoad: Int = cache.size
 }

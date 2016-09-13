@@ -21,10 +21,7 @@ package registry
 import java.math.{BigInteger => JBigInteger}
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
+import iglu.client.{SchemaKey, Resolver}
 
 // Scalaz
 import scalaz._
@@ -44,10 +41,10 @@ import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the AD-X Tracking webhook
- * into raw events.
- */
+  * Transforms a collector payload which conforms to
+  * a known version of the AD-X Tracking webhook
+  * into raw events.
+  */
 object CallrailAdapter extends Adapter {
 
   // Tracker version for an AD-X Tracking webhook
@@ -55,44 +52,54 @@ object CallrailAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-0").toSchemaUri
+    val CallComplete = SchemaKey("com.callrail",
+                                 "call_complete",
+                                 "jsonschema",
+                                 "1-0-0").toSchemaUri
   }
 
   // Datetime format used by CallRail (as we will need to massage)
-  private val CallrailDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
+  private val CallrailDateTimeFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
   // Create a simple formatter function
   private val CallrailFormatter: FormatterFunc = {
     val bools = List("first_call", "answered")
     val ints = List("duration")
-    val dateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+    val dateTimes: JU.DateTimeFields =
+      Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
 
   /**
-   * Converts a CollectorPayload instance into raw events.
-   * A CallRail payload only contains a single event.
-   *
-   * @param payload The CollectorPaylod containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
-   */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
+    * Converts a CollectorPayload instance into raw events.
+    * A CallRail payload only contains a single event.
+    *
+    * @param payload The CollectorPaylod containing one or more
+    *        raw events as collected by a Snowplow collector
+    * @param resolver (implicit) The Iglu resolver used for
+    *        schema lookup and validation. Not used
+    * @return a Validation boxing either a NEL of RawEvents on
+    *         Success, or a NEL of Failure Strings
+    */
+  def toRawEvents(payload: CollectorPayload)(
+      implicit resolver: Resolver): ValidatedRawEvents = {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no CallRail event to process".failNel
+      "Querystring is empty: no CallRail event to process".failureNel
     } else {
-      NonEmptyList(RawEvent(
-        api          = payload.api,
-        parameters   = toUnstructEventParams(TrackerVersion, params,
-                         SchemaUris.CallComplete, CallrailFormatter, "srv"),
-        contentType  = payload.contentType,
-        source       = payload.source,
-        context      = payload.context
+      NonEmptyList(
+        RawEvent(
+          api = payload.api,
+          parameters = toUnstructEventParams(TrackerVersion,
+                                             params,
+                                             SchemaUris.CallComplete,
+                                             CallrailFormatter,
+                                             "srv"),
+          contentType = payload.contentType,
+          source = payload.source,
+          context = payload.context
         )).success
     }
   }

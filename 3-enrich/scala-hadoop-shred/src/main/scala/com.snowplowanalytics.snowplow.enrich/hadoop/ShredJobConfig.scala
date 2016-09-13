@@ -72,7 +72,7 @@ object ShredJobConfig {
     val exceptionsFolder = args.optionalz("exceptions_folder")
 
     val igluResolver = args.requiredz(IgluConfigArg) match {
-      case Failure(e) => e.failNel
+      case Failure(e) => e.failureNel
       case Success(s) => for {
         node <- (base64ToJsonNode(s).toValidationNel: ValidatedNel[JsonNode])
         reso <- Resolver.parse(node)

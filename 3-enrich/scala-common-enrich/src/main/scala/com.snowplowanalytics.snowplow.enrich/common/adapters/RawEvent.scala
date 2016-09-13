@@ -17,24 +17,20 @@ package adapters
 import org.joda.time.DateTime
 
 // This project
-import loaders.{
-  CollectorSource,
-  CollectorContext,
-  CollectorApi
-}
+import loaders.{CollectorSource, CollectorContext, CollectorApi}
 
 /**
- * The canonical input format for the ETL
- * process: it should be possible to
- * convert any collector payload to this
- * raw event format via an _adapter_,
- * ready for the main, collector-agnostic
- * stage of the Enrichment.
- */
+  * The canonical input format for the ETL
+  * process: it should be possible to
+  * convert any collector payload to this
+  * raw event format via an _adapter_,
+  * ready for the main, collector-agnostic
+  * stage of the Enrichment.
+  */
 final case class RawEvent(
-  api:         CollectorApi,
-  parameters:  RawEventParameters,
-  contentType: Option[String], // Not yet used but should be logged
-  source:      CollectorSource,
-  context:     CollectorContext
-  )
+    api: CollectorApi,
+    parameters: RawEventParameters,
+    contentType: Option[String], // Not yet used but should be logged
+    source: CollectorSource,
+    context: CollectorContext
+)
