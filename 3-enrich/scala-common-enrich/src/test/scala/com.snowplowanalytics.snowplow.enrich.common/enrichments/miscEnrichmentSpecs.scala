@@ -84,7 +84,7 @@ class IdentitySpec extends Specification with ScalaCheck {
     "The identity function should work for any pair of Strings" ! e1
 
   def e1 =
-    check { (field: String, value: String) =>
+    prop { (field: String, value: String) =>
       MiscEnrichments.identity(field, value) must_== value.success
     }
 }

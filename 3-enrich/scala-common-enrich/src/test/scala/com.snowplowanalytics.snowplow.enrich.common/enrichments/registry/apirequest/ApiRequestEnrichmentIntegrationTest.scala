@@ -15,6 +15,8 @@ package enrichments
 package registry
 package apirequest
 
+import scalaz.Validation.FlatMap._
+
 // json4s
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -58,9 +60,10 @@ import ApiRequestEnrichmentIntegrationTest._
 class ApiRequestEnrichmentIntegrationTest
     extends Specification
     with ValidationMatchers {
+  skipAllUnless(continuousIntegration)
+
   def is =
     "This is a integration test for the ApiRequestEnrichment" ^
-      skipAllUnless(continuousIntegration) ^
       "Basic Case" ! e1 ^
       "POST, Auth, JSON inputs, cache, several outputs" ! e2 ^
       end

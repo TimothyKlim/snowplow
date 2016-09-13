@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich
 package common.enrichments.registry.sqlquery
 
+import scalaz.Validation.FlatMap._
+
 // json4s
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -60,9 +62,10 @@ import SqlQueryEnrichmentIntegrationTest._
 class SqlQueryEnrichmentIntegrationTest
     extends Specification
     with ValidationMatchers {
+  skipAllUnless(continuousIntegration)
+
   def is =
     "This is an integration test for the SqlQueryEnrichment" ^
-      skipAllUnless(continuousIntegration) ^
       "Basic case" ! e1 ^
       "All-features test" ! e2 ^
       end

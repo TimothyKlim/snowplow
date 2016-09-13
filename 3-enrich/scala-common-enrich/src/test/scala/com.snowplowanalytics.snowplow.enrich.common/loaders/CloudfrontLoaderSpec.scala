@@ -231,7 +231,7 @@ class CloudfrontLoaderSpec
   // A bit of fun: the chances of generating a valid CloudFront row at random are
   // so low that we can just use ScalaCheck here
   def e7 =
-    check { (raw: String) =>
+    prop { (raw: String) =>
       CloudfrontLoader.toCollectorPayload(raw) must beFailing(
         NonEmptyList(
           "Line does not match CloudFront header or data row formats"))

@@ -14,6 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments.registry
 package apirequest
 
+import scalaz.Validation.FlatMap._
+
 // specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers

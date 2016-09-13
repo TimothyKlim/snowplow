@@ -78,21 +78,25 @@ class MapTransformerSpec extends Specification with ValidationMatchers {
     ("tv", (MiscEnrichments.identity, "tracker_v")),
     ("res", (ClientEnrichments.extractViewDimensions, ("width", "height"))))
 
-  val expected = new TargetBean().tap { t =>
-    t.platform = "web"
-    t.br_features_pdf = 1
-    t.visit_id = 1
-    t.tracker_v = "no-js-0.1.1"
-    t.width = 720
-    t.height = 1080
+  val expected = new TargetBean() match {
+    case t =>
+      t.platform = "web"
+      t.br_features_pdf = 1
+      t.visit_id = 1
+      t.tracker_v = "no-js-0.1.1"
+      t.width = 720
+      t.height = 1080
+      t
   }
 
   "Applying a TransformMap to an existing POJO" should {
     "successfully set each of the target fields" in {
 
-      val target = new TargetBean().tap { t =>
-        t.platform = "old"
-        t.tracker_v = "old"
+      val target = new TargetBean() match {
+        case t =>
+          t.platform = "old"
+          t.tracker_v = "old"
+          t
       }
       val result = target.transform(sourceMap, transformMap)
 

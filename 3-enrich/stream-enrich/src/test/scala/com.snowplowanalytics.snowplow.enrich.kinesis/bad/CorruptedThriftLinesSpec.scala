@@ -39,7 +39,7 @@ class CorruptedThriftLinesSpec extends Specification with ScalaCheck with Valida
 
   // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
   // so low that we can just use ScalaCheck here
-  def e1 = check {
+  def e1 = prop {
     (raw: String) => {
       val eventBytes = Base64.decodeBase64(raw)
       TestSource.enrichEvents(eventBytes)(0) must beFailing

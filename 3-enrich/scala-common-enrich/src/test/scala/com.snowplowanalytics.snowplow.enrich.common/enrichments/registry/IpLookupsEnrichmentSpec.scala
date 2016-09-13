@@ -56,7 +56,7 @@ class IpLookupsEnrichmentSpec
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
-    check { (ipAddress: String) =>
+    prop { (ipAddress: String) =>
       config.extractIpInformation(ipAddress) must beSuccessful
     }
 

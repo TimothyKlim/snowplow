@@ -38,9 +38,10 @@ object WeatherEnrichmentSpec {
 
 import WeatherEnrichmentSpec._
 class WeatherEnrichmentSpec extends Specification {
+  skipAllIf(sys.env.get(OwmApiKey).isEmpty)
+
   def is =
     "This is a specification to test the WeatherEnrichment" ^
-      skipAllIf(sys.env.get(OwmApiKey).isEmpty) ^ // Actually only e4 and e6 need to be skipped
       "Fail event for null time" ! e1 ^
       "Fail event for invalid key" ! e5 ^
       "Fail with invalid cache size" ! e3 ^
@@ -50,6 +51,7 @@ class WeatherEnrichmentSpec extends Specification {
       "Extract configuration" ! e7 ^
       "Check time stamp transformation" ! e8 ^
       end
+
   lazy val validAppKey = sys.env
     .get(OwmApiKey)
     .getOrElse(throw new IllegalStateException(

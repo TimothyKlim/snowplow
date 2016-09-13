@@ -18,9 +18,9 @@ package registry
 import com.snowplowanalytics.forex.oerclient.DeveloperAccount
 
 // Specs2
-import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz._
+import org.specs2.Specification
 
 // Scalaz
 import scalaz._
@@ -38,10 +38,10 @@ object CurrencyConversionEnrichmentSpec {
   */
 import CurrencyConversionEnrichmentSpec._
 class CurrencyConversionEnrichmentSpec extends Specification with DataTables {
+  skipAllIf(sys.env.get(OerApiKey).isEmpty)
+
   def is =
     "This is a specification to test convertCurrencies" ^
-      p ^
-      skipAllIf(sys.env.get(OerApiKey).isEmpty) ^
       "Failure test for Currency Conversion" ! e1 ^
       "Success test for Currency Conversion" ! e2 ^
       end

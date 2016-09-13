@@ -205,7 +205,7 @@ class CljTomcatLoaderSpec
   // A bit of fun: the chances of generating a valid Clojure Collector log record at random are
   // so low that we can just use ScalaCheck here
   def e4 =
-    check { (raw: String) =>
+    prop { (raw: String) =>
       CljTomcatLoader.toCollectorPayload(raw) must beFailing(
         NonEmptyList(
           "Line does not match raw event format for Clojure Collector"))
