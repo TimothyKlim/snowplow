@@ -48,7 +48,7 @@ object Dependencies {
     val collectorPayload = "0.0.0"
     val gatlingJsonpath = "0.6.8"
     val igluClient = "0.5.0"
-    val json4s = "3.4.0"
+    val json4s = "3.5.0-SNAPSHOT"
     val maxmindIplookups = "0.3.0"
     val refererParser = "0.3.0"
     val scalaForex = "0.4.0"

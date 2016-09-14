@@ -60,7 +60,7 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
     */
   def parse(config: JValue,
             schemaKey: SchemaKey): ValidatedNelMessage[SqlQueryEnrichment] = {
-    isParseable(config, schemaKey).flatMap(conf => {
+    isParseable(config, schemaKey).flatMap { conf =>
       (for {
         inputs <- ScalazJson4sUtils
           .extract[List[Input]](config, "parameters", "inputs")
@@ -73,7 +73,7 @@ object SqlQueryEnrichmentConfig extends ParseableEnrichment {
           .extract[Cache](config, "parameters", "cache")
       } yield
         SqlQueryEnrichment(inputs, db, query, output, cache)).toValidationNel
-    })
+    }
   }
 }
 

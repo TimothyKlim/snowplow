@@ -106,7 +106,7 @@ object EventEnrichments {
       collectorTstamp: Option[String],
       trueTstamp: Option[String]
   ): Validation[String, Option[String]] = trueTstamp match {
-    case Some(ttm) => Some(ttm).success
+    case res @ Some(_) => res.success
     case None =>
       try {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {

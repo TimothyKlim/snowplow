@@ -29,7 +29,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.parseOpt
 
 // Joda
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 /**
   * Container class for output preferences.
@@ -330,7 +330,8 @@ object JsonOutput {
     "java.lang.String" -> ((obj: Object) => JString(obj.asInstanceOf[String])),
     "java.sql.Date" -> ((obj: Object) =>
                           JString(
-                            new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
+                            new DateTime(obj.asInstanceOf[java.sql.Date],
+                                         DateTimeZone.UTC).toString))
   )
 
   /**

@@ -65,7 +65,7 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
   def parse(
       config: JValue,
       schemaKey: SchemaKey): ValidatedNelMessage[ApiRequestEnrichment] = {
-    isParseable(config, schemaKey).flatMap(conf => {
+    isParseable(config, schemaKey).flatMap { conf =>
       (for {
         inputs <- ScalazJson4sUtils
           .extract[List[Input]](config, "parameters", "inputs")
@@ -77,7 +77,7 @@ object ApiRequestEnrichmentConfig extends ParseableEnrichment {
           .extract[Cache](config, "parameters", "cache")
       } yield
         ApiRequestEnrichment(inputs, httpApi, outputs, cache)).toValidationNel
-    })
+    }
   }
 }
 
