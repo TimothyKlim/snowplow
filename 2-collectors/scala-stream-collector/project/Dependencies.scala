@@ -32,7 +32,7 @@ object Dependencies {
     val awsSdk = "1.11.33"
     // Scala
     val snowplowCommonEnrich = "0.25.0"
-    val igluClient = "0.3.2"
+    val igluClient = "0.5.0"
     val scalaz7 = "7.2.6"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"

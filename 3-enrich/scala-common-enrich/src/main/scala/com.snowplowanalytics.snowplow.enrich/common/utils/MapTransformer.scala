@@ -22,6 +22,7 @@ import Scalaz._
 import Validation.FlatMap._
 
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 /**
   * The problem we're trying to solve: converting maps to classes in Scala
@@ -94,10 +95,13 @@ object MapTransformer {
     *         of error Strings, or the new object
     */
   def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(
-      implicit m: Manifest[T]): Validated[T] = {
-    val newInst = m.runtimeClass.newInstance()
+      implicit tag: ClassTag[T]): Validated[T] = {
+    val newInst = tag.runtimeClass.newInstance()
     val result =
-      _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
+      _transform(newInst,
+                 sourceMap,
+                 transformMap,
+                 getSetters(tag.runtimeClass))
     result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
   }
 
@@ -115,11 +119,11 @@ object MapTransformer {
     * A pimped object, now transformable by
     * using the transform method.
     */
-  class TransformableClass[T](obj: T)(implicit m: Manifest[T]) {
+  class TransformableClass[T](obj: T)(implicit tag: ClassTag[T]) {
 
     // Do all the reflection for the setters we need:
     // This needs to be lazy because Method is not serializable
-    private lazy val setters = getSetters(m.runtimeClass)
+    private lazy val setters = getSetters(tag.runtimeClass)
 
     /**
       * Update the object by applying the contents
