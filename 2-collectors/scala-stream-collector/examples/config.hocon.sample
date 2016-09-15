@@ -51,6 +51,7 @@ collector {
   # different formats for the enrichment process.
   sink {
     # Sinks currently supported are:
+    # 'kafka' for writing Thrift-serialized records to a Kafka topic
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
     #    Recommended settings for 'stdout' so each line printed to stdout
@@ -59,7 +60,14 @@ collector {
     #         to disable all logging.
     #      2. Using 'sbt assembly' and 'java -jar ...' to disable
     #         sbt logging.
-    enabled = "kinesis"
+    enabled = "kafka"
+
+    kafka {
+      topic {
+        good: "{{collectorKafkaTopicGoodName}}"
+        bad: "{{collectorKafkaTopicBadName}}"
+      }
+    }
 
     kinesis {
       thread-pool-size: 10 # Thread pool size for Kinesis API requests
@@ -105,26 +113,25 @@ collector {
 }
 
 # Akka has a variety of possible configuration options defined at
-# http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
+# http://doc.akka.io/docs/akka/2.4.10/general/configuration.html.
 akka {
-  loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
+  loglevel = INFO # 'OFF' for no logging, 'DEBUG' for all logging.
   loggers = ["akka.event.slf4j.Slf4jLogger"]
-}
 
-# spray-can is the server the Stream collector uses and has configurable
-# options defined at
-# https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf
-spray.can.server {
-  # To obtain the hostname in the collector, the 'remote-address' header
-  # should be set. By default, this is disabled, and enabling it
-  # adds the 'Remote-Address' header to every request automatically.
-  remote-address-header = on
+  http {
+    server {
+      # To obtain the hostname in the collector, the 'remote-address' header
+      # should be set. By default, this is disabled, and enabling it
+      # adds the 'Remote-Address' header to every request automatically.
+      remote-address-header = on
 
-  uri-parsing-mode = relaxed
-  raw-request-uri-header = on
+      uri-parsing-mode = relaxed
+      raw-request-uri-header = on
+    }
 
-  # Define the maximum request length (the default is 2048)
-  parsing {
-    max-uri-length = 32768
+    # Define the maximum request length (the default is 2048)
+    parsing {
+      max-uri-length = 32768
+    }
   }
 }
