@@ -90,6 +90,10 @@ object ScalaCollector extends App {
     collectorConfig.threadpoolSize)
 
   val sinks = collectorConfig.sinkEnabled match {
+    case Sink.Kafka =>
+      val good = new KafkaSink(collectorConfig, InputType.Good)
+      val bad = new KafkaSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
     case Sink.Kinesis =>
       val good = KinesisSink
         .createAndInitialize(collectorConfig, InputType.Good, executorService)
@@ -183,6 +187,13 @@ class CollectorConfig(config: Config) {
   val streamBadName = stream.getString("bad")
   private val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
+
+  private lazy val kafka = sink.getConfig("kafka")
+  private lazy val kafkaStream = kafka.getConfig("stream")
+
+  lazy val kafkaHost = kafka.getString("host")
+  lazy val kafkaStreamGoodName = kafkaStream.getString("good")
+  lazy val kafkaStreamBadName = kafkaStream.getString("bad")
 
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")

@@ -56,8 +56,7 @@ import CollectorPayload.thrift.model1.CollectorPayload
 /**
   * Kafka Sink for the Scala collector.
   */
-final class KafkaSink private (config: CollectorConfig,
-                               inputType: InputType.InputType)(
+final class KafkaSink(config: CollectorConfig, inputType: InputType.InputType)(
     implicit sys: ActorSystem,
     mat: Materializer)
     extends AbstractSink {
@@ -69,7 +68,7 @@ final class KafkaSink private (config: CollectorConfig,
 
   private val producerSettings =
     ProducerSettings(sys, new StringSerializer, new ByteArraySerializer)
-      .withBootstrapServers("localhost:9092")
+      .withBootstrapServers(config.kafkaHost)
 
   private val consumer =
     Producer.plainSink[String, Array[Byte]](producerSettings)
@@ -80,8 +79,8 @@ final class KafkaSink private (config: CollectorConfig,
   private val toConsumer: Sink[Record, NotUsed] = runnableGraph.run()
 
   private val streamName = inputType match {
-    case InputType.Good => config.streamGoodName
-    case InputType.Bad => config.streamBadName
+    case InputType.Good => config.kafkaStreamGoodName
+    case InputType.Bad => config.kafkaStreamBadName
   }
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = {

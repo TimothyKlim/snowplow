@@ -31,6 +31,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 
 [thrift]: http://thrift.apache.org
+[kafka]: http://kafka.apache.org
 [kinesis]: http://aws.amazon.com/kinesis
 [spray]: http://spray.io/
 [akka]: http://akka.io/
