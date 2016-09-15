@@ -53,7 +53,7 @@ object Dependencies {
     val refererParser = "0.3.0"
     val scalaForex = "0.4.0"
     val scalaWeather = "0.3.0"
-    val scalaz7 = "7.2.6"
+    val scalaz = "7.2.6"
     val schemaSniffer = "0.0.0"
     val snowplowRawEvent = "0.1.0"
     // Scala (test only)
@@ -83,7 +83,7 @@ object Dependencies {
 
     // Scala
     val scalaForex = "com.snowplowanalytics" %% "scala-forex" % V.scalaForex
-    val scalaz7 = "org.scalaz" %% "scalaz-core" % V.scalaz7
+    val scalaz = "org.scalaz" %% "scalaz-core" % V.scalaz
     val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics" % "collector-payload-1" % V.collectorPayload
     val schemaSniffer = "com.snowplowanalytics" % "schema-sniffer-1" % V.schemaSniffer

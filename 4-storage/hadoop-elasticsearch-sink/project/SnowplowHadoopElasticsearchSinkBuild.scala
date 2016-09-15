@@ -39,7 +39,7 @@ object SnowplowHadoopElasticsearchBuild extends Build {
         Libraries.scaldingCommons,
         Libraries.scaldingJson,
         Libraries.scaldingEs,
-        Libraries.scalaz7,
+        Libraries.scalaz,
         Libraries.commonEnrich,
         Libraries.specs2,
         Libraries.scalazSpecs2

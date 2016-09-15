@@ -40,7 +40,7 @@ object Dependencies {
     val snowplowCommonEnrich = "0.22.0"
     val igluClient           = "0.3.2"
     val scalazon             = "0.11"
-    val scalaz7              = "7.0.0"
+    val scalaz              = "7.0.0"
     val snowplowTracker      = "0.1.0"
     // Scala (test only)
     val specs2               = "2.2"
@@ -63,7 +63,7 @@ object Dependencies {
     val config               = "com.typesafe"               %  "config"                    % V.config
     val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
     val scalazon             = "io.github.cloudify"         %% "scalazon"                  % V.scalazon
-    val scalaz7              = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
+    val scalaz              = "org.scalaz"                 %% "scalaz-core"               % V.scalaz
     val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Intransitive to prevent the jar containing more than 2^16 files
     val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich intransitive

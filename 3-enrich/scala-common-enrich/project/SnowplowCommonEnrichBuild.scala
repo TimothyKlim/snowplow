@@ -48,7 +48,7 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.postgresDriver,
         Libraries.mysqlConnector,
         // Scala
-        Libraries.scalaz7,
+        Libraries.scalaz,
         Libraries.snowplowRawEvent,
         Libraries.collectorPayload,
         Libraries.schemaSniffer,

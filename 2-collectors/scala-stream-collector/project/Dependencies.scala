@@ -39,7 +39,7 @@ object Dependencies {
     val igluClient = "0.5.0"
     val json4s = "3.4.0"
     val logback = "1.1.7"
-    val scalaz7 = "7.2.6"
+    val scalaz = "7.2.6"
     val scalazon = "0.11"
     val snowplowCommonEnrich = "0.25.0"
     val snowplowRawEvent = "0.1.0"
@@ -63,7 +63,7 @@ object Dependencies {
     val igluClient = "com.snowplowanalytics" %% "iglu-scala-client" % V.igluClient
     val json4sJackson = "org.json4s" %% "json4s-jackson" % V.json4s
     val logback = "ch.qos.logback" % "logback-classic" % V.logback
-    val scalaz7 = "org.scalaz" %% "scalaz-core" % V.scalaz7
+    val scalaz = "org.scalaz" %% "scalaz-core" % V.scalaz
     val scalazon = "io.github.cloudify" %% "scalazon" % V.scalazon
     val snowplowCommonEnrich =
       "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive

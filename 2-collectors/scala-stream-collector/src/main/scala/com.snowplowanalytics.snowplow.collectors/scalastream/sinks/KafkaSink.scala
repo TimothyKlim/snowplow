@@ -65,23 +65,28 @@ final class KafkaSink private (config: CollectorConfig,
 
   val MaxBytes = Long.MaxValue
 
-  type Record = ProducerRecord[Array[Byte], Array[Byte]]
+  type Record = ProducerRecord[String, Array[Byte]]
 
   private val producerSettings =
-    ProducerSettings(sys, new ByteArraySerializer, new ByteArraySerializer)
+    ProducerSettings(sys, new StringSerializer, new ByteArraySerializer)
       .withBootstrapServers("localhost:9092")
 
   private val consumer =
-    Producer.plainSink[Array[Byte], Array[Byte]](producerSettings)
+    Producer.plainSink[String, Array[Byte]](producerSettings)
 
   private val runnableGraph: RunnableGraph[Sink[Record, NotUsed]] =
     MergeHub.source[Record].to(consumer)
 
   private val toConsumer: Sink[Record, NotUsed] = runnableGraph.run()
 
+  private val streamName = inputType match {
+    case InputType.Good => config.streamGoodName
+    case InputType.Bad => config.streamBadName
+  }
+
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
     Source(events)
-      .map(e => new ProducerRecord[Array[Byte], Array[Byte]](key, e))
+      .map(e => new ProducerRecord[String, Array[Byte]](streamName, key, e))
       .runWith(toConsumer)
     Nil
   }

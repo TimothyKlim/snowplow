@@ -36,7 +36,7 @@ object Dependencies {
     // Scala
     val scalding            = "0.11.2"
     val scaldingEs          = "0.6_scalding0.10"
-    val scalaz7             = "7.0.0"
+    val scalaz             = "7.0.0"
     val commonEnrich        = "0.18.0"
     // Scala (test only)
     val specs2              = "1.14"
@@ -59,7 +59,7 @@ object Dependencies {
     val scaldingCommons     = "com.twitter"               %% "scalding-commons"             % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingJson        = "com.twitter"               %% "scalding-json"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingEs          = "io.scalding"               %% "scalding-taps"                % V.scaldingEs intransitive()
-    val scalaz7             = "org.scalaz"                %% "scalaz-core"                  % V.scalaz7
+    val scalaz             = "org.scalaz"                %% "scalaz-core"                  % V.scalaz
     val commonEnrich        = "com.snowplowanalytics"     %  "snowplow-common-enrich"       % V.commonEnrich
     // Scala (test only)
     val specs2              = "org.specs2"                %% "specs2"                       % V.specs2       % "test"

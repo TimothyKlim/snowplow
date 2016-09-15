@@ -38,7 +38,7 @@ object Dependencies {
     val json4sJackson   = "3.2.11"
     val commonEnrich    = "0.23.0"
     val scalding        = "0.15.0"
-    val scalaz7         = "7.0.0"
+    val scalaz         = "7.0.0"
     val igluClient      = "0.4.0"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
@@ -63,7 +63,7 @@ object Dependencies {
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
-    val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
+    val scalaz          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz
     val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"

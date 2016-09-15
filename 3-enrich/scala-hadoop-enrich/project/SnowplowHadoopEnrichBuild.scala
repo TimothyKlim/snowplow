@@ -39,7 +39,7 @@ object SnowplowHadoopEnrichBuild extends Build {
         Libraries.scaldingArgs,
         Libraries.scaldingCommons,
         Libraries.scaldingJson,
-        Libraries.scalaz7,
+        Libraries.scalaz,
         Libraries.commonEnrich,
         Libraries.igluClient,
         // Scala (test only)
