@@ -63,9 +63,11 @@ collector {
     enabled = "kafka"
 
     kafka {
+      host = "localhost:9092"
+
       topic {
-        good: "{{collectorKafkaTopicGoodName}}"
-        bad: "{{collectorKafkaTopicBadName}}"
+        good = "{{collectorKafkaTopicGoodName}}"
+        bad = "{{collectorKafkaTopicBadName}}"
       }
     }
 
