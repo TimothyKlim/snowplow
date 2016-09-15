@@ -31,17 +31,18 @@ object Dependencies {
     val mimepull = "1.9.6"
     val awsSdk = "1.11.33"
     // Scala
-    val snowplowCommonEnrich = "0.25.0"
-    val igluClient = "0.5.0"
-    val scalaz7 = "7.2.6"
-    val snowplowRawEvent = "0.1.0"
-    val collectorPayload = "0.0.0"
     val akka = "2.4.10"
-    val logback = "1.1.7"
-    val commonsCodec = "1.10"
-    val scalazon = "0.11"
+    val akkaStreamKafka = "0.11"
     val argot = "1.0.4"
+    val collectorPayload = "0.0.0"
+    val commonsCodec = "1.10"
+    val igluClient = "0.5.0"
     val json4s = "3.4.0"
+    val logback = "1.1.7"
+    val scalaz7 = "7.2.6"
+    val scalazon = "0.11"
+    val snowplowCommonEnrich = "0.25.0"
+    val snowplowRawEvent = "0.1.0"
     // Scala (test only)
     val scalaTest = "3.0.0"
   }
@@ -53,19 +54,20 @@ object Dependencies {
 
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
+    val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % V.akka
+    val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % V.akkaStreamKafka
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
+    val argot = "org.clapper" %% "argot" % V.argot
+    val collectorPayload = "com.snowplowanalytics" % "collector-payload-1" % V.collectorPayload
+    val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
+    val igluClient = "com.snowplowanalytics" %% "iglu-scala-client" % V.igluClient
+    val json4sJackson = "org.json4s" %% "json4s-jackson" % V.json4s
+    val logback = "ch.qos.logback" % "logback-classic" % V.logback
+    val scalaz7 = "org.scalaz" %% "scalaz-core" % V.scalaz7
+    val scalazon = "io.github.cloudify" %% "scalazon" % V.scalazon
     val snowplowCommonEnrich =
       "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
-    val igluClient = "com.snowplowanalytics" % "iglu-scala-client" % V.igluClient
-    val scalaz7 = "org.scalaz" %% "scalaz-core" % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics" % "collector-payload-1" % V.collectorPayload
-    val argot = "org.clapper" %% "argot" % V.argot
-    val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % V.akka
-    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
-    val logback = "ch.qos.logback" % "logback-classic" % V.logback
-    val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
-    val scalazon = "io.github.cloudify" %% "scalazon" % V.scalazon
-    val json4sJackson = "org.json4s" %% "json4s-jackson" % V.json4s
 
     // Scala (test only)
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"

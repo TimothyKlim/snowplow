@@ -90,18 +90,16 @@ object ScalaCollector extends App {
     collectorConfig.threadpoolSize)
 
   val sinks = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => {
+    case Sink.Kinesis =>
       val good = KinesisSink
         .createAndInitialize(collectorConfig, InputType.Good, executorService)
       val bad = KinesisSink
         .createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad)
-    }
-    case Sink.Stdout => {
+    case Sink.Stdout =>
       val good = new StdoutSink(InputType.Good)
       val bad = new StdoutSink(InputType.Bad)
       CollectorSinks(good, bad)
-    }
   }
 
   // The handler actor replies to incoming HttpRequests.
@@ -136,7 +134,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Stdout, Test = Value
+  val Kafka, Kinesis, Stdout, Test = Value
 }
 
 // How a collector should set cookies
@@ -169,6 +167,7 @@ class CollectorConfig(config: Config) {
 
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
+    case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
     case "stdout" => Sink.Stdout
     case "test" => Sink.Test
