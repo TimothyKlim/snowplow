@@ -64,14 +64,15 @@ object ScalaCollector extends App {
         generated.Settings.organization))
   )
 
+  val defaultConfig = ConfigFactory.load()
+
   // Mandatory config argument
   val config =
     parser.option[Config](List("config"), "filename", "Configuration file.") {
       (c, opt) =>
         val file = new File(c)
-        if (file.exists) {
-          ConfigFactory.parseFile(file)
-        } else {
+        if (file.exists) ConfigFactory.parseFile(file)
+        else {
           parser.usage("Configuration file \"%s\" does not exist".format(c))
           ConfigFactory.empty()
         }
@@ -79,8 +80,9 @@ object ScalaCollector extends App {
 
   parser.parse(args)
 
-  val rawConf = config.value.getOrElse(
-    throw new RuntimeException("--config option must be provided"))
+  val rawConf = config.value
+    .map(_.withFallback(defaultConfig))
+    .getOrElse(throw new RuntimeException("--config option must be provided"))
   val collectorConfig = new CollectorConfig(rawConf)
 
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)

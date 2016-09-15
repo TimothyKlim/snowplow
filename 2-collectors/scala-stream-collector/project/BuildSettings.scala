@@ -76,8 +76,8 @@ object BuildSettings {
           Seq(file)
       })
 
-  import sbtassembly.AssemblyPlugin._
   import sbtassembly.AssemblyKeys._
+  import sbtassembly.AssemblyPlugin._
 
   // sbt-assembly settings for building an executable
   lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
