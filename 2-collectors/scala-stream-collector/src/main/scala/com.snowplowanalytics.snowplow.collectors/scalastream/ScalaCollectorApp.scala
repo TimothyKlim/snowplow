@@ -209,9 +209,12 @@ class CollectorConfig(config: Config) {
   lazy val minBackoff = backoffPolicy.getLong("minBackoff")
   lazy val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
-  lazy val useIpAddressAsPartitionKey = kinesis.hasPath(
-      "useIpAddressAsPartitionKey") && kinesis.getBoolean(
-      "useIpAddressAsPartitionKey")
+  lazy val useIpAddressAsPartitionKey =
+    getBooleanIfExists(sink, "kafka.useIpAddressAsPartitionKey") ||
+      getBooleanIfExists(sink, "kinesis.useIpAddressAsPartitionKey")
+
+  private def getBooleanIfExists(conf: Config, path: String) =
+    conf.hasPath(path) && conf.getBoolean(path)
 
   def cookieName = cookieConfig.map(_.name)
   def cookieDomain = cookieConfig.flatMap(_.domain)

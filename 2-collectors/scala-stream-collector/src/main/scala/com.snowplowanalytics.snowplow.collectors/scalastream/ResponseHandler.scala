@@ -57,7 +57,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
-  lazy val pixel = Base64.decodeBase64(
+  val pixel = Base64.decodeBase64(
     "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
 }
 
