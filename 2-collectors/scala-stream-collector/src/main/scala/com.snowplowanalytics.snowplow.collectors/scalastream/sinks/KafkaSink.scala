@@ -78,14 +78,14 @@ final class KafkaSink(config: CollectorConfig, inputType: InputType.InputType)(
 
   private val toConsumer: Sink[Record, NotUsed] = runnableGraph.run()
 
-  private val streamName = inputType match {
-    case InputType.Good => config.kafkaStreamGoodName
-    case InputType.Bad => config.kafkaStreamBadName
+  private val topicName = inputType match {
+    case InputType.Good => config.kafkaTopicGoodName
+    case InputType.Bad => config.kafkaTopicBadName
   }
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
     Source(events)
-      .map(e => new ProducerRecord[String, Array[Byte]](streamName, key, e))
+      .map(e => new ProducerRecord[String, Array[Byte]](topicName, key, e))
       .runWith(toConsumer)
     Nil
   }

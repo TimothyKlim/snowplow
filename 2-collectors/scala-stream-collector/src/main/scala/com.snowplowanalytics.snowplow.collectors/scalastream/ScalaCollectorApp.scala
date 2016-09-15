@@ -189,11 +189,11 @@ class CollectorConfig(config: Config) {
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
   private lazy val kafka = sink.getConfig("kafka")
-  private lazy val kafkaStream = kafka.getConfig("stream")
+  private lazy val kafkaTopic = kafka.getConfig("topic")
 
   lazy val kafkaHost = kafka.getString("host")
-  lazy val kafkaStreamGoodName = kafkaStream.getString("good")
-  lazy val kafkaStreamBadName = kafkaStream.getString("bad")
+  lazy val kafkaTopicGoodName = kafkaTopic.getString("good")
+  lazy val kafkaTopicBadName = kafkaTopic.getString("bad")
 
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")

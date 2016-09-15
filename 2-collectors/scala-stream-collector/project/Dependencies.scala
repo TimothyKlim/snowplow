@@ -70,7 +70,7 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
 
     // Scala (test only)
-    val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test"
-    val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % V.akka % "test"
+    val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "provided"
+    val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % V.akka % "provided"
   }
 }
