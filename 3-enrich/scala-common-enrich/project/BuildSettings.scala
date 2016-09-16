@@ -16,13 +16,14 @@
 import sbt._
 import Keys._
 import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
+import bintray.BintrayPlugin._
 
 object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
-    version := "0.25.0",
+    version := "0.25.0-kt",
     description := "Common functionality for enriching raw Snowplow events",
     scalaVersion := "2.11.8",
     scalacOptions := Seq("-encoding",
@@ -92,5 +93,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ bintraySettings
 }

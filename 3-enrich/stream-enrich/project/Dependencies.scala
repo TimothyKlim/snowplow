@@ -28,30 +28,28 @@ object Dependencies {
 
   object V {
     // Java
-    val logging              = "1.1.3"
-    val httpCore             = "4.3"
-    val httpClient           = "4.3.1"
-    val jacksonCore          = "2.3.0"
-    val slf4j                = "1.7.5"
-    val awsSdk               = "1.6.11"
-    val kinesisClient        = "1.6.1"
+    val logging              = "1.2"
+    val httpCore             = "4.4.5"
+    val httpClient           = "4.5.2"
+    val jacksonCore          = "2.8.2"
+    val slf4j                = "1.7.21"
+    val awsSdk               = "1.11.34"
+    val kinesisClient        = "1.7.0"
     // Scala
-    val argot                = "1.0.1"
-    val config               = "1.0.2"
-    val scalaUtil            = "0.1.0"
+    val argot                = "1.0.4"
+    val config               = "1.3.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.23.1"
+    val snowplowCommonEnrich = "0.25.0-kt"
     val scalazon             = "0.11"
-    val scalaz              = "7.0.0"
-    val igluClient           = "0.4.0"
-    val snowplowTracker      = "0.2.0"
+    val scalaz              = "7.2.6"
+    val igluClient           = "0.5.0-kt"
+    val snowplowTracker      = "0.4.0-kt"
     // Scala (test only)
-    // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
-    val specs2               = "2.2.3"
-    val scalazSpecs2         = "0.1.2"
+    val specs2               = "3.7"
+    val scalazSpecs2         = "0.4.0"
     // Scala (compile only)
-    val commonsLang3         = "3.1"
-    val thrift               = "0.9.0"
+    val commonsLang3         = "3.4"
+    val thrift               = "0.9.3"
   }
 
   object Libraries {
@@ -67,7 +65,6 @@ object Dependencies {
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config
-    val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"               % V.scalaUtil
     val snowplowRawEvent     = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon

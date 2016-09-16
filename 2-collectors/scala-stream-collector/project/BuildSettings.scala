@@ -22,7 +22,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization := "com.snowplowanalytics",
-    version := "0.8.0",
+    version := "0.8.0-kt",
     description := "Scala Stream Collector for Snowplow raw events",
     scalaVersion := "2.11.8",
     scalacOptions := Seq("-encoding",
@@ -85,7 +85,7 @@ object BuildSettings {
       assemblyOption in assembly := (assemblyOption in assembly).value
         .copy(prependShellScript = Some(defaultShellScript)),
       // Name it as an executable
-      assemblyJarName in assembly := s"${name.value}-${version.value}",
+      assemblyJarName in assembly := name.value,
       excludedJars in assembly := (fullClasspath in assembly).value
         .filter(_.data.getName.contains("specs2")),
       test in assembly := {}

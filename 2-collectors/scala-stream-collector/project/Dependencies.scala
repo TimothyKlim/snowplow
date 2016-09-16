@@ -23,7 +23,8 @@ object Dependencies {
     // For Scalazon
     "BintrayJCenter" at "http://jcenter.bintray.com",
     // For sbt-thrift
-    "bigtoast-github" at "http://bigtoast.github.com/repo/"
+    "bigtoast-github" at "http://bigtoast.github.com/repo/",
+    Resolver.bintrayRepo("fcomb", "maven")
   )
 
   object V {
@@ -36,12 +37,12 @@ object Dependencies {
     val argot = "1.0.4"
     val collectorPayload = "0.0.0"
     val commonsCodec = "1.10"
-    val igluClient = "0.5.0"
+    val igluClient = "0.5.0-kt"
     val json4s = "3.4.0"
     val logback = "1.1.7"
     val scalaz = "7.2.6"
     val scalazon = "0.11"
-    val snowplowCommonEnrich = "0.25.0"
+    val snowplowCommonEnrich = "0.25.0-kt"
     val snowplowRawEvent = "0.1.0"
     // Scala (test only)
     val scalaTest = "3.0.0"
@@ -66,7 +67,7 @@ object Dependencies {
     val scalaz = "org.scalaz" %% "scalaz-core" % V.scalaz
     val scalazon = "io.github.cloudify" %% "scalazon" % V.scalazon
     val snowplowCommonEnrich =
-      "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
+      "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
     val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
 
     // Scala (test only)

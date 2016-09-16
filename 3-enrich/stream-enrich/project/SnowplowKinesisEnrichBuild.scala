@@ -34,7 +34,6 @@ object SnowplowStreamEnrichBuild extends Build {
         Libraries.jacksonCore,
         Libraries.argot,
         Libraries.config,
-        Libraries.scalaUtil,
         Libraries.snowplowRawEvent,
         Libraries.snowplowCommonEnrich,
         Libraries.scalazon,

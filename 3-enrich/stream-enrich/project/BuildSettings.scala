@@ -14,17 +14,41 @@
  // SBT
 import sbt._
 import Keys._
+import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 
 object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.8.1",
+    version               :=  "0.9.0-kt",
     description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion          :=  "2.10.6",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-feature", "-target:jvm-1.7"),
+    scalaVersion          :=  "2.11.8",
+    scalacOptions := Seq("-encoding",
+                         "UTF-8",
+                         "-target:jvm-1.8",
+                         "-unchecked",
+                         "-deprecation",
+                         "-feature",
+                         "-language:higherKinds",
+                         "-language:existentials",
+                         "-language:postfixOps",
+                         "-Xexperimental",
+                         "-Xlint",
+                         // "-Xfatal-warnings",
+                         "-Xfuture",
+                         "-Ybackend:GenBCode",
+                         "-Ydelambdafy:method",
+                         "-Yno-adapted-args",
+                         "-Yopt-warnings",
+                         "-Yopt:l:classpath",
+                         "-Yopt:unreachable-code" /*,
+                         "-Ywarn-dead-code",
+                         "-Ywarn-infer-any",
+                         "-Ywarn-numeric-widen",
+                         "-Ywarn-unused",
+                         "-Ywarn-unused-import",
+                         "-Ywarn-value-discard"*/ ),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
   )
@@ -42,15 +66,20 @@ object BuildSettings {
     Seq(file)
   })
 
-  // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    // Executable jarfile
-    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
-    // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
-  )
+  import sbtassembly.AssemblyKeys._
+  import sbtassembly.AssemblyPlugin._
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
+  // sbt-assembly settings for building an executable
+  lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
+      // Executable jarfile
+      assemblyOption in assembly := (assemblyOption in assembly).value
+        .copy(prependShellScript = Some(defaultShellScript)),
+      // Name it as an executable
+      assemblyJarName in assembly := s"${name.value}-${version.value}",
+      excludedJars in assembly := (fullClasspath in assembly).value
+        .filter(_.data.getName.contains("specs2")),
+      test in assembly := {}
+    )
+
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ sbtAssemblySettings
 }
