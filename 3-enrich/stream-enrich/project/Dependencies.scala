@@ -37,6 +37,7 @@ object Dependencies {
     val awsSdk = "1.11.34"
     val kinesisClient = "1.7.0"
     // Scala
+    val akka = "2.4.10"
     val argot = "1.0.4"
     val config = "1.3.0"
     val snowplowRawEvent = "0.1.0"
@@ -65,6 +66,7 @@ object Dependencies {
     val awsSdk = "com.amazonaws" % "aws-java-sdk" % V.awsSdk
     val kinesisClient = "com.amazonaws" % "amazon-kinesis-client" % V.kinesisClient
     // Scala
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
     val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % V.akkaStreamKafka
     val argot = "org.clapper" %% "argot" % V.argot
     val config = "com.typesafe" % "config" % V.config

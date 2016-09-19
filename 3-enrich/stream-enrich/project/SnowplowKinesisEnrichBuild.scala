@@ -30,6 +30,7 @@ object SnowplowStreamEnrichBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.akkaSlf4j,
         Libraries.akkaStreamKafka,
         Libraries.argot,
         Libraries.awsSdk,

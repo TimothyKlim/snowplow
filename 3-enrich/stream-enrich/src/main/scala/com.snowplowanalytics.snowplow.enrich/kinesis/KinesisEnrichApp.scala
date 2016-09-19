@@ -404,28 +404,28 @@ final class KinesisEnrichConfig(config: Config) {
 
   val appName = streams.getString("app-name")
 
-  val initialPosition = streams.getString("initial-position")
+  lazy val initialPosition = streams.getString("initial-position")
 
-  val streamRegion = streams.getString("region")
-  val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
+  lazy val streamRegion = streams.getString("region")
+  lazy val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
-  val maxRecords =
+  lazy val maxRecords =
     if (inStreams.hasPath("maxRecords")) inStreams.getInt("maxRecords")
     else 10000
 
-  val buffer = inStreams.getConfig("buffer")
-  val byteLimit = buffer.getInt("byte-limit")
-  val recordLimit = buffer.getInt("record-limit")
-  val timeLimit = buffer.getInt("time-limit")
+  lazy val buffer = inStreams.getConfig("buffer")
+  lazy val byteLimit = buffer.getInt("byte-limit")
+  lazy val recordLimit = buffer.getInt("record-limit")
+  lazy val timeLimit = buffer.getInt("time-limit")
 
   val credentialsProvider =
     CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
 
-  val backoffPolicy = outStreams.getConfig("backoffPolicy")
-  val minBackoff = backoffPolicy.getLong("minBackoff")
-  val maxBackoff = backoffPolicy.getLong("maxBackoff")
+  lazy val backoffPolicy = outStreams.getConfig("backoffPolicy")
+  lazy val minBackoff = backoffPolicy.getLong("minBackoff")
+  lazy val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
-  val useIpAddressAsPartitionKey = outStreams.hasPath(
+  lazy val useIpAddressAsPartitionKey = outStreams.hasPath(
       "useIpAddressAsPartitionKey") && outStreams.getBoolean(
       "useIpAddressAsPartitionKey")
 }

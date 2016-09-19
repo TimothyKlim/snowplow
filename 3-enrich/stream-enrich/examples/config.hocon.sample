@@ -18,14 +18,18 @@ enrich {
   # Sources currently supported are:
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
-  source = "kinesis"
+  source = "kafka"
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
-  sink = "kinesis"
+  sink = "kafka"
+
+  kafka {
+    host = "localhost:9092"
+  }
 
   # AWS credentials
   #
