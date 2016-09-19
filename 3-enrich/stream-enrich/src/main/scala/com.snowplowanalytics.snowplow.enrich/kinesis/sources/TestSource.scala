@@ -21,6 +21,10 @@ package snowplow.enrich
 package kinesis
 package sources
 
+// Akka
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+
 // Iglu
 import iglu.client.Resolver
 
@@ -35,10 +39,11 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
   * using the same methods from AbstractSource as the other
   * sources.
   */
-class TestSource(config: KinesisEnrichConfig,
-                 igluResolver: Resolver,
-                 enrichmentRegistry: EnrichmentRegistry,
-                 tracker: Option[Tracker])
+class TestSource(
+    config: KinesisEnrichConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**

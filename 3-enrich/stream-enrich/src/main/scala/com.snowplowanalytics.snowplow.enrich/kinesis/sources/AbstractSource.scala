@@ -21,6 +21,10 @@ package snowplow.enrich
 package kinesis
 package sources
 
+// Akka
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+
 // Java
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
@@ -126,10 +130,11 @@ object AbstractSource {
   * Abstract base for the different sources
   * we support.
   */
-abstract class AbstractSource(config: KinesisEnrichConfig,
-                              igluResolver: Resolver,
-                              enrichmentRegistry: EnrichmentRegistry,
-                              tracker: Option[Tracker]) {
+abstract class AbstractSource(
+    config: KinesisEnrichConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer) {
 
   val MaxRecordSize = if (config.sink == Sink.Kinesis) {
     Some(MaxBytes)
@@ -160,6 +165,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig,
   private def getThreadLocalSink(inputType: InputType.InputType) =
     new ThreadLocal[Option[ISink]] {
       override def initialValue = config.sink match {
+        case Sink.Kafka => new KafkaSink(config, inputType).some
         case Sink.Kinesis =>
           new KinesisSink(kinesisProvider, config, inputType, tracker).some
         case Sink.Stdouterr => new StdouterrSink(inputType).some

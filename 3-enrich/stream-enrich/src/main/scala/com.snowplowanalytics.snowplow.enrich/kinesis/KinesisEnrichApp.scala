@@ -19,6 +19,10 @@
 package com.snowplowanalytics.snowplow.enrich
 package kinesis
 
+// Akka
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+
 // Java
 import java.io.File
 import java.net.URI
@@ -84,6 +88,8 @@ object KinesisEnrichApp extends App {
         generated.Settings.organization))
   )
 
+  val defaultConfig = ConfigFactory.load()
+
   // Mandatory config argument
   val config = parser.option[Config](List("config"),
                                      "filename",
@@ -97,6 +103,12 @@ object KinesisEnrichApp extends App {
       ConfigFactory.empty()
     }
   }
+
+  val rawConf =
+    config.value.map(_.withFallback(defaultConfig)).getOrElse(defaultConfig)
+
+  implicit val system = ActorSystem.create("scala-stream-enrich", rawConf)
+  implicit val mat = ActorMaterializer()
 
   // Mandatory resolver argument
   val resolverOption =
@@ -185,6 +197,8 @@ object KinesisEnrichApp extends App {
   }
 
   val source = kinesisEnrichConfig.source match {
+    case Source.Kafka =>
+      new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis =>
       new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin =>

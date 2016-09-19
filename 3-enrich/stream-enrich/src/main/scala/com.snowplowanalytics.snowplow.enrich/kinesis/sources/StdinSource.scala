@@ -22,6 +22,10 @@ package snowplow.enrich
 package kinesis
 package sources
 
+// Akka
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+
 // Scala
 import scala.io
 import scala.collection.JavaConversions._
@@ -42,10 +46,11 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
   * Source to decode raw events (in base64)
   * from stdin.
   */
-class StdinSource(config: KinesisEnrichConfig,
-                  igluResolver: Resolver,
-                  enrichmentRegistry: EnrichmentRegistry,
-                  tracker: Option[Tracker])
+class StdinSource(
+    config: KinesisEnrichConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**

@@ -22,6 +22,10 @@ package enrich
 package kinesis
 package sources
 
+// Akka
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+
 // Java
 import java.io.{FileInputStream, IOException}
 import java.net.InetAddress
@@ -68,10 +72,11 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 /**
   * Source to read events from a Kinesis stream
   */
-class KinesisSource(config: KinesisEnrichConfig,
-                    igluResolver: Resolver,
-                    enrichmentRegistry: EnrichmentRegistry,
-                    tracker: Option[Tracker])
+final class KinesisSource(
+    config: KinesisEnrichConfig,
+    igluResolver: Resolver,
+    enrichmentRegistry: EnrichmentRegistry,
+    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   lazy val log = LoggerFactory.getLogger(getClass())
