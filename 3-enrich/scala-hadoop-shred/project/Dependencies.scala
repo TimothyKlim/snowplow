@@ -59,7 +59,7 @@ object Dependencies {
     val yodaConvert      = "org.joda"                   %  "joda-convert"            % V.yodaConvert
     // Scala
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
-    val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
+    val commonEnrich     = "com.snowplowanalytics"      %% "snowplow-common-enrich"  % V.commonEnrich
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding

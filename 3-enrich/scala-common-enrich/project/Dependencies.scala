@@ -45,6 +45,7 @@ object Dependencies {
     val yodaTime = "2.9.4"
     // Scala
     val akka = "2.4.10"
+    val akkaStreamKafka = "0.11"
     val collectorPayload = "0.0.0"
     val gatlingJsonpath = "0.6.8"
     val igluClient = "0.5.0-kt"
@@ -96,7 +97,7 @@ object Dependencies {
     val scalaWeather = "com.snowplowanalytics" %% "scala-weather" % V.scalaWeather
     val akka = "com.typesafe.akka" %% "akka-actor" % V.akka
     val akkaStreams = "com.typesafe.akka" %% "akka-stream" % V.akka
-    val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % V.akka
+    val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % V.akkaStreamKafka
     val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % V.akka
     val gatlingJsonpath = "io.gatling" %% "jsonpath" % V.gatlingJsonpath
     // Scala (test only)

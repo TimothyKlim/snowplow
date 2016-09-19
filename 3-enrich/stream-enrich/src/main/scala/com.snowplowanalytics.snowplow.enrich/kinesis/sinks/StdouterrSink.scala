@@ -23,28 +23,29 @@ package sinks
 import com.snowplowanalytics.snowplow.collectors.thrift._
 
 /**
- * Stdouterr Sink for Scala enrichment
- */
+  * Stdouterr Sink for Scala enrichment
+  */
 class StdouterrSink(inputType: InputType.InputType) extends ISink {
 
   /**
-   * Side-effecting function to store the EnrichedEvent
-   * to the given output stream.
-   *
-   * EnrichedEvent takes the form of a tab-delimited
-   * String until such time as https://github.com/snowplow/snowplow/issues/211
-   * is implemented.
-   *
-   * @param events Sequence of enriched events and (unused) partition keys
-   * @return Whether to checkpoint
-   */
+    * Side-effecting function to store the EnrichedEvent
+    * to the given output stream.
+    *
+    * EnrichedEvent takes the form of a tab-delimited
+    * String until such time as https://github.com/snowplow/snowplow/issues/211
+    * is implemented.
+    *
+    * @param events Sequence of enriched events and (unused) partition keys
+    * @return Whether to checkpoint
+    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
       case InputType.Good => events.foreach(e => println(e._1)) // To stdout
-      case InputType.Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
+      case InputType.Bad =>
+        events.foreach(e => Console.err.println(e._1)) // To stderr
     }
     !events.isEmpty
   }
 
-  def flush() = ()
+  def flush(): Unit = ()
 }

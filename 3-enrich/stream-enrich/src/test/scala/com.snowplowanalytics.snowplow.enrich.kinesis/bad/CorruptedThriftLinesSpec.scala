@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -30,17 +30,20 @@ import org.scalacheck.Arbitrary._
 // This project
 import SpecHelpers._
 
-class CorruptedThriftLinesSpec extends Specification with ScalaCheck with ValidationMatchers { def is =
-
-  "This is a specification to test handling of corrupted Thrift payloads"                                   ^
-                                                                                                           p^
-  "Stream Enrich should return None for any corrupted Thrift raw events"                             ! e1^
-                                                                                                            end
+class CorruptedThriftLinesSpec
+    extends Specification
+    with ScalaCheck
+    with ValidationMatchers {
+  def is =
+    "This is a specification to test handling of corrupted Thrift payloads" ^
+      p ^
+      "Stream Enrich should return None for any corrupted Thrift raw events" ! e1 ^
+      end
 
   // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
   // so low that we can just use ScalaCheck here
-  def e1 = prop {
-    (raw: String) => {
+  def e1 = prop { (raw: String) =>
+    {
       val eventBytes = Base64.decodeBase64(raw)
       TestSource.enrichEvents(eventBytes)(0) must beFailing
     }

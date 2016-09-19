@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -23,10 +23,10 @@ package kinesis
 package sources
 
 // Java
-import java.io.{FileInputStream,IOException}
+import java.io.{FileInputStream, IOException}
 import java.net.InetAddress
 import java.nio.ByteBuffer
-import java.util.{List,UUID}
+import java.util.{List, UUID}
 
 // Amazon
 import com.amazonaws.auth._
@@ -66,34 +66,38 @@ import collectors.thrift.{
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
- * Source to read events from a Kinesis stream
- */
-class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+  * Source to read events from a Kinesis stream
+  */
+class KinesisSource(config: KinesisEnrichConfig,
+                    igluResolver: Resolver,
+                    enrichmentRegistry: EnrichmentRegistry,
+                    tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
-  
+
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
   /**
-   * Never-ending processing loop over source stream.
-   */
-  def run {
+    * Never-ending processing loop over source stream.
+    */
+  def run(): Unit = {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
-      ":" + UUID.randomUUID()
+        ":" + UUID.randomUUID()
     info("Using workerId: " + workerId)
 
     val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
       config.appName,
-      config.rawInStream, 
+      config.rawInStream,
       kinesisProvider,
       workerId
     ).withInitialPositionInStream(
-      InitialPositionInStream.valueOf(config.initialPosition)
-    ).withKinesisEndpoint(config.streamEndpoint)
-    .withMaxRecords(config.maxRecords)
-    .withRegionName(config.streamRegion)
-    // If the record list is empty, we still check whether it is time to flush the buffer
-    .withCallProcessRecordsEvenForEmptyRecordList(true)
+        InitialPositionInStream.valueOf(config.initialPosition)
+      )
+      .withKinesisEndpoint(config.streamEndpoint)
+      .withMaxRecords(config.maxRecords)
+      .withRegionName(config.streamRegion)
+      // If the record list is empty, we still check whether it is time to flush the buffer
+      .withCallProcessRecordsEvenForEmptyRecordList(true)
 
     info(s"Running: ${config.appName}.")
     info(s"Processing raw input stream: ${config.rawInStream}")
@@ -114,8 +118,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
   // create a processor.
   class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
       extends IRecordProcessorFactory {
-    @Override
-    def createProcessor: IRecordProcessor = {
+    override def createProcessor: IRecordProcessor = {
       new RawEventProcessor(config, sink);
     }
   }
@@ -131,16 +134,14 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     private val BACKOFF_TIME_IN_MILLIS = 3000L
     private val NUM_RETRIES = 10
     private val CHECKPOINT_INTERVAL_MILLIS = 1000L
-      
-    @Override
-    def initialize(shardId: String) = {
+
+    override def initialize(shardId: String) = {
       info("Initializing record processor for shard: " + shardId)
       this.kinesisShardId = shardId
     }
 
-    @Override
-    def processRecords(records: List[Record],
-        checkpointer: IRecordProcessorCheckpointer) = {
+    override def processRecords(records: List[Record],
+                                checkpointer: IRecordProcessorCheckpointer) = {
 
       if (!records.isEmpty) {
         info(s"Processing ${records.size} records from $kinesisShardId")
@@ -163,9 +164,8 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
       }
     }
 
-    @Override
-    def shutdown(checkpointer: IRecordProcessorCheckpointer,
-        reason: ShutdownReason) = {
+    override def shutdown(checkpointer: IRecordProcessorCheckpointer,
+                          reason: ShutdownReason) = {
       info(s"Shutting down record processor for shard: $kinesisShardId")
       if (reason == ShutdownReason.TERMINATE) {
         checkpoint(checkpointer)
@@ -175,7 +175,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Checkpointing shard $kinesisShardId")
       breakable {
-        for (i <- 0 to NUM_RETRIES-1) {
+        for (i <- 0 to NUM_RETRIES - 1) {
           try {
             checkpointer.checkpoint()
             break
@@ -185,14 +185,17 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
               break
             case e: ThrottlingException =>
               if (i >= (NUM_RETRIES - 1)) {
-                error(s"Checkpoint failed after ${i+1} attempts.", e)
+                error(s"Checkpoint failed after ${i + 1} attempts.", e)
               } else {
-                info(s"Transient issue when checkpointing - attempt ${i+1} of "
-                  + NUM_RETRIES, e)
+                info(
+                  s"Transient issue when checkpointing - attempt ${i + 1} of "
+                    + NUM_RETRIES,
+                  e)
               }
             case e: InvalidStateException =>
               error("Cannot save checkpoint to the DynamoDB table used by " +
-                "the Amazon Kinesis Client Library.", e)
+                      "the Amazon Kinesis Client Library.",
+                    e)
               break
           }
           Thread.sleep(BACKOFF_TIME_IN_MILLIS)

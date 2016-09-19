@@ -21,4 +21,6 @@ EXPOSE 8080
 
 WORKDIR /
 
+USER snowplow
+
 CMD /snowplow-stream-collector --config /etc/snowplow/collector.conf

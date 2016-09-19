@@ -62,7 +62,7 @@ final class KafkaSink(config: CollectorConfig, inputType: InputType.InputType)(
     extends AbstractSink {
   import log.{error, debug, info, trace}
 
-  val MaxBytes = Long.MaxValue
+  val MaxBytes = 1000000L
 
   type Record = ProducerRecord[String, Array[Byte]]
 

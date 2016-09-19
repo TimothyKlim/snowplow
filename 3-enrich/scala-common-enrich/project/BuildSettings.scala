@@ -81,17 +81,27 @@ object BuildSettings {
 
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
-  lazy val publishSettings = Seq[Setting[_]](
-    crossPaths := false,
-    publishTo <<= version { version =>
-      val basePath = "target/repo/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
-      Some(
-        Resolver
-          .file("Local Maven repository", file(basePath)) transactional ())
-    }
-  )
+  // lazy val publishSettings = Seq[Setting[_]](
+  //   crossPaths := false,
+  //   publishTo <<= version { version =>
+  //     val basePath = "target/repo/%s".format {
+  //       if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
+  //     }
+  //     Some(
+  //       Resolver
+  //         .file("Local Maven repository", file(basePath)) transactional ())
+  //   }
+  // )
 
-  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ bintraySettings
+  import bintray.BintrayPlugin._
+  import bintray.BintrayKeys._
+  // Bintray publishing settings
+  lazy val publishSettings = bintraySettings ++ Seq[Setting[_]](
+      licenses += ("Apache-2.0", url(
+        "http://www.apache.org/licenses/LICENSE-2.0.html")),
+      bintrayOrganization := Some("fcomb"),
+      bintrayRepository := "maven"
+    )
+
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ bintraySettings ++ publishSettings
 }

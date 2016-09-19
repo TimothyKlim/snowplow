@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -39,16 +39,19 @@ import common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
- * Source to decode raw events (in base64)
- * from stdin.
- */
-class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+  * Source to decode raw events (in base64)
+  * from stdin.
+  */
+class StdinSource(config: KinesisEnrichConfig,
+                  igluResolver: Resolver,
+                  enrichmentRegistry: EnrichmentRegistry,
+                  tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
-   * Never-ending processing loop over source stream.
-   */
-  def run = {
+    * Never-ending processing loop over source stream.
+    */
+  def run() = {
     for (ln <- io.Source.stdin.getLines) {
       val bytes = Base64.decodeBase64(ln)
       enrichAndStoreEvents(List(bytes))

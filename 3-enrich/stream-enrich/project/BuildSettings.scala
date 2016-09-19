@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
- // SBT
+// SBT
 import sbt._
 import Keys._
 import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
@@ -20,10 +20,10 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "com.snowplowanalytics",
-    version               :=  "0.9.0-kt",
-    description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion          :=  "2.11.8",
+    organization := "com.snowplowanalytics",
+    version := "0.9.0-kt",
+    description := "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
+    scalaVersion := "2.11.8",
     scalacOptions := Seq("-encoding",
                          "UTF-8",
                          "-target:jvm-1.8",
@@ -49,22 +49,28 @@ object BuildSettings {
                          "-Ywarn-unused",
                          "-Ywarn-unused-import",
                          "-Ywarn-value-discard"*/ ),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
-    resolvers             ++= Dependencies.resolutionRepos
+    scalacOptions in Test := Seq("-Yrangepos"),
+    resolvers ++= Dependencies.resolutionRepos
   )
 
   // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.kinesis.generated
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile <+= (sourceManaged in Compile,
+                                     version,
+                                     name,
+                                     organization) map { (d, v, n, o) =>
+      val file = d / "settings.scala"
+      IO.write(
+        file,
+        """package com.snowplowanalytics.snowplow.enrich.kinesis.generated
       |object Settings {
       |  val organization = "%s"
       |  val version = "%s"
       |  val name = "%s"
       |}
       |""".stripMargin.format(o, v, n))
-    Seq(file)
-  })
+      Seq(file)
+    })
 
   import sbtassembly.AssemblyKeys._
   import sbtassembly.AssemblyPlugin._

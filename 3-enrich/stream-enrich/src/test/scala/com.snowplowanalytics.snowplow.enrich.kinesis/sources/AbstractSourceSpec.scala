@@ -48,7 +48,8 @@ class AbstractSourceSpec extends Specification {
 
   "adjustOversizedFailureJson" should {
     "remove the \"line\" field from a large bad JSON" in {
-      val badJson = """{"line":"huge", "errors":["some error"], "other":"more information"}"""
+      val badJson =
+        """{"line":"huge", "errors":["some error"], "other":"more information"}"""
       val parsed = parse(AbstractSource.adjustOversizedFailureJson(badJson))
       parsed \ "line" must_== JNothing
       parsed \ "other" must_== JString("more information")
@@ -66,7 +67,13 @@ class AbstractSourceSpec extends Specification {
     "create a bad row JSON from an oversized success" in {
       val actual = parse(AbstractSource.oversizedSuccessToFailure("abc", 2))
       actual \ "size" must_== JInt(3)
-      actual \ "errors" must_== JArray(List(JObject(List(("level",JString("error")), ("message",JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
+      actual \ "errors" must_== JArray(
+        List(
+          JObject(List(
+            ("level", JString("error")),
+            ("message",
+             JString(
+               "Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
     }
   }
 }

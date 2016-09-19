@@ -13,24 +13,24 @@
 package com.snowplowanalytics.snowplow.enrich
 
 /**
- * Scala package object to hold types,
- * helper methods etc.
- *
- * See:
- * http://www.artima.com/scalazine/articles/package_objects.html
- */
+  * Scala package object to hold types,
+  * helper methods etc.
+  *
+  * See:
+  * http://www.artima.com/scalazine/articles/package_objects.html
+  */
 package object kinesis {
 
   /**
-   * Kinesis records must not exceed 1MB
-   */
+    * Kinesis records must not exceed 1MB
+    */
   val MaxBytes = 1000000L
 
-  /** 
-   * The enrichment process takes input SnowplowRawEvent objects from
-   * an input source and outputs enriched objects to a sink,
-   * as defined in the following enumerations.
-   */
+  /**
+    * The enrichment process takes input SnowplowRawEvent objects from
+    * an input source and outputs enriched objects to a sink,
+    * as defined in the following enumerations.
+    */
   object Source extends Enumeration {
     type Source = Value
     val Kafka, Kinesis, Stdin, Test = Value

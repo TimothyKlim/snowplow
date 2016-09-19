@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -20,7 +20,9 @@ object SnowplowStreamEnrichBuild extends Build {
 
   // Configure prompt to show current project
   override lazy val settings = super.settings :+ {
-    shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+    shellPrompt := { s =>
+      Project.extract(s).currentProject.id + " > "
+    }
   }
 
   // Define our project, with basic project information and library dependencies
@@ -28,26 +30,27 @@ object SnowplowStreamEnrichBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.logging,
-        Libraries.httpCore,
-        Libraries.httpClient,
-        Libraries.jacksonCore,
+        Libraries.akkaStreamKafka,
         Libraries.argot,
-        Libraries.config,
-        Libraries.snowplowRawEvent,
-        Libraries.snowplowCommonEnrich,
-        Libraries.scalazon,
-        Libraries.scalaz,
-        Libraries.specs2,
-        Libraries.scalazSpecs2,
-        Libraries.commonsLang3,
-        Libraries.thrift,
-        Libraries.slf4j,
-        Libraries.log4jOverSlf4j,
         Libraries.awsSdk,
-        Libraries.kinesisClient,
+        Libraries.commonsLang3,
+        Libraries.config,
+        Libraries.httpClient,
+        Libraries.httpCore,
         Libraries.igluClient,
-        Libraries.snowplowTracker
+        Libraries.jacksonCore,
+        Libraries.kinesisClient,
+        Libraries.log4jOverSlf4j,
+        Libraries.logging,
+        Libraries.scalaz,
+        Libraries.scalazon,
+        Libraries.scalazSpecs2,
+        Libraries.slf4j,
+        Libraries.snowplowCommonEnrich,
+        Libraries.snowplowRawEvent,
+        Libraries.snowplowTracker,
+        Libraries.specs2,
+        Libraries.thrift
         // Add your additional libraries here (comma-separated)...
       )
     )

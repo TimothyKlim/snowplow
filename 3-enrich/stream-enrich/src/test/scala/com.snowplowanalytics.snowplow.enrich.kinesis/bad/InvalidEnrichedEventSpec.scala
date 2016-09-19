@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -28,7 +28,8 @@ import SpecHelpers._
 
 object InvalidEnrichedEventSpec {
 
-  val raw = "CgABAAABSVEMALYLABQAAAAQc3NjLTAuMi4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAkxMjcuMC4wLjEMACkIAAEAAAABCAACAAAAAQsAAwAAAA1lPW5vbmV4aXN0ZW50AAsALQAAAAlsb2NhbGhvc3QLADIAAABjY3VybC83LjIyLjAgKHg4Nl82NC1wYy1saW51eC1nbnUpIGxpYmN1cmwvNy4yMi4wIE9wZW5TU0wvMS4wLjEgemxpYi8xLjIuMy40IGxpYmlkbi8xLjIzIGxpYnJ0bXAvMi4zDwBGCwAAAAMAAAALQWNjZXB0OiAqLyoAAAAUSG9zdDogbG9jYWxob3N0OjgwODAAAABvVXNlci1BZ2VudDogY3VybC83LjIyLjAgKHg4Nl82NC1wYy1saW51eC1nbnUpIGxpYmN1cmwvNy4yMi4wIE9wZW5TU0wvMS4wLjEgemxpYi8xLjIuMy40IGxpYmlkbi8xLjIzIGxpYnJ0bXAvMi4zCwBQAAAAJGE1YWUwMWQ1LTQ5NTctNGQyZS1iMzRjLTM4YTU1ZDExNGZlMQA="
+  val raw =
+    "CgABAAABSVEMALYLABQAAAAQc3NjLTAuMi4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAkxMjcuMC4wLjEMACkIAAEAAAABCAACAAAAAQsAAwAAAA1lPW5vbmV4aXN0ZW50AAsALQAAAAlsb2NhbGhvc3QLADIAAABjY3VybC83LjIyLjAgKHg4Nl82NC1wYy1saW51eC1nbnUpIGxpYmN1cmwvNy4yMi4wIE9wZW5TU0wvMS4wLjEgemxpYi8xLjIuMy40IGxpYmlkbi8xLjIzIGxpYnJ0bXAvMi4zDwBGCwAAAAMAAAALQWNjZXB0OiAqLyoAAAAUSG9zdDogbG9jYWxob3N0OjgwODAAAABvVXNlci1BZ2VudDogY3VybC83LjIyLjAgKHg4Nl82NC1wYy1saW51eC1nbnUpIGxpYmN1cmwvNy4yMi4wIE9wZW5TU0wvMS4wLjEgemxpYi8xLjIuMy40IGxpYmlkbi8xLjIzIGxpYnJ0bXAvMi4zCwBQAAAAJGE1YWUwMWQ1LTQ5NTctNGQyZS1iMzRjLTM4YTU1ZDExNGZlMQA="
 }
 
 class InvalidEnrichedEventSpec extends Specification with ValidationMatchers {
@@ -39,7 +40,7 @@ class InvalidEnrichedEventSpec extends Specification with ValidationMatchers {
     "return None for a valid SnowplowRawEvent which fails enrichment" in {
 
       val rawEvent = Base64.decodeBase64(InvalidEnrichedEventSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beFailing
     }
