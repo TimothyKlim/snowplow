@@ -103,5 +103,5 @@ object BuildSettings {
       bintrayRepository := "maven"
     )
 
-  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ bintraySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ publishSettings
 }

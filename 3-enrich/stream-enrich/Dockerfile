@@ -13,7 +13,7 @@ RUN chown -R java:java ${WORKDIR} && \
     mkdir -p /etc/snowplow && \
     mv ${WORKDIR}/examples/config.hocon.sample /etc/snowplow/enrich.conf && \
     su java -c "/home/java/bin/sbt assembly" && \
-    mv ${WORKDIR}/target/scala-2.11/snowplow-enrich-collector / && \
+    mv ${WORKDIR}/target/scala-2.11/snowplow-stream-enrich / && \
     deluser --remove-home java && \
     rm -rf /var/cache/apk/* ${WORKDIR}
 
@@ -23,4 +23,4 @@ USER snowplow
 
 ENV RESOLVER ""
 ENV ENRICHMENTS ""
-CMD /snowplow-enrich-collector --config /etc/snowplow/enrich.conf --enrichments ${ENRICHMENTS} --resolver ${RESOLVER}
+CMD /snowplow-stream-enrich --config /etc/snowplow/enrich.conf --enrichments ${ENRICHMENTS} --resolver ${RESOLVER}
