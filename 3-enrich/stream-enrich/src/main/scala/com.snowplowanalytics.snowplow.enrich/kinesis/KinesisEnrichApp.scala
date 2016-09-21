@@ -387,6 +387,7 @@ final class KinesisEnrichConfig(config: Config) {
   private lazy val kafka = enrich.getConfig("kafka")
 
   lazy val kafkaHost = kafka.getString("host")
+  lazy val kafkaGroup = kafka.getString("group")
 
   private lazy val aws = enrich.getConfig("aws")
 
@@ -402,7 +403,7 @@ final class KinesisEnrichConfig(config: Config) {
   val enrichedOutStream = outStreams.getString("enriched")
   val badOutStream = outStreams.getString("bad")
 
-  val appName = streams.getString("app-name")
+  lazy val appName = streams.getString("app-name")
 
   lazy val initialPosition = streams.getString("initial-position")
 
@@ -418,7 +419,7 @@ final class KinesisEnrichConfig(config: Config) {
   lazy val recordLimit = buffer.getInt("record-limit")
   lazy val timeLimit = buffer.getInt("time-limit")
 
-  val credentialsProvider =
+  lazy val credentialsProvider =
     CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
 
   lazy val backoffPolicy = outStreams.getConfig("backoffPolicy")

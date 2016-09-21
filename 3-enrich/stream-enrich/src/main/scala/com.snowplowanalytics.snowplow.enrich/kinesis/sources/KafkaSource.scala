@@ -25,8 +25,9 @@ package sources
 
 // Akka
 import akka.actor.ActorSystem
-import akka.kafka.{ConsumerSettings, Subscriptions}
+import akka.kafka.ConsumerMessage.{CommittableOffsetBatch, CommittableOffset}
 import akka.kafka.scaladsl.Consumer
+import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl._
@@ -59,16 +60,28 @@ final class KafkaSource(
   private val consumerSettings =
     ConsumerSettings(sys, new StringDeserializer, new ByteArrayDeserializer)
       .withBootstrapServers(config.kafkaHost)
-      .withGroupId("group1")
+      .withGroupId(config.kafkaGroup)
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
   private val topicName = Subscriptions.topics(config.rawInStream)
 
-  private val consumer = Consumer.plainSource(consumerSettings, topicName)
+  private val consumer =
+    Consumer.committableSource(consumerSettings, topicName)
 
   def run() =
     consumer
       .groupedWithin(256, 1.second)
-      .map(xs => enrichAndStoreEvents(xs.map(_.value).toList))
+      .map { group =>
+        val (offsets, events) =
+          group.foldRight(
+            (List.empty[CommittableOffset], List.empty[Array[Byte]])) {
+            case (msg, (ofs, evs)) =>
+              (msg.committableOffset :: ofs, msg.record.value :: evs)
+          }
+        enrichAndStoreEvents(events)
+        offsets
+      }
+      .mapAsync(3)(_.foldLeft(CommittableOffsetBatch.empty)(_.updated(_))
+        .commitScaladsl())
       .runWith(Sink.ignore)
 }

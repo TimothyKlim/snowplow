@@ -8,7 +8,10 @@ NAME="snowplow-stream-enrich"
 REPO="ktimothy/${NAME}"
 IMAGE="${REPO}:v${VERSION}"
 
+cp -r ../config ./
+
 docker build --no-cache --force-rm -t ${REPO} .
+rm -rf ./config
 docker tag ${REPO} ${IMAGE}
 docker push ${REPO}:latest
 docker push ${IMAGE}

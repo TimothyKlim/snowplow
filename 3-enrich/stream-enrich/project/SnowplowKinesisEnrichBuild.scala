@@ -12,6 +12,7 @@
  */
 import sbt._
 import Keys._
+import com.typesafe.sbt.SbtNativePackager
 
 object SnowplowStreamEnrichBuild extends Build {
 
@@ -55,4 +56,5 @@ object SnowplowStreamEnrichBuild extends Build {
         // Add your additional libraries here (comma-separated)...
       )
     )
+    .enablePlugins(SbtNativePackager)
 }

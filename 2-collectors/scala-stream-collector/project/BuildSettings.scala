@@ -16,6 +16,9 @@
 import sbt._
 import Keys._
 import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
+import com.typesafe.sbt.SbtNativePackager
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.Keys._
 
 object BuildSettings {
 
@@ -76,20 +79,34 @@ object BuildSettings {
           Seq(file)
       })
 
-  import sbtassembly.AssemblyKeys._
-  import sbtassembly.AssemblyPlugin._
+  lazy val javaRunOptions = Seq(
+    "-server",
+    "-XX:+UseAES",
+    "-XX:+UseAESIntrinsics",
+    "-Xms2g",
+    "-Xmx2g",
+    "-Xss6m",
+    "-XX:NewSize=512m",
+    "-XX:+UseNUMA",
+    "-XX:+AlwaysPreTouch",
+    "-XX:-UseBiasedLocking",
+    "-XX:+TieredCompilation",
+    "-XX:+UseG1GC",
+    "-XX:MaxGCPauseMillis=200",
+    "-XX:ParallelGCThreads=20",
+    "-XX:ConcGCThreads=5",
+    "-XX:InitiatingHeapOccupancyPercent=70"
+  )
 
-  // sbt-assembly settings for building an executable
-  lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
-      // Executable jarfile
-      assemblyOption in assembly := (assemblyOption in assembly).value
-        .copy(prependShellScript = Some(defaultShellScript)),
-      // Name it as an executable
-      assemblyJarName in assembly := name.value,
-      excludedJars in assembly := (fullClasspath in assembly).value
-        .filter(_.data.getName.contains("specs2")),
-      test in assembly := {}
+  lazy val packageSettings = SbtNativePackager.packageArchetype.java_application ++ Seq(
+      publishArtifact in (Compile, packageDoc) := false,
+      publishArtifact in packageDoc := false,
+      sources in (Compile, doc) := Seq.empty,
+      executableScriptName := "start",
+      javaOptions in Universal ++= javaRunOptions.map(o => s"-J$o"),
+      packageName in Universal := "dist",
+      scriptClasspath ~= (cp => "../config" +: cp)
     )
 
-  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ reformatOnCompileSettings ++ scalifySettings ++ packageSettings
 }

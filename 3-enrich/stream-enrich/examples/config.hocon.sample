@@ -29,6 +29,7 @@ enrich {
 
   kafka {
     host = "localhost:9092"
+    group = "group1"
   }
 
   # AWS credentials
