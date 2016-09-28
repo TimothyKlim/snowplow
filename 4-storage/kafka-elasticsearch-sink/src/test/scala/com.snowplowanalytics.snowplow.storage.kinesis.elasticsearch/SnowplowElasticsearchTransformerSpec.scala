@@ -11,7 +11,7 @@
   * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
   */
 package com.snowplowanalytics.snowplow
-package storage.kafka.elasticsearch
+package storage
 
 // Scalaz
 import scalaz._
@@ -29,9 +29,9 @@ import org.specs2.scalaz.ValidationMatchers
 import enrich.common.utils.ScalazJson4sUtils
 
 /**
-  * Tests ElasticsearchTransformer
+  * Tests Transformer
   */
-class ElasticsearchTransformerSpec
+class TransformerSpec
     extends Specification
     with ValidationMatchers {
 
@@ -261,7 +261,7 @@ class ElasticsearchTransformerSpec
 
       val eventValues = nvPairs.unzip._2.toArray
 
-      val jsonRecord = new ElasticsearchTransformer("index", "type")
+      val jsonRecord = new Transformer("index", "type")
         .jsonifyGoodEvent(eventValues)
         .getOrElse(throw new RuntimeException("Event failed transformation"))
 

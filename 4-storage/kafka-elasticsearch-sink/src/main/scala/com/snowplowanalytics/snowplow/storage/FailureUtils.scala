@@ -16,27 +16,25 @@
   * See the Apache License Version 2.0 for the specific language
   * governing permissions and limitations there under.
   */
-package com.snowplowanalytics.snowplow.storage.kafka
+package com.snowplowanalytics.snowplow.storage
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
-// json4s
-import org.json4s._
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
-package object elasticsearch {
-
-  /**
-    * The original tab separated enriched event together with
-    * a validated ElasticsearchObject created from it (or list of errors
-    * if the creation process failed)
-    * Can't use NonEmptyList as it isn't serializable
-    */
-  type ValidatedRecord = (String, Validation[List[String], JsonRecord])
+object FailureUtils {
 
   /**
-    * Functions used to change a TSV pair to a JObject
+    * Due to serialization issues we use List instead of NonEmptyList
+    * so we need this method to convert the errors back to a NonEmptyList
+    *
+    * @param line
+    * @param errors
+    * @return Compact bad row JSON string
     */
-  type TsvToJsonConverter = (String, String) => ValidationNel[String, JObject]
+  def getBadRow(line: String, errors: List[String]): String =
+    BadRow(line, NonEmptyList(errors.head, errors.tail: _*)).toCompactJson
 }

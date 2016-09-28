@@ -44,7 +44,7 @@ object BuildSettings {
       val file = d / "settings.scala"
       IO.write(
         file,
-        """package com.snowplowanalytics.snowplow.storage.kafka.elasticsearch.generated
+        """package com.snowplowanalytics.snowplow.storage.generated
       |object Settings {
       |  val organization = "%s"
       |  val version = "%s"

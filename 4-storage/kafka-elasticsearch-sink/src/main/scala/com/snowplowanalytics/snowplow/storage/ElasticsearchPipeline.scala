@@ -17,7 +17,7 @@
   * governing permissions and limitations there under.
   */
 package com.snowplowanalytics.snowplow
-package storage.kafka.elasticsearch
+package storage
 
 // This project
 import StreamType._
@@ -64,7 +64,7 @@ class ElasticsearchPipeline(
   // override def getTransformer(c: KafkaConnectorConfiguration) =
   //   streamType match {
   //     case Good =>
-  //       new ElasticsearchTransformer(documentIndex, documentType)
+  //       new Transformer(documentIndex, documentType)
   //     case Bad => new BadEventTransformer(documentIndex, documentType)
   //   }
   //

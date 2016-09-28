@@ -17,33 +17,21 @@
   * governing permissions and limitations there under.
   */
 package com.snowplowanalytics.snowplow
-package storage.kafka.elasticsearch
+package storage
 
-// Java
+import com.fasterxml.jackson.core.JsonParseException
 import java.nio.charset.StandardCharsets.UTF_8
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Scala
-import scala.util.matching.Regex
-
-// json4s
-import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
-
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
-// Logging
+import org.json4s._
 import org.slf4j.LoggerFactory
+import scala.util.matching.Regex
+import _root_.scalaz._, Scalaz._
 
-object ElasticsearchTransformer {
+object Transformer {
 
   /**
-    * Convert an Kafka record to a JSON string
+    * Convert a Kafka record to a JSON string
     *
     * @param record Byte array representation of an enriched event string
     * @return ValidatedRecord for the event
@@ -274,15 +262,13 @@ object ElasticsearchTransformer {
         s"Expected ${fields.size} fields, received ${event.size} fields. This may be caused by using an outdated version of Snowplow Kafka Enrich.")
     }
 
-    if (event.size <= ElasticsearchTransformer.GeopointIndexes.latitude.max(
-          ElasticsearchTransformer.GeopointIndexes.longitude)) {
+    if (event.size <= Transformer.GeopointIndexes.latitude.max(
+          Transformer.GeopointIndexes.longitude)) {
       s"Event contained only ${event.size} tab-separated fields".failureNel
     } else {
-
       val geoLocation: JObject = {
-        val latitude = event(ElasticsearchTransformer.GeopointIndexes.latitude)
-        val longitude = event(
-          ElasticsearchTransformer.GeopointIndexes.longitude)
+        val latitude = event(Transformer.GeopointIndexes.latitude)
+        val longitude = event(Transformer.GeopointIndexes.longitude)
         if (latitude.size > 0 && longitude.size > 0) {
           JObject("geo_location" -> JString(s"$latitude,$longitude"))
         } else JObject()

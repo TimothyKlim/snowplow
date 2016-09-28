@@ -16,14 +16,17 @@
   * See the Apache License Version 2.0 for the specific language
   * governing permissions and limitations there under.
   */
-package com.snowplowanalytics.snowplow.storage.kafka.elasticsearch
+package com.snowplowanalytics.snowplow.storage
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl._
 import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
 import com.snowplowanalytics.snowplow.scalatracker.SelfDescribingJson
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import com.snowplowanalytics.snowplow.storage.source._
+import com.snowplowanalytics.snowplow.storage.utils.Tracking
 import com.typesafe.config.{Config, ConfigFactory}
 import java.io.File
 import java.util.Properties
@@ -31,15 +34,9 @@ import org.clapper.argot.ArgotParser
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.json4s._
-import Scalaz._
-import scalaz._
-
-// Whether the input stream contains enriched events or bad events
-object StreamType extends Enumeration {
-  type StreamType = Value
-
-  val Good, Bad = Value
-}
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import _root_.scalaz._, Scalaz._
 
 /**
   * Main entry point for the Elasticsearch sink
@@ -88,7 +85,7 @@ object Main extends App {
 
   val tracker =
     if (configValue.hasPath("monitoring.snowplow"))
-      SnowplowTracking
+      Tracking
         .initializeTracker(configValue.getConfig("monitoring.snowplow"))
         .some
     else None
@@ -97,10 +94,11 @@ object Main extends App {
     .map(_.withFallback(defaultConfig))
     .getOrElse(throw new RuntimeException("--config option must be provided"))
 
-  implicit val system = ActorSystem.create("kafka-elasticsearch-sink", rawConf)
+  implicit val sys = ActorSystem.create("kafka-elasticsearch-sink", rawConf)
   implicit val mat = ActorMaterializer()
+  import sys.dispatcher
 
-  val finalConfig = convertConfig(configValue)
+  val finalConfig = AppConfig(configValue)
 
   lazy val goodSink = configValue.getString("sink.good") match {
     case "stdout" => ??? // Some(new StdouterrSink)
@@ -136,72 +134,13 @@ object Main extends App {
     case _ => "Source must be set to 'kafka'".failure
   }
 
-  import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
+  val inStream = new Kafka(finalConfig)
 
-  import org.elasticsearch.common.settings.Settings
+  inStream.source.map {
+    case (msg, offset) => (Transformer.transform(msg), offset)
+  }.collect { case ((_, Success(rec)), offset) => (rec, offset) }
+    .via(new sink.Elastic(finalConfig).flow)
+    .runWith(inStream.commitSink)
 
-  import akka.stream.scaladsl._
-  import system.dispatcher
-
-  val esClient: ElasticClient = {
-    val settings = Settings.settingsBuilder
-      .put("cluster.name", finalConfig.elasticCluster)
-      .put("client.transport.sniff", false) // don't set sniff = true if local
-      .build
-    ElasticClient.transport(settings,
-                            ElasticsearchClientUri(finalConfig.elasticEndpoint,
-                                                   finalConfig.elasticPort))
-  }
-
-  import com.sksamuel.elastic4s.BulkCompatibleDefinition
-  import com.sksamuel.elastic4s.ElasticDsl._
-  import com.sksamuel.elastic4s.streams._
-  import com.sksamuel.elastic4s.streams.ReactiveElastic._
-  import com.sksamuel.elastic4s.source.JsonDocumentSource
-
-  final class JsonRecordBuilder(documentIndex: String, documentType: String)
-      extends RequestBuilder[JsonRecord] {
-    val indexType = documentIndex / documentType
-
-    override def request(record: JsonRecord): BulkCompatibleDefinition = {
-      val doc = JsonDocumentSource(compact(render(record.json)))
-      val q = index.into(indexType)
-      record.id.map(q.id).getOrElse(q).doc(doc)
-    }
-  }
-
-  implicit val builder = new JsonRecordBuilder(
-    finalConfig.elasticDocumentIndex,
-    finalConfig.elasticDocumentType)
-
-  val esSink =
-    Sink.fromSubscriber(new ReactiveElastic(esClient).subscriber[JsonRecord]())
-
-  Kafka
-    .source(finalConfig)
-    .map { case (_, msg) => ElasticsearchTransformer.transform(msg) }
-    .collect { case (_, Success(rec)) => rec }
-    .runWith(esSink)
-
-  /**
-    * Builds a AppConfig from the "connector" field of the configuration HOCON
-    *
-    * @param connector The "connector" field of the configuration HOCON
-    * @return A AppConfig
-    */
-  def convertConfig(connector: Config): AppConfig = {
-    val elastic = connector.getConfig("elasticsearch")
-    val kafka = connector.getConfig("kafka")
-
-    AppConfig(
-      kafkaHost = kafka.getString("host"),
-      kafkaTopic = kafka.getString("topic"),
-      kafkaGroup = kafka.getString("group"),
-      elasticEndpoint = elastic.getString("endpoint"),
-      elasticCluster = elastic.getString("cluster"),
-      elasticPort = elastic.getInt("port"),
-      elasticDocumentIndex = elastic.getString("document-index"),
-      elasticDocumentType = elastic.getString("document-type")
-    )
-  }
+  Await.result(sys.whenTerminated, Duration.Inf)
 }

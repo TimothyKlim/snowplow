@@ -16,25 +16,11 @@
   * See the Apache License Version 2.0 for the specific language
   * governing permissions and limitations there under.
   */
-package com.snowplowanalytics.snowplow.storage.kafka.elasticsearch
+package com.snowplowanalytics.snowplow.storage
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
-// Common Enrich
-import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
-
-object FailureUtils {
-
-  /**
-    * Due to serialization issues we use List instead of NonEmptyList
-    * so we need this method to convert the errors back to a NonEmptyList
-    *
-    * @param line
-    * @param errors
-    * @return Compact bad row JSON string
-    */
-  def getBadRow(line: String, errors: List[String]): String =
-    BadRow(line, NonEmptyList(errors.head, errors.tail: _*)).toCompactJson
+/**
+  * Like the connector library's ITransformer, but for consuming from stdin
+  */
+trait StdinTransformer {
+  def consumeLine(line: String): ValidatedRecord
 }

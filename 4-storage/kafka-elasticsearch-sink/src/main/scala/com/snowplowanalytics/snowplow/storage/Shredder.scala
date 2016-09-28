@@ -16,7 +16,7 @@
   * See the Apache License Version 2.0 for the specific language
   * governing permissions and limitations there under.
   */
-package com.snowplowanalytics.snowplow.storage.kafka.elasticsearch
+package com.snowplowanalytics.snowplow.storage
 
 // Scalaz
 import scalaz._
@@ -37,7 +37,7 @@ import scala.annotation.tailrec
   */
 object Shredder {
 
-  private[elasticsearch] val schemaPattern =
+  private[storage] val schemaPattern =
     """^iglu:([a-zA-Z0-9-_.]+)/([a-zA-Z0-9-_]+)/[a-zA-Z0-9-_]+/([0-9]+-[0-9]+-[0-9]+)$""".r
 
   /**

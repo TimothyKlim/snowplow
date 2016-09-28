@@ -1,5 +1,5 @@
 package com.snowplowanalytics.snowplow
-package storage.kafka.elasticsearch
+package storage
 
 import akka.stream.scaladsl._
 

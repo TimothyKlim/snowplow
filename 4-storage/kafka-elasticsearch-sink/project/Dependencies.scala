@@ -27,8 +27,7 @@ object Dependencies {
 
   object V {
     // Java
-    val logging = "1.2"
-    val slf4j = "1.7.21"
+    val logback = "1.1.7"
     // Scala
     val akka = "2.4.10"
     val akkaStreamKafka = "0.12"
@@ -39,6 +38,7 @@ object Dependencies {
     val scalaz = "7.2.6"
     val snowplowCommonEnrich = "0.25.0-kt"
     val snowplowTracker = "0.4.0-kt"
+    val scalaLogging = "3.5.0"
     // Scala (test only)
     val specs2 = "3.7"
     val scalazSpecs2 = "0.4.0"
@@ -48,17 +48,16 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val logging = "commons-logging" % "commons-logging" % V.logging
-    val slf4j = "org.slf4j" % "slf4j-simple" % V.slf4j
-    val log4jOverSlf4j = "org.slf4j" % "log4j-over-slf4j" % V.slf4j
+    val logback = "ch.qos.logback" %  "logback-classic" % V.logback
     // Scala
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
     val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % V.akkaStreamKafka
-    val elastic4sStreams = "com.sksamuel.elastic4s" %% "elastic4s-streams" % V.elastic4s
+    val elastic4s = "com.sksamuel.elastic4s" %% "elastic4s-core" % V.elastic4s
     val argot = "org.clapper" %% "argot" % V.argot
     val config = "com.typesafe" % "config" % V.config
     val scalaz = "org.scalaz" %% "scalaz-core" % V.scalaz
     val snowplowTracker = "com.snowplowanalytics" %% "snowplow-scala-tracker" % V.snowplowTracker
+      val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % V.scalaLogging
     // Intransitive to prevent the jar containing more than 2^16 files
     val snowplowCommonEnrich =
       "com.snowplowanalytics" %% "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive

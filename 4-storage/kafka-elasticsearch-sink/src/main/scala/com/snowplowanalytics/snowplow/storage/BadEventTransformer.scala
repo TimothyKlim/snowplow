@@ -16,7 +16,7 @@
   * See the Apache License Version 2.0 for the specific language
   * governing permissions and limitations there under.
   */
-package com.snowplowanalytics.snowplow.storage.kafka.elasticsearch
+package com.snowplowanalytics.snowplow.storage
 
 // Java
 import java.nio.charset.StandardCharsets.UTF_8
