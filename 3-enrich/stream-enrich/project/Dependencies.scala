@@ -29,25 +29,25 @@ object Dependencies {
 
   object V {
     // Java
-    val logging = "1.2"
-    val httpCore = "4.4.5"
-    val httpClient = "4.5.2"
-    val jacksonCore = "2.8.2"
-    val slf4j = "1.7.21"
     val awsSdk = "1.11.34"
+    val httpClient = "4.5.2"
+    val httpCore = "4.4.5"
+    val jacksonCore = "2.8.2"
     val kinesisClient = "1.7.0"
+    val logging = "1.2"
+    val slf4j = "1.7.21"
     // Scala
     val akka = "2.4.10"
     val argot = "1.0.4"
     val config = "1.3.0"
-    val snowplowRawEvent = "0.1.0"
-    val snowplowCommonEnrich = "0.25.0-kt"
-    val scalazon = "0.11"
-    val scalaz = "7.2.6"
     val igluClient = "0.5.0-kt"
+    val scalaz = "7.2.6"
+    val scalazon = "0.11"
+    val snowplowCommonEnrich = "0.25.0-kt"
+    val snowplowRawEvent = "0.1.0"
     val snowplowTracker = "0.4.0-kt"
     // Scala (test only)
-    val akkaStreamKafka = "0.11"
+    val akkaStreamKafka = "0.12"
     val specs2 = "3.7"
     val scalazSpecs2 = "0.4.0"
     // Scala (compile only)

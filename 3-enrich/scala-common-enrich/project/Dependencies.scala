@@ -45,7 +45,7 @@ object Dependencies {
     val yodaTime = "2.9.4"
     // Scala
     val akka = "2.4.10"
-    val akkaStreamKafka = "0.11"
+    val akkaStreamKafka = "0.12"
     val collectorPayload = "0.0.0"
     val gatlingJsonpath = "0.6.8"
     val igluClient = "0.5.0-kt"

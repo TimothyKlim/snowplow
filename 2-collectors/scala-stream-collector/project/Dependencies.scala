@@ -33,7 +33,7 @@ object Dependencies {
     val awsSdk = "1.11.33"
     // Scala
     val akka = "2.4.10"
-    val akkaStreamKafka = "0.11"
+    val akkaStreamKafka = "0.12"
     val argot = "1.0.4"
     val collectorPayload = "0.0.0"
     val commonsCodec = "1.10"

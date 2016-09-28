@@ -1,0 +1,57 @@
+# Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0, and
+# you may not use this file except in compliance with the Apache License
+# Version 2.0.  You may obtain a copy of the Apache License Version 2.0 at
+# http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the Apache License Version 2.0 is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the Apache License Version 2.0 for the specific language
+# governing permissions and limitations there under.
+
+# This file (application.conf.example) contains a template with
+# configuration options for the Kafka Elasticsearch Sink.
+
+sink {
+
+  # Sources currently supported are:
+  # 'kafka' for reading records from a Kafka stream
+  # 'stdin' for reading unencoded tab-separated events from stdin
+  # If set to "stdin", JSON documents will not be sent to Elasticsearch
+  # but will be written to stdout.
+  # source = {{sinkElasticsearchInputType}}
+
+  # Where to write good and bad records
+  sink {
+    # Sinks currently supported are:
+    # 'elasticsearch' for writing good records to Elasticsearch
+    # 'stdout' for writing good records to stdout
+    # "good": {{sinkElasticsearchGoodOutputDestination}}
+
+    # Sinks currently supported are:
+    # 'kafka' for writing bad records to Kafka
+    # 'stderr' for writing bad records to stderr
+    # 'none' for ignoring bad records
+    # "bad": {{sinkElasticsearchBadOutputDestination}}
+  }
+
+  # "good" for a stream of successfully enriched events
+  # "bad" for a stream of bad events
+  # stream-type: "{{sinkKafkaInStreamType}}"
+
+  kafka {
+    host = "localhost:9092"
+    topic = "enriched"
+    group = "kafka-elasticsearch-sink"
+  }
+
+  elasticsearch {
+    endpoint: "127.0.0.1"
+    cluster: "elasticsearch"
+    port: 9300
+    document-index: "events"
+    document-type: "event"
+  }
+}
