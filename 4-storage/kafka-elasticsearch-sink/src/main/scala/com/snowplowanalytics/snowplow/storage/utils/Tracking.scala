@@ -34,7 +34,7 @@ import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
 object Tracking {
 
   private val HeartbeatInterval = 300000L
-  private val StorageType = "ELASTICSEARCH"
+  private val StorageType       = "ELASTICSEARCH"
 
   /**
     * Configure a Tracker based on the configuration HOCON
@@ -44,10 +44,10 @@ object Tracking {
     */
   def initializeTracker(config: Config): Tracker = {
     val endpoint = config.getString("collector-uri")
-    val port = config.getInt("collector-port")
-    val appName = config.getString("app-id")
+    val port     = config.getInt("collector-port")
+    val appName  = config.getString("app-id")
     // Not yet used
-    val method = config.getString("method")
+    val method  = config.getString("method")
     val emitter = AsyncEmitter.createAndStart(endpoint, port)
     new Tracker(List(emitter), generated.Settings.name, appName)
   }
@@ -65,40 +65,36 @@ object Tracking {
                        lastRetryPeriod: Long,
                        failureCount: Long,
                        initialFailureTime: Long,
-                       message: String) {
-
+                       message: String): Unit =
     tracker.trackUnstructEvent(
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kafka/storage_write_failed/jsonschema/1-0-0",
-        ("storage" -> StorageType) ~
-          ("failureCount" -> failureCount) ~
+        ("storage"              -> StorageType) ~
+          ("failureCount"       -> failureCount) ~
           ("initialFailureTime" -> initialFailureTime) ~
-          ("lastRetryPeriod" -> lastRetryPeriod) ~
-          ("message" -> message)
+          ("lastRetryPeriod"    -> lastRetryPeriod) ~
+          ("message"            -> message)
       ))
-  }
 
   /**
     * Send an initialization event and schedule heartbeat and shutdown events
     *
     * @param tracker a Tracker instance
     */
-  def initializeSnowplowTracking(tracker: Tracker) {
+  def initializeSnowplowTracking(tracker: Tracker): Unit = {
     trackApplicationInitialization(tracker)
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run(): Unit = {
+      override def run(): Unit =
         trackApplicationShutdown(tracker)
-      }
     })
 
     val heartbeatThread = new Thread {
-      override def run(): Unit = {
+      override def run(): Unit =
         while (true) {
           trackApplicationHeartbeat(tracker, HeartbeatInterval)
           Thread.sleep(HeartbeatInterval)
         }
-      }
     }
 
     heartbeatThread.start()
@@ -109,26 +105,24 @@ object Tracking {
     *
     * @param tracker a Tracker instance
     */
-  private def trackApplicationInitialization(tracker: Tracker) {
+  private def trackApplicationInitialization(tracker: Tracker): Unit =
     tracker.trackUnstructEvent(
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kafka/app_initialized/jsonschema/1-0-0",
         JObject(Nil)
       ))
-  }
 
   /**
     * Send an application_shutdown unstructured event
     *
     * @param tracker a Tracker instance
     */
-  def trackApplicationShutdown(tracker: Tracker) {
+  def trackApplicationShutdown(tracker: Tracker): Unit =
     tracker.trackUnstructEvent(
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kafka/app_shutdown/jsonschema/1-0-0",
         JObject(Nil)
       ))
-  }
 
   /**
     * Send a heartbeat unstructured event
@@ -136,12 +130,10 @@ object Tracking {
     * @param tracker a Tracker instance
     * @param heartbeatInterval Time between heartbeats in milliseconds
     */
-  private def trackApplicationHeartbeat(tracker: Tracker,
-                                        heartbeatInterval: Long) {
+  private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long): Unit =
     tracker.trackUnstructEvent(
       SelfDescribingJson(
         "iglu:com.snowplowanalytics.monitoring.kafka/app_heartbeat/jsonschema/1-0-0",
         "interval" -> heartbeatInterval
       ))
-  }
 }

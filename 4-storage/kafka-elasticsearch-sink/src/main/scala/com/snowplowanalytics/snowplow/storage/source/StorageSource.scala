@@ -4,7 +4,7 @@ package source
 import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.kafka.scaladsl.Consumer
 import akka.NotUsed
-import akka.stream.scaladsl.{Flow, Source, Sink}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 
 sealed trait SourceType
 

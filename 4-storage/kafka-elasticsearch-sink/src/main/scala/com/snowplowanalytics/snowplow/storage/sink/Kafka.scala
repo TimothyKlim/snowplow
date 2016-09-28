@@ -34,17 +34,14 @@ import akka.stream.Materializer
 import akka.stream.scaladsl._
 
 // Kafka
-import org.apache.kafka.common.serialization.{
-  ByteArraySerializer,
-  StringSerializer
-}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.apache.kafka.clients.producer.ProducerRecord
 
 // Concurrent libraries
-import scala.concurrent.{Future, Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -56,10 +53,9 @@ import org.slf4j.LoggerFactory
   * @param topic Kafka stream name
   * @param config Configuration for the Kafka stream
   */
-final class KafkaSink(config: AppConfig)(implicit sys: ActorSystem,
-                                         mat: Materializer) {
+final class KafkaSink(config: AppConfig)(implicit sys: ActorSystem, mat: Materializer) {
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   type Record = ProducerRecord[String, Array[Byte]]
 

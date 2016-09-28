@@ -20,9 +20,9 @@ final class Elastic(config: AppConfig)(implicit ec: ExecutionContext)
     with LazyLogging {
   val sinkType = SinkType.Elastic
 
-  private val indexName = config.elasticDocumentIndex
+  private val indexName     = config.elasticDocumentIndex
   private val indexTypeName = config.elasticDocumentType
-  private val indexType = indexName / indexTypeName
+  private val indexType     = indexName / indexTypeName
 
   private val client: ElasticClient = {
     val settings = Settings.settingsBuilder
@@ -36,40 +36,32 @@ final class Elastic(config: AppConfig)(implicit ec: ExecutionContext)
 
   private def mapRecord(record: JsonRecord): BulkCompatibleDefinition = {
     val doc = JsonDocumentSource(compact(render(record.json)))
-    val q = index.into(indexType)
+    val q   = index.into(indexType)
     record.id.map(q.id).getOrElse(q).doc(doc)
   }
 
   private lazy val createIndex =
-    client
-      .execute(create.index(indexName).mappings(mapping(indexTypeName)))
-      .recover {
-        case e: Throwable =>
-          logger.error(e.getMessage, e)
-      }
+    client.execute(create.index(indexName).mappings(mapping(indexTypeName))).recover {
+      case e: Throwable =>
+        logger.error(e.getMessage, e)
+    }
 
   val flow =
-    Flow[(JsonRecord, Option[CommittableOffset])]
-      .groupedWithin(100, 1.second)
-      .mapAsync(3) { xs =>
-        println(s"xs: $xs")
-        val (records, offset) =
-          xs.foldLeft(
-            (List.empty[BulkCompatibleDefinition],
-             CommittableOffsetBatch.empty)) {
-            case ((evs, batch), (rec, offset)) =>
-              (mapRecord(rec) :: evs,
-               offset.map(batch.updated).getOrElse(batch))
-          }
+    Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 1.second).mapAsync(3) { xs =>
+      println(s"xs: $xs")
+      val (records, offset) =
+        xs.foldLeft((List.empty[BulkCompatibleDefinition], CommittableOffsetBatch.empty)) {
+          case ((evs, batch), (rec, offset)) =>
+            (mapRecord(rec) :: evs, offset.map(batch.updated).getOrElse(batch))
+        }
 
-        def insertRecords() = insert(records, offset)
+      def insertRecords() = insert(records, offset)
 
-        if (createIndex.isCompleted) insertRecords()
-        else createIndex.flatMap(_ => insertRecords())
-      }
+      if (createIndex.isCompleted) insertRecords()
+      else createIndex.flatMap(_ => insertRecords())
+    }
 
-  private def insert(records: List[BulkCompatibleDefinition],
-                     offset: CommittableOffsetBatch) =
+  private def insert(records: List[BulkCompatibleDefinition], offset: CommittableOffsetBatch) =
     client.execute(bulk(records)).fast.map(_ => offset).recover {
       case e: Throwable =>
         logger.error(e.getMessage, e)

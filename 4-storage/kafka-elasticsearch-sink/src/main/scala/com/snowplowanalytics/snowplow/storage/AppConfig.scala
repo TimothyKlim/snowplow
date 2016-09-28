@@ -16,7 +16,7 @@ final case class AppConfig(
 object AppConfig {
   def apply(config: Config): AppConfig = {
     val elastic = config.getConfig("elasticsearch")
-    val kafka = config.getConfig("kafka")
+    val kafka   = config.getConfig("kafka")
 
     AppConfig(
       kafkaHost = kafka.getString("host"),

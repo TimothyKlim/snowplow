@@ -2,7 +2,10 @@ lazy val akkaStreamKafkaVersion      = "0.12"
 lazy val akkaVersion                 = "2.4.10"
 lazy val elastic4sVersion            = "2.3.1"
 lazy val igluClientVersion           = "0.3.2"
+lazy val postgresqlVersion           = "9.4.1211"
 lazy val scalazVersion               = "7.2.6"
+lazy val slickPgVersion              = "0.15.0-M2"
+lazy val slickVersion                = "3.2.0-M1"
 lazy val snowplowCommonEnrichVersion = "0.25.0-kt"
 lazy val snowplowTrackerVersion      = "0.4.0-kt"
 
@@ -92,6 +95,7 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
   .settings(
     libraryDependencies ++= Seq(
       "ch.qos.logback"             % "logback-classic"         % "1.1.7",
+      "com.github.tminglei"        %% "slick-pg"               % slickPgVersion,
       "com.sksamuel.elastic4s"     %% "elastic4s-core"         % elastic4sVersion,
       "com.snowplowanalytics"      % "iglu-scala-client"       % igluClientVersion,
       "com.snowplowanalytics"      %% "snowplow-common-enrich" % snowplowCommonEnrichVersion intransitive,
@@ -100,8 +104,13 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
       "com.typesafe.akka"          %% "akka-slf4j"             % akkaVersion,
       "com.typesafe.akka"          %% "akka-stream-kafka"      % akkaStreamKafkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging"          % "3.5.0",
+      "com.typesafe.slick"         %% "slick"                  % slickVersion,
+      "com.typesafe.slick"         %% "slick-hikaricp"         % slickVersion exclude ("com.zaxxer", "HikariCP-java6"),
+      "com.zaxxer"                 % "HikariCP"                % "2.5.1",
+      "io.fcomb"                   %% "db-migration"           % "0.3.1",
       "org.apache.commons"         % "commons-lang3"           % "3.4" % "compile",
       "org.clapper"                %% "argot"                  % "1.0.4",
+      "org.postgresql"             % "postgresql"              % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
       "org.scalaz"                 %% "scalaz-core"            % scalazVersion,
       "org.specs2"                 %% "specs2"                 % "3.7" % "test",
       "org.typelevel"              %% "scalaz-specs2"          % "0.4.0" % "test"

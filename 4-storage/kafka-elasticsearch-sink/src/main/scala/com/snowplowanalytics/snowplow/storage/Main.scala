@@ -46,10 +46,9 @@ object Main extends App {
     programName = generated.Settings.name,
     compactUsage = true,
     preUsage = Some(
-      "%s: Version %s. Copyright (c) 2013, %s.".format(
-        generated.Settings.name,
-        generated.Settings.version,
-        generated.Settings.organization))
+      "%s: Version %s. Copyright (c) 2013, %s.".format(generated.Settings.name,
+                                                       generated.Settings.version,
+                                                       generated.Settings.organization))
   )
 
   val defaultConfig = ConfigFactory.load()
@@ -58,7 +57,7 @@ object Main extends App {
   val config = parser.option[Config](List("config"),
                                      "filename",
                                      """
-        |Configuration file""".stripMargin) { (c, opt) =>
+                                       |Configuration file""".stripMargin) { (c, opt) =>
     val file = new File(c)
     if (file.exists) ConfigFactory.parseFile(file)
     else {
@@ -70,8 +69,7 @@ object Main extends App {
   parser.parse(args)
 
   val configValue: Config = config.value
-    .getOrElse(
-      throw new RuntimeException("--config argument must be provided"))
+    .getOrElse(throw new RuntimeException("--config argument must be provided"))
     .resolve
     .getConfig("sink")
 
@@ -85,9 +83,7 @@ object Main extends App {
 
   val tracker =
     if (configValue.hasPath("monitoring.snowplow"))
-      Tracking
-        .initializeTracker(configValue.getConfig("monitoring.snowplow"))
-        .some
+      Tracking.initializeTracker(configValue.getConfig("monitoring.snowplow")).some
     else None
 
   val rawConf = config.value
@@ -101,7 +97,7 @@ object Main extends App {
   val finalConfig = AppConfig(configValue)
 
   lazy val goodSink = configValue.getString("sink.good") match {
-    case "stdout" => ??? // Some(new StdouterrSink)
+    case "stdout"        => ??? // Some(new StdouterrSink)
     case "elasticsearch" => None
   }
 
@@ -109,8 +105,8 @@ object Main extends App {
     // case "stderr" => new StdouterrSink
     // case "none" => new NullSink
     case "kafka" =>
-      val kafka = configValue.getConfig("kafka")
-      val kafkaSink = kafka.getConfig("out")
+      val kafka         = configValue.getConfig("kafka")
+      val kafkaSink     = kafka.getConfig("out")
       val kafkaSinkName = kafkaSink.getString("stream-name")
       // new KafkaSink(finalConfig.AWS_CREDENTIALS_PROVIDER,
       //               kinesisSinkEndpoint,
@@ -137,7 +133,7 @@ object Main extends App {
   val inStream = new Kafka(finalConfig)
 
   inStream.source.map {
-    case (msg, offset) => (Transformer.transform(msg), offset)
+    case (msg, offset)                         => (Transformer.transform(msg), offset)
   }.collect { case ((_, Success(rec)), offset) => (rec, offset) }
     .via(new sink.Elastic(finalConfig).flow)
     .runWith(inStream.commitSink)

@@ -7,13 +7,12 @@ import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.kafka.scaladsl.Consumer
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Source, Sink}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.serialization.StringDeserializer
 import scala.concurrent.duration._
 
-final class Kafka(config: AppConfig)(implicit sys: ActorSystem,
-                                     mat: Materializer)
+final class Kafka(config: AppConfig)(implicit sys: ActorSystem, mat: Materializer)
     extends StorageSource {
   val sourceType = SourceType.Kafka
 
@@ -31,7 +30,5 @@ final class Kafka(config: AppConfig)(implicit sys: ActorSystem,
       .map(msg => (msg.record.value, Some(msg.committableOffset)))
 
   val commitSink: Sink[CommittableOffsetBatch, NotUsed] =
-    Flow[CommittableOffsetBatch]
-      .mapAsync(3)(_.commitScaladsl())
-      .to(Sink.ignore)
+    Flow[CommittableOffsetBatch].mapAsync(3)(_.commitScaladsl()).to(Sink.ignore)
 }

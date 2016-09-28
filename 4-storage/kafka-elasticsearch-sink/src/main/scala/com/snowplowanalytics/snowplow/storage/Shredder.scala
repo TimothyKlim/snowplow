@@ -51,8 +51,7 @@ object Shredder {
     */
   // TODO: move this to shared storage/shredding utils
   // See https://github.com/snowplow/snowplow/issues/1189
-  def fixSchema(prefix: String,
-                schema: String): ValidationNel[String, String] = {
+  def fixSchema(prefix: String, schema: String): ValidationNel[String, String] =
     schema match {
       case schemaPattern(organization, name, schemaVer) => {
 
@@ -74,7 +73,6 @@ object Shredder {
           .format(schema, schemaPattern.toString)
           .failureNel
     }
-  }
 
   /**
     * Convert a contexts JSON to an Elasticsearch-compatible JObject
@@ -151,11 +149,9 @@ object Shredder {
       * @return List of validated tuples containing a fixed schema string and the original data JObject
       */
     @tailrec
-    def innerParseContexts(
-        contextJsons: List[JValue],
-        accumulator: List[ValidationNel[String, (String, JValue)]])
-      : List[ValidationNel[String, (String, JValue)]] = {
-
+    def innerParseContexts(contextJsons: List[JValue],
+                           accumulator: List[ValidationNel[String, (String, JValue)]])
+      : List[ValidationNel[String, (String, JValue)]] =
       contextJsons match {
         case Nil => accumulator
         case head :: tail => {
@@ -178,7 +174,6 @@ object Shredder {
           innerParseContexts(tail, schemaDataPair :: accumulator)
         }
       }
-    }
 
     val json = parse(contexts, false)
     val data = json \ "data"
@@ -190,8 +185,7 @@ object Shredder {
           innerParseContexts(ls, Nil).sequenceU
 
         // Group contexts with the same schema together
-        innerContexts.map(
-          _.groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2))))
+        innerContexts.map(_.groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2))))
       }
       case _ => "Could not extract contexts data field as an array".failureNel
     }
@@ -222,8 +216,8 @@ object Shredder {
     * @return Unstructured event JSON in an Elasticsearch-compatible format
     */
   def parseUnstruct(unstruct: String): ValidationNel[String, JObject] = {
-    val json = parse(unstruct, false)
-    val data = json \ "data"
+    val json   = parse(unstruct, false)
+    val data   = json \ "data"
     val schema = data \ "schema"
     val innerData: ValidationNel[String, JValue] = data \ "data" match {
       case JNothing =>
