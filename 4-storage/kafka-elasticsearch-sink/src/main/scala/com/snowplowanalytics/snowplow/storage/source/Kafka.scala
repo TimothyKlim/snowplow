@@ -12,17 +12,17 @@ import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.serialization.StringDeserializer
 import scala.concurrent.duration._
 
-final class Kafka(config: AppConfig)(implicit sys: ActorSystem, mat: Materializer)
+final class Kafka(config: KafkaConfig)(implicit sys: ActorSystem, mat: Materializer)
     extends StorageSource {
   val sourceType = SourceType.Kafka
 
   private val consumerSettings =
     ConsumerSettings(sys, new StringDeserializer, new StringDeserializer)
-      .withBootstrapServers(config.kafkaHost)
-      .withGroupId(config.kafkaGroup)
+      .withBootstrapServers(config.host)
+      .withGroupId(config.group)
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
-  private val topicName = Subscriptions.topics(config.kafkaTopic)
+  private val topicName = Subscriptions.topics(config.topic)
 
   val source: Source[(String, Option[CommittableOffset]), Consumer.Control] =
     Consumer

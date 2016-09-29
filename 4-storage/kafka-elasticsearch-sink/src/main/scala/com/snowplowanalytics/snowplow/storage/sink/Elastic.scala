@@ -10,27 +10,26 @@ import com.sksamuel.elastic4s.source.JsonDocumentSource
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import com.typesafe.scalalogging.LazyLogging
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.settings.Settings
 import org.json4s.jackson.JsonMethods._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-final class Elastic(config: AppConfig)(implicit ec: ExecutionContext)
+final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
     extends StorageSink
     with LazyLogging {
   val sinkType = SinkType.Elastic
 
-  private val indexName     = config.elasticDocumentIndex
-  private val indexTypeName = config.elasticDocumentType
+  private val indexName     = config.documentIndex
+  private val indexTypeName = config.documentType
   private val indexType     = indexName / indexTypeName
 
   private val client: ElasticClient = {
     val settings = Settings.settingsBuilder
-      .put("cluster.name", config.elasticCluster)
+      .put("cluster.name", config.cluster)
       .put("client.transport.sniff", false)
       .build
     val client =
-      ElasticsearchClientUri(config.elasticEndpoint, config.elasticPort)
+      ElasticsearchClientUri(config.endpoint, config.port)
     ElasticClient.transport(settings, client)
   }
 
@@ -40,7 +39,7 @@ final class Elastic(config: AppConfig)(implicit ec: ExecutionContext)
     record.id.map(q.id).getOrElse(q).doc(doc)
   }
 
-  private lazy val createIndex =
+  private lazy val createIndex: Future[_] =
     client.execute(create.index(indexName).mappings(mapping(indexTypeName))).recover {
       case e: Throwable =>
         logger.error(e.getMessage, e)
@@ -48,7 +47,6 @@ final class Elastic(config: AppConfig)(implicit ec: ExecutionContext)
 
   val flow =
     Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 1.second).mapAsync(3) { xs =>
-      println(s"xs: $xs")
       val (records, offset) =
         xs.foldLeft((List.empty[BulkCompatibleDefinition], CommittableOffsetBatch.empty)) {
           case ((evs, batch), (rec, offset)) =>

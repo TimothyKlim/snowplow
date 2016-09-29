@@ -53,15 +53,12 @@ import org.slf4j.LoggerFactory
   * @param topic Kafka stream name
   * @param config Configuration for the Kafka stream
   */
-final class KafkaSink(config: AppConfig)(implicit sys: ActorSystem, mat: Materializer) {
-  private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{debug, error, info, trace}
-
+final class KafkaSink(config: KafkaConfig)(implicit sys: ActorSystem, mat: Materializer) {
   type Record = ProducerRecord[String, Array[Byte]]
 
   private val producerSettings =
     ProducerSettings(sys, new StringSerializer, new ByteArraySerializer)
-      .withBootstrapServers(config.kafkaHost)
+      .withBootstrapServers(config.host)
 
   private val consumer =
     Producer.plainSink[String, Array[Byte]](producerSettings)

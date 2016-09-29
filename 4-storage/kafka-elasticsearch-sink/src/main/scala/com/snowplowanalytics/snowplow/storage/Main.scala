@@ -130,12 +130,17 @@ object Main extends App {
     case _ => "Source must be set to 'kafka'".failure
   }
 
-  val inStream = new Kafka(finalConfig)
+  val inStream = finalConfig.source match {
+    case KafkaSourceConfig(config) => new source.Kafka(config)
+  }
+  val outStream = finalConfig.sink match {
+    case ElasticSinkConfig(config) => new sink.Elastic(config)
+  }
 
   inStream.source.map {
     case (msg, offset)                         => (Transformer.transform(msg), offset)
   }.collect { case ((_, Success(rec)), offset) => (rec, offset) }
-    .via(new sink.Elastic(finalConfig).flow)
+    .via(outStream.flow)
     .runWith(inStream.commitSink)
 
   Await.result(sys.whenTerminated, Duration.Inf)
