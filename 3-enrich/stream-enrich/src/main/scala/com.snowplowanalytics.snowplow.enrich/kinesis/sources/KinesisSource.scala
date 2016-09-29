@@ -109,7 +109,7 @@ final class KinesisSource(
 
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
-      sink.get.get // TODO: yech, yech
+      sink.get // TODO: yech, yech
     )
     val worker = new Worker(
       rawEventProcessorFactory,

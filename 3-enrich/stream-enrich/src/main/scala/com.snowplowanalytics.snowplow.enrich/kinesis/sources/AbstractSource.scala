@@ -136,11 +136,7 @@ abstract class AbstractSource(
     enrichmentRegistry: EnrichmentRegistry,
     tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer) {
 
-  val MaxRecordSize = if (config.sink == Sink.Kinesis) {
-    Some(MaxBytes)
-  } else {
-    None
-  }
+  val MaxRecordSize = if (config.sink == Sink.Kinesis) Some(MaxBytes) else None
 
   /**
     * Never-ending processing loop over source stream.
@@ -163,14 +159,12 @@ abstract class AbstractSource(
     * @return ThreadLocal sink
     */
   private def getThreadLocalSink(inputType: InputType.InputType) =
-    new ThreadLocal[Option[ISink]] {
-      override def initialValue = config.sink match {
-        case Sink.Kafka => new KafkaSink(config, inputType).some
-        case Sink.Kinesis =>
-          new KinesisSink(kinesisProvider, config, inputType, tracker).some
-        case Sink.Stdouterr => new StdouterrSink(inputType).some
-        case Sink.Test => None
-      }
+    config.sink match {
+      case Sink.Kafka => new KafkaSink(config, inputType).some
+      case Sink.Kinesis =>
+        new KinesisSink(kinesisProvider, config, inputType, tracker).some
+      case Sink.Stdouterr => new StdouterrSink(inputType).some
+      case Sink.Test => None
     }
 
   implicit val resolver: Resolver = igluResolver
@@ -200,21 +194,16 @@ abstract class AbstractSource(
                                 s"kinesis-${generated.Settings.version}",
                                 new DateTime(System.currentTimeMillis),
                                 canonicalInput)
-    processedEvents.map(validatedMaybeEvent => {
-      validatedMaybeEvent match {
-        case Success(co) =>
-          (tabSeparateEnrichedEvent(co),
-           if (config.useIpAddressAsPartitionKey) {
-             co.user_ipaddress
-           } else {
-             UUID.randomUUID.toString
-           }).success
-        case Failure(errors) => {
-          val line = new String(Base64.encodeBase64(binaryData), UTF_8)
-          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).failure
-        }
-      }
-    })
+    processedEvents.map {
+      case Success(co) =>
+        val pk =
+          if (config.useIpAddressAsPartitionKey) co.user_ipaddress
+          else UUID.randomUUID.toString
+        (tabSeparateEnrichedEvent(co), pk).success
+      case Failure(errors) =>
+        val line = new String(Base64.encodeBase64(binaryData), UTF_8)
+        (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).failure
+    }
   }
 
   /**
@@ -251,20 +240,17 @@ abstract class AbstractSource(
     } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
     val successesTriggeredFlush =
-      sink.get.map(_.storeEnrichedEvents(smallEnoughSuccesses))
+      sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
     val failuresTriggeredFlush =
-      badSink.get.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
+      badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
     if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(
           true)) {
 
       // Block until the records have been sent to Kinesis
-      sink.get.foreach(_.flush)
-      badSink.get.foreach(_.flush)
+      sink.foreach(_.flush)
+      badSink.foreach(_.flush)
       true
-    } else {
-      false
-    }
-
+    } else false
   }
 
   /**

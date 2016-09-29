@@ -107,9 +107,6 @@ object KinesisEnrichApp extends App {
   val rawConf =
     config.value.map(_.withFallback(defaultConfig)).getOrElse(defaultConfig)
 
-  implicit val system = ActorSystem.create("scala-stream-enrich", rawConf)
-  implicit val mat = ActorMaterializer()
-
   // Mandatory resolver argument
   val resolverOption =
     parser.option[String](List("resolver"),
@@ -149,13 +146,13 @@ object KinesisEnrichApp extends App {
 
   val enrichmentConfig = extractEnrichmentConfig(enrichmentsOption.value)
 
+  implicit val system = ActorSystem.create("scala-stream-enrich", rawConf)
+  implicit val mat = ActorMaterializer()
+
   implicit val igluResolver: Resolver = (for {
     json <- JsonUtils.extractJson("", parsedResolver)
     resolver <- Resolver.parse(json).leftMap(_.toString)
-  } yield resolver) fold (
-      e => throw new RuntimeException(e),
-      s => s
-    )
+  } yield resolver) fold (e => throw new RuntimeException(e), identity)
 
   val registry: EnrichmentRegistry = (for {
     registryConfig <- JsonUtils.extractJson("", enrichmentConfig)

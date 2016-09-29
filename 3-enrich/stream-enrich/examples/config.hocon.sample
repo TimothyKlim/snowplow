@@ -29,7 +29,7 @@ enrich {
 
   kafka {
     host = "localhost:9092"
-    group = "group1"
+    group = "stream-enrich"
   }
 
   # AWS credentials
@@ -46,7 +46,7 @@ enrich {
 
   streams {
     in: {
-      raw: "{{enrichStreamsInRaw}}"
+      raw: "collector-good"
 
       # Maximum number of records to get from Kinesis per call to GetRecords
       maxRecords: 10000
@@ -58,27 +58,27 @@ enrich {
       # - the time in milliseconds since it was last emptied exceeds time-limit when
       #   a new event enters the buffer
       buffer: {
-        byte-limit: {{enrichStreamsBufferByteThreshold}}
-        record-limit: {{enrichStreamsBufferRecordThreshold}}
-        time-limit: {{enrichStreamsBufferTimeThreshold}}
+        byte-limit: 100000
+        record-limit: 100000
+        time-limit: 100
       }
     }
 
     out: {
-      enriched: "{{enrichStreamsOutEnriched}}"
-      bad: "{{enrichStreamsOutBad}}"
+      enriched: "enriched-good"
+      bad: "enriched-bad"
 
       # Minimum and maximum backoff periods
       # - Units: Milliseconds
       backoffPolicy: {
-        minBackoff: {{enrichStreamsOutMinBackoff}}
-        maxBackoff: {{enrichStreamsOutMaxBackoff}}
+        minBackoff: 100
+        maxBackoff: 1000
       }
     }
 
     # "app-name" is used for a DynamoDB table to maintain stream state.
     # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
-    app-name: "{{enrichStreamsAppName}}"
+    app-name: "scala-enrich"
 
     # LATEST: most recent data.
     # TRIM_HORIZON: oldest available data.

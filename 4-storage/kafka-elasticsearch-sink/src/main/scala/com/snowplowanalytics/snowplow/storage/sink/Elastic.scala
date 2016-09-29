@@ -10,6 +10,7 @@ import com.sksamuel.elastic4s.source.JsonDocumentSource
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import com.typesafe.scalalogging.LazyLogging
 import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.indices.IndexAlreadyExistsException
 import org.json4s.jackson.JsonMethods._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,8 +42,8 @@ final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
 
   private lazy val createIndex: Future[_] =
     client.execute(create.index(indexName).mappings(mapping(indexTypeName))).recover {
-      case e: Throwable =>
-        logger.error(e.getMessage, e)
+      case e: IndexAlreadyExistsException => ()
+      case e: Throwable                   => logger.error(e.getMessage, e)
     }
 
   val flow =

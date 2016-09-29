@@ -39,8 +39,8 @@ storage {
 
     kafka {
       host = "localhost:9092"
-      topic = "enriched"
-      group = "kafka-elasticsearch-sink121"
+      topic = "enriched-good"
+      group = "kafka-elasticsearch-sink"
     }
   }
 

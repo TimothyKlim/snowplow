@@ -1,4 +1,5 @@
 3-enrich/stream-enrich/config
+3-enrich/stream-enrich/ip_geo
 
 target/
 

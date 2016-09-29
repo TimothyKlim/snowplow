@@ -17,6 +17,8 @@ import org.apache.kafka.common.serialization.{
 }
 import org.apache.kafka.clients.producer.ProducerRecord
 
+object KafkaSink {}
+
 final class KafkaSink(config: KinesisEnrichConfig,
                       inputType: InputType.InputType)(
     implicit sys: ActorSystem,
