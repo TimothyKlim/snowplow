@@ -71,7 +71,7 @@ object Main extends App {
   val configValue: Config = config.value
     .getOrElse(throw new RuntimeException("--config argument must be provided"))
     .resolve
-    .getConfig("sink")
+    .getConfig("storage")
 
   lazy val streamType = ??? /*configValue.getString("stream-type") match {
     case "good" => StreamType.Good
@@ -90,45 +90,11 @@ object Main extends App {
     .map(_.withFallback(defaultConfig))
     .getOrElse(throw new RuntimeException("--config option must be provided"))
 
+  val finalConfig = AppConfig(configValue)
+
   implicit val sys = ActorSystem.create("kafka-elasticsearch-sink", rawConf)
   implicit val mat = ActorMaterializer()
   import sys.dispatcher
-
-  val finalConfig = AppConfig(configValue)
-
-  lazy val goodSink = configValue.getString("sink.good") match {
-    case "stdout"        => ??? // Some(new StdouterrSink)
-    case "elasticsearch" => None
-  }
-
-  lazy val badSink = configValue.getString("sink.bad") match {
-    // case "stderr" => new StdouterrSink
-    // case "none" => new NullSink
-    case "kafka" =>
-      val kafka         = configValue.getConfig("kafka")
-      val kafkaSink     = kafka.getConfig("out")
-      val kafkaSinkName = kafkaSink.getString("stream-name")
-      // new KafkaSink(finalConfig.AWS_CREDENTIALS_PROVIDER,
-      //               kinesisSinkEndpoint,
-      //               kinesisSinkName,
-      //               kinesisSinkShards)
-      ???
-  }
-
-  lazy val executor = configValue.getString("source") match {
-    // Read records from Kafka
-    // case "kafka" =>
-    //   new ElasticsearchSinkExecutor(streamType,
-    //                                 documentIndex,
-    //                                 documentType,
-    //                                 finalConfig,
-    //                                 goodSink,
-    //                                 badSink,
-    //                                 tracker,
-    //                                 maxConnectionTime,
-    //                                 clientType).success
-    case _ => "Source must be set to 'kafka'".failure
-  }
 
   val inStream = finalConfig.source match {
     case KafkaSourceConfig(config) => new source.Kafka(config)

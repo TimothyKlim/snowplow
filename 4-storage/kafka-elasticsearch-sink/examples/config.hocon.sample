@@ -14,7 +14,7 @@
 # This file (application.conf.example) contains a template with
 # configuration options for the Kafka Elasticsearch Sink.
 
-sink {
+storage {
 
   # Sources currently supported are:
   # 'kafka' for reading records from a Kafka stream
@@ -24,7 +24,7 @@ sink {
   # source = {{sinkElasticsearchInputType}}
 
   # Where to write good and bad records
-  sink {
+  source {
     # Sinks currently supported are:
     # 'elasticsearch' for writing good records to Elasticsearch
     # 'stdout' for writing good records to stdout
@@ -35,23 +35,28 @@ sink {
     # 'stderr' for writing bad records to stderr
     # 'none' for ignoring bad records
     # "bad": {{sinkElasticsearchBadOutputDestination}}
+    type = "kafka"
+
+    kafka {
+      host = "localhost:9092"
+      topic = "enriched"
+      group = "kafka-elasticsearch-sink121"
+    }
   }
 
   # "good" for a stream of successfully enriched events
   # "bad" for a stream of bad events
   # stream-type: "{{sinkKafkaInStreamType}}"
 
-  kafka {
-    host = "localhost:9092"
-    topic = "enriched"
-    group = "kafka-elasticsearch-sink"
-  }
+  sink {
+    type = "elastic"
 
-  elasticsearch {
-    endpoint: "127.0.0.1"
-    cluster: "elasticsearch"
-    port: 9300
-    document-index: "events"
-    document-type: "event"
+    elastic {
+      endpoint: "127.0.0.1"
+      cluster: "elasticsearch"
+      port: 9300
+      document-index: "events"
+      document-type: "event"
+    }
   }
 }

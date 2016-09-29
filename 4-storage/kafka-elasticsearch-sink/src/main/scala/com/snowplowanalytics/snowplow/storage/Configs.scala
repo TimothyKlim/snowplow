@@ -29,7 +29,7 @@ final case class ElasticConfig(
 
 object ElasticConfig {
   def apply(config: Config): ElasticConfig = {
-    val elasticConf = config.getConfig("elasticsearch")
+    val elasticConf = config.getConfig("elastic")
     ElasticConfig(
       endpoint = elasticConf.getString("endpoint"),
       cluster = elasticConf.getString("cluster"),
@@ -81,8 +81,8 @@ final case class AppConfig(
 
 object AppConfig {
   def apply(config: Config): AppConfig = {
-    val source = SourceConfig(config.getConfig("stream.source"))
-    val sink   = SinkConfig(config.getConfig("stream.sink"))
+    val source = SourceConfig(config.getConfig("source"))
+    val sink   = SinkConfig(config.getConfig("sink"))
     AppConfig(source, sink)
   }
 }

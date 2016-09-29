@@ -46,17 +46,18 @@ final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
     }
 
   val flow =
-    Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 1.second).mapAsync(3) { xs =>
-      val (records, offset) =
-        xs.foldLeft((List.empty[BulkCompatibleDefinition], CommittableOffsetBatch.empty)) {
-          case ((evs, batch), (rec, offset)) =>
-            (mapRecord(rec) :: evs, offset.map(batch.updated).getOrElse(batch))
-        }
+    Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 250.millis).mapAsync(6) {
+      xs =>
+        val (records, offset) =
+          xs.foldLeft((List.empty[BulkCompatibleDefinition], CommittableOffsetBatch.empty)) {
+            case ((evs, batch), (rec, offset)) =>
+              (mapRecord(rec) :: evs, offset.map(batch.updated).getOrElse(batch))
+          }
 
-      def insertRecords() = insert(records, offset)
+        def insertRecords() = insert(records, offset)
 
-      if (createIndex.isCompleted) insertRecords()
-      else createIndex.flatMap(_ => insertRecords())
+        if (createIndex.isCompleted) insertRecords()
+        else createIndex.flatMap(_ => insertRecords())
     }
 
   private def insert(records: List[BulkCompatibleDefinition], offset: CommittableOffsetBatch) =
