@@ -144,7 +144,7 @@ abstract class AbstractSource(
   def run(): Unit
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
-  protected val kinesisProvider = config.credentialsProvider
+  protected lazy val kinesisProvider = config.credentialsProvider
 
   // Initialize the sink to output enriched events to.
   protected val sink = getThreadLocalSink(InputType.Good)
