@@ -11,7 +11,6 @@ lazy val snowplowTrackerVersion      = "0.4.0-kt"
 
 lazy val buildSettings = Seq(
   organization := "com.snowplowanalytics",
-  version := "0.8.0-kt",
   description := "Kafka sink for Elasticsearch",
   scalaVersion := "2.11.8",
   scalafmtConfig := Some(file(".scalafmt.conf"))
