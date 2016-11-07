@@ -92,6 +92,9 @@ object Main extends App {
 
   val finalConfig = AppConfig(configValue)
 
+  org.json4s.jackson.JsonMethods.mapper
+    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+
   implicit val sys = ActorSystem.create("kafka-elasticsearch-sink", rawConf)
   implicit val mat = ActorMaterializer()
   import sys.dispatcher
@@ -100,7 +103,8 @@ object Main extends App {
     case KafkaSourceConfig(config) => new source.Kafka(config)
   }
   val outStream = finalConfig.sink match {
-    case ElasticSinkConfig(config) => new sink.Elastic(config)
+    case ElasticSinkConfig(config)  => new sink.Elastic(config)
+    case PostgresSinkConfig(config) => new sink.Postgres(config)
   }
 
   inStream.source.map {

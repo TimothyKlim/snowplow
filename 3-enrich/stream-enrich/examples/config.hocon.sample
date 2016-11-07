@@ -32,70 +32,12 @@ enrich {
     group = "stream-enrich"
   }
 
-  # AWS credentials
-  #
-  # If both are set to 'default', use the default AWS credentials provider chain.
-  #
-  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
-  #
-  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-  aws {
-    access-key: "iam"
-    secret-key: "iam"
-  }
-
   streams {
-    in: {
-      raw: "collector-good"
+    in.raw = "collector-good"
 
-      # Maximum number of records to get from Kinesis per call to GetRecords
-      maxRecords: 10000
-
-      # After enrichment, are accumulated in a buffer before being sent to Kinesis.
-      # The buffer is emptied whenever:
-      # - the number of stored records reaches record-limit or
-      # - the combined size of the stored records reaches byte-limit or
-      # - the time in milliseconds since it was last emptied exceeds time-limit when
-      #   a new event enters the buffer
-      buffer: {
-        byte-limit: 100000
-        record-limit: 100000
-        time-limit: 100
-      }
-    }
-
-    out: {
-      enriched: "enriched-good"
-      bad: "enriched-bad"
-
-      # Minimum and maximum backoff periods
-      # - Units: Milliseconds
-      backoffPolicy: {
-        minBackoff: 100
-        maxBackoff: 1000
-      }
-    }
-
-    # "app-name" is used for a DynamoDB table to maintain stream state.
-    # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
-    app-name: "scala-enrich"
-
-    # LATEST: most recent data.
-    # TRIM_HORIZON: oldest available data.
-    # Note: This only effects the first run of this application
-    # on a stream.
-    initial-position = "TRIM_HORIZON"
-
-    region: "{{enrichStreamsRegion}}"
-  }
-
-  # Optional section for tracking endpoints
-  monitoring {
-    snowplow {
-      collector-uri: "{{collectorUri}}"
-      collector-port: 80
-      app-id: "{{enrichAppName}}"
-      method: "GET"
+    out {
+      enriched = "enriched-good"
+      bad = "enriched-bad"
     }
   }
 }

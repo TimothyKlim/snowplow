@@ -32,8 +32,8 @@ object Dependencies {
     val mimepull = "1.9.6"
     val awsSdk = "1.11.33"
     // Scala
-    val akka = "2.4.10"
-    val akkaStreamKafka = "0.12"
+    val akka = "2.4.12"
+    val akkaStreamKafka = "0.13"
     val argot = "1.0.4"
     val collectorPayload = "0.0.0"
     val commonsCodec = "1.10"

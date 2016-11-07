@@ -28,13 +28,13 @@ storage {
     # Sinks currently supported are:
     # 'elasticsearch' for writing good records to Elasticsearch
     # 'stdout' for writing good records to stdout
-    # "good": {{sinkElasticsearchGoodOutputDestination}}
+    # "good" = {{sinkElasticsearchGoodOutputDestination}}
 
     # Sinks currently supported are:
     # 'kafka' for writing bad records to Kafka
     # 'stderr' for writing bad records to stderr
     # 'none' for ignoring bad records
-    # "bad": {{sinkElasticsearchBadOutputDestination}}
+    # "bad" = {{sinkElasticsearchBadOutputDestination}}
     type = "kafka"
 
     kafka {
@@ -46,17 +46,23 @@ storage {
 
   # "good" for a stream of successfully enriched events
   # "bad" for a stream of bad events
-  # stream-type: "{{sinkKafkaInStreamType}}"
+  # stream-type = "{{sinkKafkaInStreamType}}"
 
   sink {
-    type = "elastic"
+    type = "postgres"
 
     elastic {
-      endpoint: "127.0.0.1"
-      cluster: "elasticsearch"
-      port: 9300
-      document-index: "events"
-      document-type: "event"
+      endpoint = "127.0.0.1"
+      cluster = "elasticsearch"
+      port = 9300
+      document-index = "events"
+      document-type = "event"
+    }
+
+    postgres {
+      url = "jdbc:postgresql://127.0.0.1:5432/snowplow"
+      user = "postgres"
+      password = ""
     }
   }
 }

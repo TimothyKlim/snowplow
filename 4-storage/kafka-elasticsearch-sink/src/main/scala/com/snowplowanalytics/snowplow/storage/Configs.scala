@@ -46,6 +46,17 @@ final case class PostgresConfig(
     password: String
 )
 
+object PostgresConfig {
+  def apply(config: Config): PostgresConfig = {
+    val postgresConf = config.getConfig("postgres")
+    PostgresConfig(
+      url = postgresConf.getString("url"),
+      user = postgresConf.getString("user"),
+      password = postgresConf.getString("password")
+    )
+  }
+}
+
 sealed trait SourceConfig
 
 object SourceConfig {
@@ -65,14 +76,16 @@ object SinkConfig {
   def apply(config: Config): SinkConfig =
     config.getString("type") match {
       // case "kafka" => KafkaSinkConfig(config)
-      case "elastic" => ElasticSinkConfig(ElasticConfig(config))
-      // case "postgres" => PostgresSinkConfig(config)
+      case "elastic"  => ElasticSinkConfig(ElasticConfig(config))
+      case "postgres" => PostgresSinkConfig(PostgresConfig(config))
       // case "stdout" => StdoutSinkConfig(config)
       case _ => throw new IllegalArgumentException("Unknown or empty `stream.sink.type`")
     }
 }
 
-final case class ElasticSinkConfig(elastic: ElasticConfig) extends SinkConfig
+final case class ElasticSinkConfig(config: ElasticConfig) extends SinkConfig
+
+final case class PostgresSinkConfig(config: PostgresConfig) extends SinkConfig
 
 final case class AppConfig(
     source: SourceConfig,

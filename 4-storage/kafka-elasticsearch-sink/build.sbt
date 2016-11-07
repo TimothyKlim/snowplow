@@ -1,11 +1,9 @@
-lazy val akkaStreamKafkaVersion      = "0.12"
-lazy val akkaVersion                 = "2.4.10"
-lazy val elastic4sVersion            = "2.3.1"
+lazy val akkaStreamKafkaVersion      = "0.13"
+lazy val akkaVersion                 = "2.4.12"
+lazy val elastic4sVersion            = "2.4.0"
 lazy val igluClientVersion           = "0.3.2"
-lazy val postgresqlVersion           = "9.4.1211"
-lazy val scalazVersion               = "7.2.6"
-lazy val slickPgVersion              = "0.15.0-M2"
-lazy val slickVersion                = "3.2.0-M1"
+lazy val postgresqlVersion           = "9.4.1212"
+lazy val scalazVersion               = "7.2.7"
 lazy val snowplowCommonEnrichVersion = "0.25.0-kt"
 lazy val snowplowTrackerVersion      = "0.4.0-kt"
 
@@ -72,8 +70,8 @@ lazy val javaRunOptions = Seq(
   "-server",
   "-XX:+UseAES",
   "-XX:+UseAESIntrinsics",
-  "-Xms2g",
-  "-Xmx2g",
+  "-Xms512m",
+  "-Xmx1g",
   "-Xss6m",
   "-XX:NewSize=512m",
   "-XX:+UseNUMA",
@@ -88,51 +86,48 @@ lazy val javaRunOptions = Seq(
 )
 
 lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
+  .enablePlugins(JavaAppPackaging)
   .settings(allSettings: _*)
   .settings(noPublishSettings)
-  .settings(SbtNativePackager.packageArchetype.java_application)
   .settings(
     libraryDependencies ++= Seq(
-      "ch.qos.logback"             % "logback-classic"         % "1.1.7",
-      "com.github.tminglei"        %% "slick-pg"               % slickPgVersion,
-      "com.sksamuel.elastic4s"     %% "elastic4s-core"         % elastic4sVersion,
-      "com.snowplowanalytics"      % "iglu-scala-client"       % igluClientVersion,
-      "com.snowplowanalytics"      %% "snowplow-common-enrich" % snowplowCommonEnrichVersion intransitive,
-      "com.snowplowanalytics"      %% "snowplow-scala-tracker" % snowplowTrackerVersion,
-      "com.typesafe"               % "config"                  % "1.3.1",
-      "com.typesafe.akka"          %% "akka-slf4j"             % akkaVersion,
-      "com.typesafe.akka"          %% "akka-stream-kafka"      % akkaStreamKafkaVersion,
-      "com.typesafe.scala-logging" %% "scala-logging"          % "3.5.0",
-      "com.typesafe.slick"         %% "slick"                  % slickVersion,
-      "com.typesafe.slick"         %% "slick-hikaricp"         % slickVersion exclude ("com.zaxxer", "HikariCP-java6"),
-      "com.zaxxer"                 % "HikariCP"                % "2.5.1",
-      "io.fcomb"                   %% "db-migration"           % "0.3.1",
-      "org.apache.commons"         % "commons-lang3"           % "3.4" % "compile",
-      "org.clapper"                %% "argot"                  % "1.0.4",
-      "org.postgresql"             % "postgresql"              % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
-      "org.scalaz"                 %% "scalaz-core"            % scalazVersion,
-      "org.specs2"                 %% "specs2"                 % "3.7" % "test",
-      "org.typelevel"              %% "scalaz-specs2"          % "0.4.0" % "test"
+      "ch.qos.logback"                 % "logback-classic"         % "1.1.7",
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.8.4",
+      "com.sksamuel.elastic4s"         %% "elastic4s-core"         % elastic4sVersion,
+      "com.snowplowanalytics"          % "iglu-scala-client"       % igluClientVersion,
+      "com.snowplowanalytics" %% "snowplow-common-enrich" % snowplowCommonEnrichVersion intransitive,
+      "com.snowplowanalytics"      %% "snowplow-scala-tracker"           % snowplowTrackerVersion,
+      "com.typesafe"               % "config"                            % "1.3.1",
+      "com.typesafe.akka"          %% "akka-slf4j"                       % akkaVersion,
+      "com.typesafe.akka"          %% "akka-stream-kafka"                % akkaStreamKafkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging"                    % "3.5.0",
+      "com.zaxxer"                 % "HikariCP"                          % "2.5.1",
+      "io.fcomb"                   %% "db-migration"                     % "0.3.3",
+      "org.apache.commons"         % "commons-lang3"                     % "3.4" % "compile",
+      "org.clapper"                %% "argot"                            % "1.0.4",
+      "org.postgresql"             % "postgresql"                        % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
+      "org.scalaz"                 %% "scalaz-core"                      % scalazVersion,
+      "org.tpolecat"               %% "doobie-core"                      % "0.3.0",
+      "org.specs2"                 %% "specs2"                           % "3.7" % "test",
+      "org.typelevel"              %% "scalaz-specs2"                    % "0.4.0" % "test"
     ),
     mainClass := Some("com.snowplowanalytics.snowplow.storage"),
     executableScriptName := "start",
     javaOptions in Universal ++= javaRunOptions.map(o => s"-J$o"),
     packageName in Universal := "dist",
     javaOptions in (Test, run) ++= javaRunOptions,
-    sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map {
-      (d, v, n, o) =>
-        val file = d / "settings.scala"
-        IO.write(file,
-                 """package com.snowplowanalytics.snowplow.storage.generated
-                   |object Settings {
-                   |  val organization = "%s"
-                   |  val version = "%s"
-                   |  val name = "%s"
-                   |}
-                   |""".stripMargin.format(o, v, n))
-        Seq(file)
-    },
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(file,
+               """package com.snowplowanalytics.snowplow.storage.generated
+                 |object Settings {
+                 |  val organization = "%s"
+                 |  val version = "%s"
+                 |  val name = "%s"
+                 |}
+                 |""".stripMargin.format(organization.value, version.value, name.value))
+      Seq(file)
+    }.taskValue,
     parallelExecution := true,
     fork in run := true
   )
-  .enablePlugins(SbtNativePackager)

@@ -37,7 +37,7 @@ object Dependencies {
     val logging = "1.2"
     val slf4j = "1.7.21"
     // Scala
-    val akka = "2.4.10"
+    val akka = "2.4.12"
     val argot = "1.0.4"
     val config = "1.3.0"
     val igluClient = "0.5.0-kt"
@@ -47,7 +47,7 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0"
     val snowplowTracker = "0.4.0-kt"
     // Scala (test only)
-    val akkaStreamKafka = "0.12"
+    val akkaStreamKafka = "0.13"
     val specs2 = "3.7"
     val scalazSpecs2 = "0.4.0"
     // Scala (compile only)
