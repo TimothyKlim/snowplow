@@ -33,6 +33,7 @@ object Dependencies {
     val awsSdk = "1.11.33"
     // Scala
     val akka = "2.4.12"
+    val akkaHttp = "10.0.0-RC2"
     val akkaStreamKafka = "0.13"
     val argot = "1.0.4"
     val collectorPayload = "0.0.0"
@@ -55,7 +56,7 @@ object Dependencies {
 
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
-    val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % V.akka
+    val akkaHttp = "com.typesafe.akka" %% "akka-http" % V.akkaHttp
     val akkaStreamKafka = "com.typesafe.akka" %% "akka-stream-kafka" % V.akkaStreamKafka
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
     val argot = "org.clapper" %% "argot" % V.argot
@@ -72,6 +73,6 @@ object Dependencies {
 
     // Scala (test only)
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "provided"
-    val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % V.akka % "provided"
+    val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % V.akkaHttp % "provided"
   }
 }

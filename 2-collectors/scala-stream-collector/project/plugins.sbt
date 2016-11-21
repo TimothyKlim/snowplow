@@ -1,3 +1,3 @@
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.6")
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0-M5")
-addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M14-2")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.10")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0-M6")
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M14-7")

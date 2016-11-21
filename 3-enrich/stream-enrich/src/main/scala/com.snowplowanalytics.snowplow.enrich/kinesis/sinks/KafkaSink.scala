@@ -56,6 +56,7 @@ final class KafkaSink(config: KinesisEnrichConfig,
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     Source(events).map {
       case (e, key) =>
+        println(new String(e.getBytes))
         new ProducerRecord[String, Array[Byte]](topicName, key, e.getBytes)
     }.runWith(toConsumer)
     !events.isEmpty

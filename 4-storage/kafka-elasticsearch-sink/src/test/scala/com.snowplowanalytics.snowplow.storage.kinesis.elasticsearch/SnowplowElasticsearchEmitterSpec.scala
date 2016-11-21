@@ -35,23 +35,20 @@ import org.specs2.scalaz.ValidationMatchers
 /**
   * Tests Shredder
   */
-class SnowplowElasticsearchEmitterSpec
-    extends Specification
-    with ValidationMatchers {
+class SnowplowElasticsearchEmitterSpec extends Specification with ValidationMatchers {
 
   "The emit method" should {
     "return all invalid records" in {
 
-      val eem = new SnowplowElasticsearchEmitter(Some(new StdouterrSink),
-                                                 new StdouterrSink)
+      val eem = new SnowplowElasticsearchEmitter(Some(new StdouterrSink), new StdouterrSink)
 
-      val validInput: ValidatedRecord = "good" -> JObject(Nil).success
-      val invalidInput: ValidatedRecord = "bad" -> List("malformed event").failure
+      val validInput: ValidatedRecord   = "good" -> JObject(Nil).success
+      val invalidInput: ValidatedRecord = "bad"  -> List("malformed event").failure
 
       val input = List(validInput, invalidInput)
 
       val bmb = new BasicMemoryBuffer[ValidatedRecord](kcc, input)
-      val ub = new UnmodifiableBuffer[ValidatedRecord](bmb)
+      val ub  = new UnmodifiableBuffer[ValidatedRecord](bmb)
 
       val actual = eem.emit(ub)
 

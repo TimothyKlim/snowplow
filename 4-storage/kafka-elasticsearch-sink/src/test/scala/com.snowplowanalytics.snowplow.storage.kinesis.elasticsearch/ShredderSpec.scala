@@ -32,30 +32,26 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
   "The fixSchema method" should {
     "convert a snake_case schema to an Elasticsearch field name" in {
-      val actual = Shredder.fixSchema(
-        "unstruct_event",
-        "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
-      actual must beSuccessful(
-        "unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
+      val actual =
+        Shredder.fixSchema("unstruct_event",
+                           "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
+      actual must beSuccessful("unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
     }
 
     "convert a schema with a hyphen to an Elasticsearch field name" in {
-      val actual = Shredder.fixSchema("unstruct_event",
-                                      "iglu:com.hy-phen/evt/jsonschema/1-0-0")
+      val actual = Shredder.fixSchema("unstruct_event", "iglu:com.hy-phen/evt/jsonschema/1-0-0")
       actual must beSuccessful("unstruct_event_com_hy_phen_evt_1")
     }
 
     "convert a PascalCase schema to an Elasticsearch field name" in {
       val actual =
-        Shredder.fixSchema("contexts",
-                           "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
+        Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_pascal_case_context_1")
     }
 
     "convert a schema with consecutive capital letters to an Elasticsearch field name" in {
       val actual =
-        Shredder.fixSchema("contexts",
-                           "iglu:com.acme/ContextUK/jsonschema/1-0-0")
+        Shredder.fixSchema("contexts", "iglu:com.acme/ContextUK/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_context_uk_1")
     }
   }
@@ -75,7 +71,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
       }""")
       val expected = JObject(
         "unstruct_event_com_snowplowanalytics_snowplow_social_interaction_1" ->
-          (("action" -> "like") ~ ("network" -> "fb")))
+          (("action"                                                         -> "like") ~ ("network" -> "fb")))
 
       actual must beSuccessful(expected)
     }
@@ -86,9 +82,9 @@ class ShredderSpec extends Specification with ValidationMatchers {
         "data": {}
       }""")
 
-      val expected = NonEmptyList(
-        "Unstructured event JSON did not contain a stringly typed schema field",
-        "Could not extract inner data field from unstructured event")
+      val expected =
+        NonEmptyList("Unstructured event JSON did not contain a stringly typed schema field",
+                     "Could not extract inner data field from unstructured event")
 
       actual must be failing (expected)
     }
@@ -96,8 +92,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
   "The parseContexts method" should {
     "fix up a custom contexts JSON" in {
-      val actual = Shredder.parseContexts(
-        """{
+      val actual = Shredder.parseContexts("""{
         "schema": "any",
         "data": [
           {
@@ -120,17 +115,14 @@ class ShredderSpec extends Specification with ValidationMatchers {
           }
         ]
       }""")
-      val expected = ("contexts_com_acme_duplicated_20" -> List(
-          ("value" -> 2),
-          ("value" -> 1))) ~
+      val expected = ("contexts_com_acme_duplicated_20" -> List(("value" -> 2), ("value" -> 1))) ~
           ("contexts_com_acme_unduplicated_1" -> List(("type" -> "test")))
 
       actual must beSuccessful(expected)
     }
 
     "fail a malformed custom contexts JSON" in {
-      val actual = Shredder.parseContexts(
-        """{
+      val actual = Shredder.parseContexts("""{
         "schema": "any",
         "data": [
           {
@@ -150,11 +142,11 @@ class ShredderSpec extends Specification with ValidationMatchers {
         ]
       }""")
 
-      val expected = NonEmptyList(
-        "Could not extract inner data field from custom context",
-        "Context JSON did not contain a stringly typed schema field",
-        """Schema failing does not conform to regular expression %s""".format(
-          Shredder.schemaPattern))
+      val expected =
+        NonEmptyList("Could not extract inner data field from custom context",
+                     "Context JSON did not contain a stringly typed schema field",
+                     """Schema failing does not conform to regular expression %s""".format(
+                       Shredder.schemaPattern))
 
       actual must be failing (expected)
     }

@@ -14,7 +14,6 @@ import org.json4s._, JsonDSL._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
-import scalikejdbc._, autoConstruct._, jsr310._
 
 final case class PostgresEvent(
     app_id: Option[String],
@@ -145,14 +144,9 @@ final case class PostgresEvent(
     event_version: Option[String],
     event_fingerprint: Option[String],
     true_tstamp: Option[LocalDateTime]
-) {
-  def toSeq: Seq[(String, Any)] = {
-    val values = this.productIterator
-    this.getClass.getDeclaredFields.map(_.getName -> values.next)
-  }
-}
+)
 
-case object JLocalDateTimeSerializer
+final case object JLocalDateTimeSerializer
     extends CustomSerializer[LocalDateTime](
       format =>
         (
@@ -171,13 +165,6 @@ case object JLocalDateTimeSerializer
           }
       ))
 
-object PostgresEvent extends SQLSyntaxSupport[PostgresEvent] {
-  override lazy val columns = autoColumns[PostgresEvent]()
-
-  def apply(rs: WrappedResultSet, rn: ResultName[PostgresEvent]): PostgresEvent =
-    autoConstruct(rs, rn)
-}
-
 final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
     extends StorageSink
     with LazyLogging {
@@ -187,8 +174,7 @@ final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
 
   private lazy val migration = Migration.run(config.url, config.user, config.password)
 
-  import JLocalDateTimeSerializer._
-  implicit val formats = DefaultFormats
+  implicit val formats = DefaultFormats ++ List(JLocalDateTimeSerializer)
 
   val flow =
     Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 250.millis).mapAsync(6) {
@@ -198,7 +184,7 @@ final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
             case ((evs, batch), (rec, offset)) =>
               val offsetBatch = offset.map(batch.updated).getOrElse(batch)
               Try(rec.json.extract[PostgresEvent]) match {
-                case Success(event) => (event.toSeq :: evs, offsetBatch)
+                case Success(event) => (evs, offsetBatch)
                 case Failure(e) =>
                   println(e)
                   (evs, offsetBatch)

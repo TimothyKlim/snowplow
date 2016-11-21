@@ -1,6 +1,6 @@
 lazy val akkaStreamKafkaVersion      = "0.13"
-lazy val akkaVersion                 = "2.4.12"
-lazy val elastic4sVersion            = "2.4.0"
+lazy val akkaVersion                 = "2.4.13"
+lazy val elastic4sVersion            = "5.0.0"
 lazy val igluClientVersion           = "0.3.2"
 lazy val postgresqlVersion           = "9.4.1212"
 lazy val scalazVersion               = "7.2.7"
@@ -70,8 +70,8 @@ lazy val javaRunOptions = Seq(
   "-server",
   "-XX:+UseAES",
   "-XX:+UseAESIntrinsics",
-  "-Xms512m",
-  "-Xmx1g",
+  "-Xms1g",
+  "-Xmx2g",
   "-Xss6m",
   "-XX:NewSize=512m",
   "-XX:+UseNUMA",
@@ -96,20 +96,20 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
       "com.sksamuel.elastic4s"         %% "elastic4s-core"         % elastic4sVersion,
       "com.snowplowanalytics"          % "iglu-scala-client"       % igluClientVersion,
       "com.snowplowanalytics" %% "snowplow-common-enrich" % snowplowCommonEnrichVersion intransitive,
-      "com.snowplowanalytics"      %% "snowplow-scala-tracker"           % snowplowTrackerVersion,
-      "com.typesafe"               % "config"                            % "1.3.1",
-      "com.typesafe.akka"          %% "akka-slf4j"                       % akkaVersion,
-      "com.typesafe.akka"          %% "akka-stream-kafka"                % akkaStreamKafkaVersion,
-      "com.typesafe.scala-logging" %% "scala-logging"                    % "3.5.0",
-      "com.zaxxer"                 % "HikariCP"                          % "2.5.1",
-      "io.fcomb"                   %% "db-migration"                     % "0.3.3",
-      "org.apache.commons"         % "commons-lang3"                     % "3.4" % "compile",
-      "org.clapper"                %% "argot"                            % "1.0.4",
-      "org.postgresql"             % "postgresql"                        % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
-      "org.scalaz"                 %% "scalaz-core"                      % scalazVersion,
-      "org.tpolecat"               %% "doobie-core"                      % "0.3.0",
-      "org.specs2"                 %% "specs2"                           % "3.7" % "test",
-      "org.typelevel"              %% "scalaz-specs2"                    % "0.4.0" % "test"
+      "com.snowplowanalytics"      %% "snowplow-scala-tracker" % snowplowTrackerVersion,
+      "com.typesafe"               % "config"                  % "1.3.1",
+      "com.typesafe.akka"          %% "akka-slf4j"             % akkaVersion,
+      "com.typesafe.akka"          %% "akka-stream-kafka"      % akkaStreamKafkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging"          % "3.5.0",
+      "com.zaxxer"                 % "HikariCP"                % "2.5.1",
+      "io.fcomb"                   %% "db-migration"           % "0.3.3",
+      "org.apache.commons"         % "commons-lang3"           % "3.5" % "compile",
+      "org.clapper"                %% "argot"                  % "1.0.4",
+      "org.postgresql"             % "postgresql"              % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
+      "org.scalaz"                 %% "scalaz-core"            % scalazVersion,
+      "org.tpolecat"               %% "doobie-core"            % "0.3.0",
+      "org.specs2"                 %% "specs2"                 % "3.7" % "test",
+      "org.typelevel"              %% "scalaz-specs2"          % "0.4.0" % "test"
     ),
     mainClass := Some("com.snowplowanalytics.snowplow.storage"),
     executableScriptName := "start",

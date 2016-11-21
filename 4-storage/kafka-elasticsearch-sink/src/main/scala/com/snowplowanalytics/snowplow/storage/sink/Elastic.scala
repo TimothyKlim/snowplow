@@ -4,9 +4,8 @@ package sink
 import akka.http.scaladsl.util.FastFuture._
 import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.stream.scaladsl._
-import com.sksamuel.elastic4s.BulkCompatibleDefinition
+import com.sksamuel.elastic4s.bulk.BulkCompatibleDefinition
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s.source.JsonDocumentSource
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import com.typesafe.scalalogging.LazyLogging
 import org.elasticsearch.common.settings.Settings
@@ -25,7 +24,7 @@ final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
   private val indexType     = indexName / indexTypeName
 
   private val client: ElasticClient = {
-    val settings = Settings.settingsBuilder
+    val settings = Settings.builder
       .put("cluster.name", config.cluster)
       .put("client.transport.sniff", false)
       .build
@@ -35,13 +34,13 @@ final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
   }
 
   private def mapRecord(record: JsonRecord): BulkCompatibleDefinition = {
-    val doc = JsonDocumentSource(compact(render(record.json)))
-    val q   = index.into(indexType)
+    val doc = compact(render(record.json))
+    val q   = indexInto(indexType)
     record.id.map(q.id).getOrElse(q).doc(doc)
   }
 
-  private lazy val createIndex: Future[_] =
-    client.execute(create.index(indexName).mappings(mapping(indexTypeName))).recover {
+  private lazy val createElasticIndex: Future[_] =
+    client.execute(createIndex(indexName).mappings(mapping(indexTypeName))).recover {
       case e: IndexAlreadyExistsException => ()
       case e: Throwable                   => logger.error(e.getMessage, e)
     }
@@ -57,8 +56,8 @@ final class Elastic(config: ElasticConfig)(implicit ec: ExecutionContext)
 
         def insertRecords() = insert(records, offset)
 
-        if (createIndex.isCompleted) insertRecords()
-        else createIndex.flatMap(_ => insertRecords())
+        if (createElasticIndex.isCompleted) insertRecords()
+        else createElasticIndex.flatMap(_ => insertRecords())
     }
 
   private def insert(records: List[BulkCompatibleDefinition], offset: CommittableOffsetBatch) =
