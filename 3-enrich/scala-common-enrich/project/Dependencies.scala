@@ -44,7 +44,7 @@ object Dependencies {
     val yodaConvert = "1.8.1"
     val yodaTime = "2.9.4"
     // Scala
-    val akka = "2.4.12"
+    val akka = "2.4.14"
     val akkaStreamKafka = "0.13"
     val collectorPayload = "0.0.0"
     val gatlingJsonpath = "0.6.8"

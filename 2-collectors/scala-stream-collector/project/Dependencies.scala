@@ -32,8 +32,8 @@ object Dependencies {
     val mimepull = "1.9.6"
     val awsSdk = "1.11.33"
     // Scala
-    val akka = "2.4.12"
-    val akkaHttp = "10.0.0-RC2"
+    val akka = "2.4.14"
+    val akkaHttp = "10.0.0"
     val akkaStreamKafka = "0.13"
     val argot = "1.0.4"
     val collectorPayload = "0.0.0"
@@ -46,7 +46,7 @@ object Dependencies {
     val snowplowCommonEnrich = "0.25.0-kt"
     val snowplowRawEvent = "0.1.0"
     // Scala (test only)
-    val scalaTest = "3.0.0"
+    val scalaTest = "3.0.1"
   }
 
   object Libraries {

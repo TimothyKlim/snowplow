@@ -37,7 +37,7 @@ object Dependencies {
     val logging = "1.2"
     val slf4j = "1.7.21"
     // Scala
-    val akka = "2.4.12"
+    val akka = "2.4.14"
     val argot = "1.0.4"
     val config = "1.3.0"
     val igluClient = "0.5.0-kt"

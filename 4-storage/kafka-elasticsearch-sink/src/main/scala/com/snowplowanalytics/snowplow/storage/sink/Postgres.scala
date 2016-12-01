@@ -5,22 +5,30 @@ import akka.http.scaladsl.util.FastFuture._
 import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.stream.scaladsl._
 import com.typesafe.scalalogging.LazyLogging
+import doobie.imports._
 import io.fcomb.db.Migration
 import java.sql.Timestamp
-import java.time.{LocalDateTime, ZoneId}
+import java.time.{OffsetDateTime, ZoneId}
 import java.util.Date
 import org.json4s.jackson.JsonMethods._
 import org.json4s._, JsonDSL._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
+import shapeless._
+
+object DoobieImplicits {
+  final implicit val offsetDateTimeMeta: Meta[OffsetDateTime] =
+    Meta[String].nxmap(OffsetDateTime.parse(_), _.toString)
+}
+import DoobieImplicits._
 
 final case class PostgresEvent(
     app_id: Option[String],
     platform: Option[String],
-    etl_tstamp: Option[LocalDateTime],
-    collector_tstamp: LocalDateTime,
-    dvce_created_tstamp: Option[LocalDateTime],
+    etl_tstamp: Option[OffsetDateTime],
+    collector_tstamp: OffsetDateTime,
+    dvce_created_tstamp: Option[OffsetDateTime],
     event: Option[String],
     event_id: String,
     txn_id: Option[Int],
@@ -133,37 +141,36 @@ final case class PostgresEvent(
     mkt_clickid: Option[String],
     mkt_network: Option[String],
     etl_tags: Option[String],
-    dvce_sent_tstamp: Option[LocalDateTime],
+    dvce_sent_tstamp: Option[OffsetDateTime],
     refr_domain_userid: Option[String],
-    refr_dvce_tstamp: Option[LocalDateTime],
+    refr_dvce_tstamp: Option[OffsetDateTime],
     domain_sessionid: Option[String],
-    derived_tstamp: Option[LocalDateTime],
+    derived_tstamp: Option[OffsetDateTime],
     event_vendor: Option[String],
     event_name: Option[String],
     event_format: Option[String],
     event_version: Option[String],
     event_fingerprint: Option[String],
-    true_tstamp: Option[LocalDateTime]
+    true_tstamp: Option[OffsetDateTime]
 )
 
-final case object JLocalDateTimeSerializer
-    extends CustomSerializer[LocalDateTime](
-      format =>
-        (
-          {
-            case JString(s) =>
-              val date = format.dateFormat
-                .parse(s)
-                .map(d => new Date(d.getTime))
-                .getOrElse(throw new MappingException(s"Invalid date format $s"))
-              LocalDateTime.ofInstant(date.toInstant, ZoneId.systemDefault)
-            case JNull => null
-          }, {
-            case ldt: LocalDateTime =>
-              val instant = ldt.atZone(ZoneId.systemDefault).toInstant
-              JString(format.dateFormat.format(Date.from(instant)))
-          }
-      ))
+object PostgresEvent {
+  val insertEvent: Update[PostgresEvent] =
+    Update[PostgresEvent](
+      """
+      INSERT INTO suppliers (app_id, platform, etl_tstamp, collector_tstamp, dvce_created_tstamp, event, event_id, txn_id, name_tracker, v_tracker, v_collector, v_etl, user_id, user_ipaddress, user_fingerprint, domain_userid, domain_sessionidx, network_userid, geo_country, geo_region, geo_city, geo_zipcode, geo_latitude, geo_longitude, geo_region_name, ip_isp, ip_organization, ip_domain, ip_netspeed, page_url, page_title, page_referrer, page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment, refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment, refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign, se_category, se_action, se_label, se_property, se_value, tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country, ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity, pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max, useragent, br_name, br_family, br_version, br_type, br_renderengine, br_lang, br_features_pdf, br_features_flash, br_features_java, br_features_director, br_features_quicktime, br_features_realplayer, br_features_windowsmedia, br_features_gears, br_features_silverlight, br_cookies, br_colordepth, br_viewwidth, br_viewheight, os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight, doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base, ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags, dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, domain_sessionid, derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT DO NOTHING
+      """,
+      None)
+}
+
+final case object JOffsetDateTimeSerializer
+    extends CustomSerializer[OffsetDateTime](_ =>
+      ({
+        case JString(s)             => OffsetDateTime.parse(s)
+        case JNull                  => null
+      }, { case odt: OffsetDateTime => JString(odt.toString) }))
 
 final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
     extends StorageSink
@@ -174,19 +181,19 @@ final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
 
   private lazy val migration = Migration.run(config.url, config.user, config.password)
 
-  implicit val formats = DefaultFormats ++ List(JLocalDateTimeSerializer)
+  implicit val formats = DefaultFormats ++ List(JOffsetDateTimeSerializer)
 
   val flow =
     Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 250.millis).mapAsync(6) {
       xs =>
         val (records, offset) =
-          xs.foldLeft((List.empty[Seq[(String, Any)]], CommittableOffsetBatch.empty)) {
+          xs.foldLeft((List.empty[PostgresEvent], CommittableOffsetBatch.empty)) {
             case ((evs, batch), (rec, offset)) =>
               val offsetBatch = offset.map(batch.updated).getOrElse(batch)
               Try(rec.json.extract[PostgresEvent]) match {
-                case Success(event) => (evs, offsetBatch)
+                case Success(event) => (event :: evs, offsetBatch)
                 case Failure(e) =>
-                  println(e)
+                  logger.error(e.toString)
                   (evs, offsetBatch)
               }
           }
