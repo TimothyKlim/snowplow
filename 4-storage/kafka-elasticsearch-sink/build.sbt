@@ -1,9 +1,10 @@
 lazy val akkaStreamKafkaVersion      = "0.13"
 lazy val akkaVersion                 = "2.4.14"
-lazy val elastic4sVersion            = "5.0.1"
+lazy val doobieVersion               = "0.3.1-M2"
+lazy val elastic4sVersion            = "5.0.4"
 lazy val igluClientVersion           = "0.3.2"
 lazy val postgresqlVersion           = "9.4.1212"
-lazy val scalazVersion               = "7.2.7"
+lazy val scalazVersion               = "7.2.8"
 lazy val snowplowCommonEnrichVersion = "0.25.0-kt"
 lazy val snowplowTrackerVersion      = "0.4.1-kt"
 
@@ -107,7 +108,9 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
       "org.clapper"                %% "argot"                  % "1.0.4",
       "org.postgresql"             % "postgresql"              % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
       "org.scalaz"                 %% "scalaz-core"            % scalazVersion,
-      "org.tpolecat"               %% "doobie-core"            % "0.3.1-M2",
+      "org.tpolecat"               %% "doobie-core"            % doobieVersion,
+      "org.tpolecat"               %% "doobie-postgres"        % doobieVersion,
+      "org.tpolecat"               %% "doobie-hikari"          % doobieVersion,
       "org.specs2"                 %% "specs2"                 % "3.7" % "test",
       "org.typelevel"              %% "scalaz-specs2"          % "0.5.0" % "test"
     ),

@@ -1,7 +1,6 @@
 package com.snowplowanalytics.snowplow.storage
 package sink
 
-import akka.http.scaladsl.util.FastFuture._
 import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.stream.scaladsl._
 import com.typesafe.scalalogging.LazyLogging
@@ -13,9 +12,11 @@ import java.util.Date
 import org.json4s.jackson.JsonMethods._
 import org.json4s._, JsonDSL._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Promise}
 import scala.util.{Failure, Success, Try}
-import shapeless._
+import _root_.scalaz._
+import _root_.scalaz.Scalaz._
+import _root_.scalaz.concurrent.Task
 
 object DoobieImplicits {
   final implicit val offsetDateTimeMeta: Meta[OffsetDateTime] =
@@ -155,14 +156,13 @@ final case class PostgresEvent(
 )
 
 object PostgresEvent {
-  val insertEvent: Update[PostgresEvent] =
+  val insert =
     Update[PostgresEvent](
       """
       INSERT INTO suppliers (app_id, platform, etl_tstamp, collector_tstamp, dvce_created_tstamp, event, event_id, txn_id, name_tracker, v_tracker, v_collector, v_etl, user_id, user_ipaddress, user_fingerprint, domain_userid, domain_sessionidx, network_userid, geo_country, geo_region, geo_city, geo_zipcode, geo_latitude, geo_longitude, geo_region_name, ip_isp, ip_organization, ip_domain, ip_netspeed, page_url, page_title, page_referrer, page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment, refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment, refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign, se_category, se_action, se_label, se_property, se_value, tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country, ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity, pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max, useragent, br_name, br_family, br_version, br_type, br_renderengine, br_lang, br_features_pdf, br_features_flash, br_features_java, br_features_director, br_features_quicktime, br_features_realplayer, br_features_windowsmedia, br_features_gears, br_features_silverlight, br_cookies, br_colordepth, br_viewwidth, br_viewheight, os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight, doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base, ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags, dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, domain_sessionid, derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT DO NOTHING
-      """,
-      None)
+      """)
 }
 
 final case object JOffsetDateTimeSerializer
@@ -175,17 +175,20 @@ final case object JOffsetDateTimeSerializer
 final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
     extends StorageSink
     with LazyLogging {
-  val sinkType = SinkType.Postgres
+  final val sinkType = SinkType.Postgres
 
-  // private lazy val db = Database.forConfig("", Config.jdbcConfigSlick)
+  private final val xa: Transactor[Task] =
+    DriverManagerTransactor("org.postgresql.Driver", config.url, config.user, config.password)
 
-  private lazy val migration = Migration.run(config.url, config.user, config.password)
+  private final lazy val migration = Migration.run(config.url, config.user, config.password)
 
-  implicit val formats = DefaultFormats ++ List(JOffsetDateTimeSerializer)
+  final implicit val formats = DefaultFormats ++ List(JOffsetDateTimeSerializer)
 
-  val flow =
+  final val flow =
     Flow[(JsonRecord, Option[CommittableOffset])].groupedWithin(100, 250.millis).mapAsync(6) {
       xs =>
+        println(s"xs: $xs")
+
         val (records, offset) =
           xs.foldLeft((List.empty[PostgresEvent], CommittableOffsetBatch.empty)) {
             case ((evs, batch), (rec, offset)) =>
@@ -200,10 +203,19 @@ final class Postgres(config: PostgresConfig)(implicit ec: ExecutionContext)
 
         println(s"records: $records")
 
-        // def insertRecords() = insert(records, offset)
-        //
-        // if (createIndex.isCompleted) insertRecords()
-        // else createIndex.flatMap(_ => insertRecords())
-        ???
+        def insertRecords() = {
+          val p = Promise[CommittableOffsetBatch]()
+          PostgresEvent.insert.updateMany(records).transact(xa).unsafePerformAsync { res =>
+            p.success(offset)
+            res match {
+              case -\/(e) => logger.error(e.getMessage, e)
+              case _      =>
+            }
+          }
+          p.future
+        }
+
+        if (migration.isCompleted) insertRecords()
+        else migration.flatMap(_ => insertRecords())
     }
 }
