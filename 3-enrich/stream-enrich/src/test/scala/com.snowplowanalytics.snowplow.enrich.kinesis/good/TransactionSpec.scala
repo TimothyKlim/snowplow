@@ -184,8 +184,7 @@ class TransactionSpec extends Specification with ValidationMatchers {
 
       Result.unit(
         for (idx <- TransactionSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(TransactionSpec.expected(idx),
-                                          withIndex = idx)
+          fields(idx) must beFieldEqualTo(TransactionSpec.expected(idx), withIndex = idx)
         }
       )
     }

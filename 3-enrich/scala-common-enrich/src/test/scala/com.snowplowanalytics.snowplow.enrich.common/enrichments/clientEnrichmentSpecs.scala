@@ -29,13 +29,9 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"
   def err: (String) => String =
-    input =>
-      "Field [%s]: [%s] does not contain valid view dimensions"
-        .format(FieldName, input)
+    input => "Field [%s]: [%s] does not contain valid view dimensions".format(FieldName, input)
   def err2: (String) => String =
-    input =>
-      "Field [%s]: view dimensions [%s] exceed Integer's max range"
-        .format(FieldName, input)
+    input => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(FieldName, input)
 
   def is =
     "Extracting screen dimensions (viewports, screen resolution etc) with extractViewDimensions should work" ! e1
@@ -53,7 +49,6 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
       "number > int #2" !! "9989336768x1200" ! err2("9989336768x1200").failure |> {
 
       (_, input, expected) =>
-        ClientEnrichments
-          .extractViewDimensions(FieldName, input) must_== expected
+        ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
     }
 }

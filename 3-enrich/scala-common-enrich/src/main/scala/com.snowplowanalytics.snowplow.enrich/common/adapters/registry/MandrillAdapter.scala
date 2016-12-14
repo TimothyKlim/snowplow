@@ -42,7 +42,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -66,39 +66,15 @@ object MandrillAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "hard_bounce" -> SchemaKey("com.mandrill",
-                               "message_bounced",
-                               "jsonschema",
-                               "1-0-0").toSchemaUri,
-    "click" -> SchemaKey("com.mandrill",
-                         "message_clicked",
-                         "jsonschema",
-                         "1-0-0").toSchemaUri,
-    "deferral" -> SchemaKey("com.mandrill",
-                            "message_delayed",
-                            "jsonschema",
-                            "1-0-0").toSchemaUri,
-    "spam" -> SchemaKey("com.mandrill",
-                        "message_marked_as_spam",
-                        "jsonschema",
-                        "1-0-0").toSchemaUri,
-    "open" -> SchemaKey("com.mandrill",
-                        "message_opened",
-                        "jsonschema",
-                        "1-0-0").toSchemaUri,
-    "reject" -> SchemaKey("com.mandrill",
-                          "message_rejected",
-                          "jsonschema",
-                          "1-0-0").toSchemaUri,
-    "send" -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
-    "soft_bounce" -> SchemaKey("com.mandrill",
-                               "message_soft_bounced",
-                               "jsonschema",
-                               "1-0-0").toSchemaUri,
-    "unsub" -> SchemaKey("com.mandrill",
-                         "recipient_unsubscribed",
-                         "jsonschema",
-                         "1-0-0").toSchemaUri
+    "hard_bounce" -> SchemaKey("com.mandrill", "message_bounced", "jsonschema", "1-0-0").toSchemaUri,
+    "click"       -> SchemaKey("com.mandrill", "message_clicked", "jsonschema", "1-0-0").toSchemaUri,
+    "deferral"    -> SchemaKey("com.mandrill", "message_delayed", "jsonschema", "1-0-0").toSchemaUri,
+    "spam"        -> SchemaKey("com.mandrill", "message_marked_as_spam", "jsonschema", "1-0-0").toSchemaUri,
+    "open"        -> SchemaKey("com.mandrill", "message_opened", "jsonschema", "1-0-0").toSchemaUri,
+    "reject"      -> SchemaKey("com.mandrill", "message_rejected", "jsonschema", "1-0-0").toSchemaUri,
+    "send"        -> SchemaKey("com.mandrill", "message_sent", "jsonschema", "1-0-0").toSchemaUri,
+    "soft_bounce" -> SchemaKey("com.mandrill", "message_soft_bounced", "jsonschema", "1-0-0").toSchemaUri,
+    "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
@@ -118,8 +94,7 @@ object MandrillAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) =>
         s"Request body is empty: no ${VendorName} events to process".failureNel
@@ -142,16 +117,13 @@ object MandrillAdapter extends Adapter {
                 val eventOpt: Option[String] =
                   (event \ "event").extractOpt[String]
                 for {
-                  schema <- lookupSchema(eventOpt,
-                                         VendorName,
-                                         index,
-                                         EventSchemaMap)
+                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
 
                   val formattedEvent =
                     cleanupJsonEventValues(event, eventOpt match {
                       case Some(x) => ("event", x).some
-                      case None => None
+                      case None    => None
                     }, "ts", _ * 1000)
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
@@ -194,9 +166,7 @@ object MandrillAdapter extends Adapter {
       rawEventString: String): Validation[String, List[JValue]] = {
 
     val bodyMap = toMap(
-      URLEncodedUtils
-        .parse(URI.create("http://localhost/?" + rawEventString), "UTF-8")
-        .toList)
+      URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
       case map if map.size != 1 =>

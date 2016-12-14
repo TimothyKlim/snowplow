@@ -66,11 +66,11 @@ case class TypeHierarchy(
     * @return the TypeHierarchy as a json4s JValue
     */
   def toJValue: JValue =
-    ("rootId" -> rootId) ~
+    ("rootId"       -> rootId) ~
       ("rootTstamp" -> rootTstamp) ~
-      ("refRoot" -> refRoot) ~
-      ("refTree" -> refTree) ~
-      ("refParent" -> refParent)
+      ("refRoot"    -> refRoot) ~
+      ("refTree"    -> refTree) ~
+      ("refParent"  -> refParent)
 
   /**
     * Completes a partial TypeHierarchy with
@@ -108,8 +108,8 @@ case class TypeHierarchy(
     */
   private def secondTail[A](ls: List[A]): A = ls match {
     case h :: _ :: Nil => h
-    case _ :: tail => secondTail(tail)
-    case _ => throw new NoSuchElementException
+    case _ :: tail     => secondTail(tail)
+    case _             => throw new NoSuchElementException
   }
 
 }

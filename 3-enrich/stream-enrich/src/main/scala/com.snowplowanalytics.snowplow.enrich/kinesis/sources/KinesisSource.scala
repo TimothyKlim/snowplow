@@ -72,15 +72,14 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 /**
   * Source to read events from a Kinesis stream
   */
-final class KinesisSource(
-    config: KinesisEnrichConfig,
-    igluResolver: Resolver,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
+final class KinesisSource(config: KinesisEnrichConfig,
+                          igluResolver: Resolver,
+                          enrichmentRegistry: EnrichmentRegistry,
+                          tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   /**
     * Never-ending processing loop over source stream.
@@ -123,21 +122,19 @@ final class KinesisSource(
   // create a processor.
   class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
       extends IRecordProcessorFactory {
-    override def createProcessor: IRecordProcessor = {
+    override def createProcessor: IRecordProcessor =
       new RawEventProcessor(config, sink);
-    }
   }
 
   // Process events from a Kinesis stream.
-  class RawEventProcessor(config: KinesisEnrichConfig, sink: ISink)
-      extends IRecordProcessor {
+  class RawEventProcessor(config: KinesisEnrichConfig, sink: ISink) extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()
 
     private var kinesisShardId: String = _
 
     // Backoff and retry settings.
-    private val BACKOFF_TIME_IN_MILLIS = 3000L
-    private val NUM_RETRIES = 10
+    private val BACKOFF_TIME_IN_MILLIS     = 3000L
+    private val NUM_RETRIES                = 10
     private val CHECKPOINT_INTERVAL_MILLIS = 1000L
 
     override def initialize(shardId: String) = {
@@ -158,7 +155,7 @@ final class KinesisSource(
       }
     }
 
-    private def processRecordsWithRetries(records: List[Record]): Boolean = {
+    private def processRecordsWithRetries(records: List[Record]): Boolean =
       try {
         enrichAndStoreEvents(records.map(_.getData.array).toList)
       } catch {
@@ -167,10 +164,8 @@ final class KinesisSource(
           error(s"Caught throwable while processing records $records", e)
           false
       }
-    }
 
-    override def shutdown(checkpointer: IRecordProcessorCheckpointer,
-                          reason: ShutdownReason) = {
+    override def shutdown(checkpointer: IRecordProcessorCheckpointer, reason: ShutdownReason) = {
       info(s"Shutting down record processor for shard: $kinesisShardId")
       if (reason == ShutdownReason.TERMINATE) {
         checkpoint(checkpointer)
@@ -192,10 +187,9 @@ final class KinesisSource(
               if (i >= (NUM_RETRIES - 1)) {
                 error(s"Checkpoint failed after ${i + 1} attempts.", e)
               } else {
-                info(
-                  s"Transient issue when checkpointing - attempt ${i + 1} of "
-                    + NUM_RETRIES,
-                  e)
+                info(s"Transient issue when checkpointing - attempt ${i + 1} of "
+                       + NUM_RETRIES,
+                     e)
               }
             case e: InvalidStateException =>
               error("Cannot save checkpoint to the DynamoDB table used by " +

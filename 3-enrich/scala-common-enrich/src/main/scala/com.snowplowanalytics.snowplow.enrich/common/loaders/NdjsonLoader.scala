@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich.common.loaders
 
 import com.snowplowanalytics.snowplow.enrich.common.ValidatedMaybeCollectorPayload
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{DateTime, DateTimeZone}
 
 // Scalaz
 import scalaz._
@@ -28,7 +28,7 @@ import com.fasterxml.jackson.core.JsonParseException
 
 case class NdjsonLoader(adapter: String) extends Loader[String] {
 
-  private val CollectorName = "ndjson"
+  private val CollectorName     = "ndjson"
   private val CollectorEncoding = "UTF-8"
 
   /**
@@ -40,9 +40,7 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
     *         boxed, or None if no input was
     *         extractable.
     */
-  override def toCollectorPayload(
-      line: String): ValidatedMaybeCollectorPayload = {
-
+  override def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload =
     try {
 
       if (line.replaceAll("\r?\n", "").isEmpty) {
@@ -76,6 +74,5 @@ case class NdjsonLoader(adapter: String) extends Loader[String] {
     } catch {
       case e: JsonParseException => "Unparsable JSON".failureNel
     }
-  }
 
 }

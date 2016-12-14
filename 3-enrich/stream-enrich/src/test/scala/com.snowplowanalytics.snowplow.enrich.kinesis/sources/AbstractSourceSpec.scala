@@ -58,7 +58,7 @@ class AbstractSourceSpec extends Specification {
 
     "remove create a new bad row if the bad row JSON is unparseable" in {
       val badJson = "{"
-      val parsed = parse(AbstractSource.adjustOversizedFailureJson(badJson))
+      val parsed  = parse(AbstractSource.adjustOversizedFailureJson(badJson))
       parsed \ "size" must_== JInt(1)
     }
   }
@@ -68,12 +68,10 @@ class AbstractSourceSpec extends Specification {
       val actual = parse(AbstractSource.oversizedSuccessToFailure("abc", 2))
       actual \ "size" must_== JInt(3)
       actual \ "errors" must_== JArray(
-        List(
-          JObject(List(
-            ("level", JString("error")),
-            ("message",
-             JString(
-               "Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
+        List(JObject(
+          List(("level", JString("error")),
+               ("message",
+                JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
     }
   }
 }

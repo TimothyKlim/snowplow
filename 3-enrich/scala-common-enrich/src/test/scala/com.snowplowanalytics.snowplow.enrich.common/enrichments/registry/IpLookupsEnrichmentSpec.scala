@@ -18,7 +18,7 @@ package registry
 import java.net.URI
 
 // Specs2, Scalaz-Specs2 & ScalaCheck
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
@@ -29,7 +29,7 @@ import scalaz._
 import Scalaz._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
+import com.snowplowanalytics.maxmind.iplookups.{IpLocation, IpLookups}
 
 class IpLookupsEnrichmentSpec
     extends Specification
@@ -79,10 +79,8 @@ class IpLookupsEnrichmentSpec
                    dmaCode = Some(548),
                    areaCode = Some(561),
                    metroCode = Some(548),
-                   regionName = Some("Florida"))) |> {
-      (_, ipAddress, expected) =>
-        config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(
-          expected)
+                   regionName = Some("Florida"))) |> { (_, ipAddress, expected) =>
+      config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(expected)
     }
 
   def e3 =
@@ -92,14 +90,8 @@ class IpLookupsEnrichmentSpec
   def e4 = config.dbsToCache must_== Nil
 
   val configRemote = IpLookupsEnrichment(
-    Some(
-      ("geo",
-       new URI("http://public-website.com/files/GeoLiteCity.dat"),
-       "GeoLiteCity.dat")),
-    Some(
-      ("isp",
-       new URI("s3://private-bucket/files/GeoIPISP.dat"),
-       "GeoIPISP.dat")),
+    Some(("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat")),
+    Some(("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat")),
     None,
     None,
     None,

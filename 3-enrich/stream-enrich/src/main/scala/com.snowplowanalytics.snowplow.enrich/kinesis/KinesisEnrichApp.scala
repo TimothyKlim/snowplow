@@ -73,7 +73,7 @@ import sinks._
 object KinesisEnrichApp extends App {
 
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
@@ -82,10 +82,9 @@ object KinesisEnrichApp extends App {
     programName = generated.Settings.name,
     compactUsage = true,
     preUsage = Some(
-      "%s: Version %s. Copyright (c) 2013, %s.".format(
-        generated.Settings.name,
-        generated.Settings.version,
-        generated.Settings.organization))
+      "%s: Version %s. Copyright (c) 2013, %s.".format(generated.Settings.name,
+                                                       generated.Settings.version,
+                                                       generated.Settings.organization))
   )
 
   val defaultConfig = ConfigFactory.load()
@@ -94,7 +93,7 @@ object KinesisEnrichApp extends App {
   val config = parser.option[Config](List("config"),
                                      "filename",
                                      """
-        |Configuration file.""".stripMargin) { (c, opt) =>
+                                       |Configuration file.""".stripMargin) { (c, opt) =>
     val file = new File(c)
     if (file.exists) {
       ConfigFactory.parseFile(file)
@@ -112,19 +111,18 @@ object KinesisEnrichApp extends App {
     parser.option[String](List("resolver"),
                           "'file:[filename]' or 'dynamodb:[region/table/key]'",
                           """
-        |Iglu resolver file.""".stripMargin) { (c, opt) =>
+                            |Iglu resolver file.""".stripMargin) { (c, opt) =>
       c
     }
 
   // Optional directory of enrichment configuration JSONs
-  val enrichmentsOption = parser.option[String](
-    List("enrichments"),
-    "'file:[filename]' or 'dynamodb:[region/table/partialKey]'",
-    """
-        |Directory of enrichment configuration JSONs.""".stripMargin) {
-    (c, opt) =>
+  val enrichmentsOption =
+    parser.option[String](List("enrichments"),
+                          "'file:[filename]' or 'dynamodb:[region/table/partialKey]'",
+                          """
+                            |Directory of enrichment configuration JSONs.""".stripMargin) { (c, opt) =>
       c
-  }
+    }
 
   parser.parse(args)
 
@@ -133,32 +131,28 @@ object KinesisEnrichApp extends App {
   val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
   val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
-    SnowplowTracking
-      .initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow"))
-      .some
+    SnowplowTracking.initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow")).some
   } else {
     None
   }
 
-  val nonOptionalResolver = resolverOption.value.getOrElse(
-    parser.usage("--resolver argument must be provided"))
+  val nonOptionalResolver =
+    resolverOption.value.getOrElse(parser.usage("--resolver argument must be provided"))
   val parsedResolver = extractResolver(nonOptionalResolver)
 
   val enrichmentConfig = extractEnrichmentConfig(enrichmentsOption.value)
 
   implicit val system = ActorSystem.create("scala-stream-enrich", rawConf)
-  implicit val mat = ActorMaterializer()
+  implicit val mat    = ActorMaterializer()
 
   implicit val igluResolver: Resolver = (for {
-    json <- JsonUtils.extractJson("", parsedResolver)
+    json     <- JsonUtils.extractJson("", parsedResolver)
     resolver <- Resolver.parse(json).leftMap(_.toString)
   } yield resolver) fold (e => throw new RuntimeException(e), identity)
 
   val registry: EnrichmentRegistry = (for {
     registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg <- EnrichmentRegistry
-      .parse(fromJsonNode(registryConfig), false)
-      .leftMap(_.toString)
+    reg            <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
   } yield reg) fold (
       e => throw new RuntimeException(e),
       s => s
@@ -166,7 +160,7 @@ object KinesisEnrichApp extends App {
 
   val filesToCache = registry.getIpLookupsEnrichment match {
     case Some(ipLookups) => ipLookups.dbsToCache
-    case None => Nil
+    case None            => Nil
   }
 
   for (uriFilePair <- filesToCache) {
@@ -182,13 +176,11 @@ object KinesisEnrichApp extends App {
           (uriFilePair._1.toURL #> targetFile).! // using sys.process
         case "s3" => downloadFromS3(uriFilePair._1, targetFile)
         case s =>
-          throw new RuntimeException(
-            s"Schema ${s} for file ${uriFilePair._1} not supported")
+          throw new RuntimeException(s"Schema ${s} for file ${uriFilePair._1} not supported")
       }
 
       if (downloadResult != 0) {
-        throw new RuntimeException(
-          s"Attempt to download ${uriFilePair._1} to $targetFile failed")
+        throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
       }
     }
   }
@@ -204,7 +196,7 @@ object KinesisEnrichApp extends App {
 
   tracker match {
     case Some(t) => SnowplowTracking.initializeSnowplowTracking(t)
-    case None => None
+    case None    => None
   }
 
   source.run
@@ -222,9 +214,7 @@ object KinesisEnrichApp extends App {
         if (file.exists) {
           scala.io.Source.fromFile(file).mkString
         } else {
-          parser.usage(
-            "Iglu resolver configuration file \"%s\" does not exist".format(
-              filepath))
+          parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
         }
       }
       case DynamoDBRegex(region, table, key) =>
@@ -243,14 +233,11 @@ object KinesisEnrichApp extends App {
     * @param key The value of the primary key for the configuration
     * @return The JSON stored in DynamoDB
     */
-  def lookupDynamoDBConfig(region: String,
-                           table: String,
-                           key: String): String = {
-    val dynamoDBClient = new AmazonDynamoDBClient(
-      kinesisEnrichConfig.credentialsProvider)
+  def lookupDynamoDBConfig(region: String, table: String, key: String): String = {
+    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
     dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
     val dynamoDB = new DynamoDB(dynamoDBClient)
-    val item = dynamoDB.getTable(table).getItem("id", key)
+    val item     = dynamoDB.getTable(table).getItem("id", key)
     item.getString("json")
   }
 
@@ -270,9 +257,8 @@ object KinesisEnrichApp extends App {
       case Some(DynamoDBRegex(region, table, partialKey)) => {
         (lookupDynamoDBEnrichments(region, table, partialKey), tracker) match {
           case (Nil, Some(t)) => {
-            SnowplowTracking.trackApplicationWarning(
-              t,
-              s"No enrichments found with partial key ${partialKey}")
+            SnowplowTracking
+              .trackApplicationWarning(t, s"No enrichments found with partial key ${partialKey}")
             Nil
           }
           case (Nil, None) => {
@@ -283,8 +269,7 @@ object KinesisEnrichApp extends App {
         }
       }
       case Some(other) =>
-        parser.usage(
-          s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
+        parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
     }
     val combinedJson = ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
         ("data" -> jsons.toList.map(parse(_)))
@@ -299,26 +284,23 @@ object KinesisEnrichApp extends App {
     * @param partialKey Primary key prefix, e.g. "enrichments-"
     * @return List of JSONs
     */
-  def lookupDynamoDBEnrichments(region: String,
-                                table: String,
-                                partialKey: String): List[String] = {
-    val dynamoDBClient = new AmazonDynamoDBClient(
-      kinesisEnrichConfig.credentialsProvider)
+  def lookupDynamoDBEnrichments(region: String, table: String, partialKey: String): List[String] = {
+    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
     dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
 
     // Each scan can only return up to 1MB
     // See http://techtraits.com/cloud/nosql/2012/06/27/Amazon-DynamoDB--Understanding-Query-and-Scan-operations/
     @tailrec
     def partialScan(sofar: List[Map[String, String]] = Nil,
-                    lastEvaluatedKey: java.util.Map[String, AttributeValue] =
-                      null): List[Map[String, String]] = {
+                    lastEvaluatedKey: java.util.Map[String, AttributeValue] = null)
+      : List[Map[String, String]] = {
       val scanRequest = new ScanRequest().withTableName(table)
       scanRequest.setExclusiveStartKey(lastEvaluatedKey)
       val lastResult = dynamoDBClient.scan(scanRequest)
       val combinedResults = sofar ++ lastResult.getItems.asScala
           .map(_.asScala.toMap.mapValues(_.getS))
       lastResult.getLastEvaluatedKey match {
-        case null => combinedResults
+        case null     => combinedResults
         case startKey => partialScan(combinedResults, startKey)
       }
     }
@@ -326,7 +308,7 @@ object KinesisEnrichApp extends App {
     allItems filter { item =>
       item.get("id") match {
         case Some(value) if value.startsWith(partialKey) => true
-        case _ => false
+        case _                                           => false
       }
     } flatMap (_.get("json"))
   }
@@ -342,10 +324,10 @@ object KinesisEnrichApp extends App {
     */
   def downloadFromS3(uri: URI, outputFile: File): Int = {
     val s3Client = new AmazonS3Client(kinesisEnrichConfig.credentialsProvider)
-    val bucket = uri.getHost
+    val bucket   = uri.getHost
     val key = uri.getPath match { // Need to remove leading '/'
       case s if s.charAt(0) == '/' => s.substring(1)
-      case s => s
+      case s                       => s
     }
 
     try {
@@ -366,24 +348,24 @@ final class KinesisEnrichConfig(config: Config) {
   private val enrich = config.resolve.getConfig("enrich")
 
   val source = enrich.getString("source") match {
-    case "kafka" => Source.Kafka
+    case "kafka"   => Source.Kafka
     case "kinesis" => Source.Kinesis
-    case "stdin" => Source.Stdin
-    case "test" => Source.Test
-    case _ => throw new RuntimeException("enrich.source unknown.")
+    case "stdin"   => Source.Stdin
+    case "test"    => Source.Test
+    case _         => throw new RuntimeException("enrich.source unknown.")
   }
 
   val sink = enrich.getString("sink") match {
-    case "kafka" => Sink.Kafka
-    case "kinesis" => Sink.Kinesis
+    case "kafka"     => Sink.Kafka
+    case "kinesis"   => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
-    case "test" => Sink.Test
-    case _ => throw new RuntimeException("enrich.sink unknown.")
+    case "test"      => Sink.Test
+    case _           => throw new RuntimeException("enrich.sink unknown.")
   }
 
   private lazy val kafka = enrich.getConfig("kafka")
 
-  lazy val kafkaHost = kafka.getString("host")
+  lazy val kafkaHost  = kafka.getString("host")
   lazy val kafkaGroup = kafka.getString("group")
 
   private lazy val aws = enrich.getConfig("aws")
@@ -394,36 +376,35 @@ final class KinesisEnrichConfig(config: Config) {
   private val streams = enrich.getConfig("streams")
 
   private val inStreams = streams.getConfig("in")
-  val rawInStream = inStreams.getString("raw")
+  val rawInStream       = inStreams.getString("raw")
 
   private val outStreams = streams.getConfig("out")
-  val enrichedOutStream = outStreams.getString("enriched")
-  val badOutStream = outStreams.getString("bad")
+  val enrichedOutStream  = outStreams.getString("enriched")
+  val badOutStream       = outStreams.getString("bad")
 
   lazy val appName = streams.getString("app-name")
 
   lazy val initialPosition = streams.getString("initial-position")
 
-  lazy val streamRegion = streams.getString("region")
+  lazy val streamRegion   = streams.getString("region")
   lazy val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
   lazy val maxRecords =
     if (inStreams.hasPath("maxRecords")) inStreams.getInt("maxRecords")
     else 10000
 
-  lazy val buffer = inStreams.getConfig("buffer")
-  lazy val byteLimit = buffer.getInt("byte-limit")
+  lazy val buffer      = inStreams.getConfig("buffer")
+  lazy val byteLimit   = buffer.getInt("byte-limit")
   lazy val recordLimit = buffer.getInt("record-limit")
-  lazy val timeLimit = buffer.getInt("time-limit")
+  lazy val timeLimit   = buffer.getInt("time-limit")
 
   lazy val credentialsProvider =
     CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
 
   lazy val backoffPolicy = outStreams.getConfig("backoffPolicy")
-  lazy val minBackoff = backoffPolicy.getLong("minBackoff")
-  lazy val maxBackoff = backoffPolicy.getLong("maxBackoff")
+  lazy val minBackoff    = backoffPolicy.getLong("minBackoff")
+  lazy val maxBackoff    = backoffPolicy.getLong("maxBackoff")
 
-  lazy val useIpAddressAsPartitionKey = outStreams.hasPath(
-      "useIpAddressAsPartitionKey") && outStreams.getBoolean(
-      "useIpAddressAsPartitionKey")
+  lazy val useIpAddressAsPartitionKey = outStreams.hasPath("useIpAddressAsPartitionKey") && outStreams
+      .getBoolean("useIpAddressAsPartitionKey")
 }

@@ -25,7 +25,7 @@ package sources
 
 // Akka
 import akka.actor.ActorSystem
-import akka.kafka.ConsumerMessage.{CommittableOffsetBatch, CommittableOffset}
+import akka.kafka.ConsumerMessage.{CommittableOffset, CommittableOffsetBatch}
 import akka.kafka.scaladsl.Consumer
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.NotUsed
@@ -33,10 +33,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl._
 
 // Kafka
-import org.apache.kafka.common.serialization.{
-  ByteArrayDeserializer,
-  StringDeserializer
-}
+import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import org.apache.kafka.clients.consumer._
 
 // Iglu
@@ -50,11 +47,10 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 import scala.concurrent.duration._
 
-final class KafkaSource(
-    config: KinesisEnrichConfig,
-    igluResolver: Resolver,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
+final class KafkaSource(config: KinesisEnrichConfig,
+                        igluResolver: Resolver,
+                        enrichmentRegistry: EnrichmentRegistry,
+                        tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   private val consumerSettings =
@@ -73,15 +69,13 @@ final class KafkaSource(
       .groupedWithin(256, 1.second)
       .map { group =>
         val (offsets, events) =
-          group.foldRight(
-            (List.empty[CommittableOffset], List.empty[Array[Byte]])) {
+          group.foldRight((List.empty[CommittableOffset], List.empty[Array[Byte]])) {
             case (msg, (ofs, evs)) =>
               (msg.committableOffset :: ofs, msg.record.value :: evs)
           }
         enrichAndStoreEvents(events)
         offsets
       }
-      .mapAsync(3)(_.foldLeft(CommittableOffsetBatch.empty)(_.updated(_))
-        .commitScaladsl())
+      .mapAsync(3)(_.foldLeft(CommittableOffsetBatch.empty)(_.updated(_)).commitScaladsl())
       .runWith(Sink.ignore)
 }

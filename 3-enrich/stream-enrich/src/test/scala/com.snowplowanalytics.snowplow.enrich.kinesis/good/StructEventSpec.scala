@@ -184,8 +184,7 @@ class StructEventSpec extends Specification with ValidationMatchers {
 
       Result.unit(
         for (idx <- StructEventSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(StructEventSpec.expected(idx),
-                                          withIndex = idx)
+          fields(idx) must beFieldEqualTo(StructEventSpec.expected(idx), withIndex = idx)
         }
       )
     }

@@ -134,8 +134,7 @@ object FatalEtlError {
   * ValidationConstructors trait
   * for details.
   */
-object UnexpectedEtlException
-    extends EtlExceptionConstructors[UnexpectedEtlException] {
+object UnexpectedEtlException extends EtlExceptionConstructors[UnexpectedEtlException] {
   val fac = (msg: String) => UnexpectedEtlException(msg)
 }
 

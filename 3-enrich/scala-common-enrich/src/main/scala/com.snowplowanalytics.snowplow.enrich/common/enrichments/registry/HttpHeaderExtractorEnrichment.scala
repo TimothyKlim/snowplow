@@ -36,12 +36,11 @@ import iglu.client.{SchemaCriterion, SchemaKey}
 import utils.ScalazJson4sUtils
 
 object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
-  val supportedSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow.enrichments",
-    "http_header_extractor_config",
-    "jsonschema",
-    1,
-    0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments",
+                                        "http_header_extractor_config",
+                                        "jsonschema",
+                                        1,
+                                        0)
 
   /**
     * Creates a HttpHeaderExtractorEnrichment instance from a JValue.
@@ -51,16 +50,14 @@ object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured HeaderExtractorEnrichment instance
     */
-  def parse(config: JValue, schemaKey: SchemaKey)
-    : ValidatedNelMessage[HttpHeaderExtractorEnrichment] = {
+  def parse(config: JValue,
+            schemaKey: SchemaKey): ValidatedNelMessage[HttpHeaderExtractorEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        headersPattern <- ScalazJson4sUtils
-          .extract[String](config, "parameters", "headersPattern")
+        headersPattern <- ScalazJson4sUtils.extract[String](config, "parameters", "headersPattern")
         enrich = HttpHeaderExtractorEnrichment(headersPattern)
       } yield enrich).toValidationNel
     })
-  }
 }
 
 /**
@@ -68,8 +65,7 @@ object HttpHeaderExtractorEnrichmentConfig extends ParseableEnrichment {
   *
   * @param headersPattern Names of the headers to be extracted
   */
-case class HttpHeaderExtractorEnrichment(headersPattern: String)
-    extends Enrichment {
+case class HttpHeaderExtractorEnrichment(headersPattern: String) extends Enrichment {
 
   case class Header(name: String, value: String)
 
@@ -87,7 +83,7 @@ case class HttpHeaderExtractorEnrichment(headersPattern: String)
     httpHeaders.map { header =>
       (("schema" -> "iglu:org.ietf/http_header/jsonschema/1-0-0") ~
         ("data" ->
-          ("name" -> header.name.trim) ~
+          ("name"    -> header.name.trim) ~
             ("value" -> header.value.trim)))
     }
   }

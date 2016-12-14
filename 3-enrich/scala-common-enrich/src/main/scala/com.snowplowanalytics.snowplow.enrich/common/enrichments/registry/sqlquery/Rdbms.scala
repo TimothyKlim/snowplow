@@ -42,8 +42,7 @@ trait Rdbms {
     * will try to reinitilize it
     */
   private[this] var lastConnection: ThrowableXor[Connection] =
-    InvalidStateException(
-      "SQL Query Enrichment: Connection hasn't been initialized").left
+    InvalidStateException("SQL Query Enrichment: Connection hasn't been initialized").left
 
   /**
     * Try to initialize new connection if cached one is closed or wasn't
@@ -74,10 +73,8 @@ trait Rdbms {
   /**
     * Get amount of placeholders (?-signs) in [[PreparedStatement]]
     */
-  def getPlaceholderCount(
-      preparedStatement: PreparedStatement): ThrowableXor[Int] =
-    \/.fromTryCatchNonFatal(
-      preparedStatement.getParameterMetaData.getParameterCount)
+  def getPlaceholderCount(preparedStatement: PreparedStatement): ThrowableXor[Int] =
+    \/.fromTryCatchNonFatal(preparedStatement.getParameterMetaData.getParameterCount)
 
   /**
     * Transform SQL-string with placeholders (?-signs) into [[PreparedStatement]]

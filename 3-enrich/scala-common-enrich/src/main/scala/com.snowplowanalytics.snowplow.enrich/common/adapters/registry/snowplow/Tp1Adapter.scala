@@ -46,8 +46,7 @@ object Tp1Adapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {

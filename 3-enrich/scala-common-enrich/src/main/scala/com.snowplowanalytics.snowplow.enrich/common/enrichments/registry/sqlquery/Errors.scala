@@ -15,23 +15,18 @@ package enrichments.registry.sqlquery
 
 sealed trait SqlQueryEnrichmentError extends Throwable {
   val message: String
-  override def toString = message
+  override def toString   = message
   override def getMessage = message
 }
 
-final case class ValueNotFoundException(message: String)
-    extends SqlQueryEnrichmentError
+final case class ValueNotFoundException(message: String) extends SqlQueryEnrichmentError
 
-final case class JsonPathException(message: String)
-    extends SqlQueryEnrichmentError
+final case class JsonPathException(message: String) extends SqlQueryEnrichmentError
 
-final case class InvalidStateException(message: String)
-    extends SqlQueryEnrichmentError
+final case class InvalidStateException(message: String) extends SqlQueryEnrichmentError
 
-final case class InvalidConfiguration(message: String)
-    extends SqlQueryEnrichmentError
+final case class InvalidConfiguration(message: String) extends SqlQueryEnrichmentError
 
-final case class InvalidDbResponse(message: String)
-    extends SqlQueryEnrichmentError
+final case class InvalidDbResponse(message: String) extends SqlQueryEnrichmentError
 
 final case class InvalidInput(message: String) extends SqlQueryEnrichmentError

@@ -35,20 +35,17 @@ import utils.HttpClient
   * @param authentication auth preferences
   * @param timeout time in milliseconds after which request can be considered failed
   */
-case class HttpApi(method: String,
-                   uri: String,
-                   timeout: Int,
-                   authentication: Authentication) {
+case class HttpApi(method: String, uri: String, timeout: Int, authentication: Authentication) {
   import HttpApi._
 
   private val authUser = for {
     httpBasic <- authentication.httpBasic
-    user <- httpBasic.username
+    user      <- httpBasic.username
   } yield user
 
   private val authPassword = for {
     httpBasic <- authentication.httpBasic
-    password <- httpBasic.password
+    password  <- httpBasic.password
   } yield password
 
   /**
@@ -59,15 +56,11 @@ case class HttpApi(method: String,
     * @param url URL to query
     * @return self-describing JSON ready to be attached to event contexts
     */
-  def perform(client: HttpClient, url: String): Validation[Throwable, String] = {
+  def perform(client: HttpClient, url: String): Validation[Throwable, String] =
     for {
-      request <- client.buildRequest(url,
-                                     authUser = authUser,
-                                     authPassword = authPassword,
-                                     method)
+      request  <- client.buildRequest(url, authUser = authUser, authPassword = authPassword, method)
       response <- client.getBody(request, timeout)
     } yield response
-  }
 
   /**
     * Build URL from URI templates (http://acme.com/{{key1}}/{{key2}}
@@ -77,8 +70,7 @@ case class HttpApi(method: String,
     * @return Some request if everything is built correct,
     *         None if some placeholders weren't matched
     */
-  private[apirequest] def buildUrl(
-      context: Map[String, String]): Option[String] = {
+  private[apirequest] def buildUrl(context: Map[String, String]): Option[String] = {
     val encodedContext = context.map {
       case (k, v) => (k, URLEncoder.encode(v, "UTF-8"))
     }

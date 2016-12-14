@@ -34,7 +34,7 @@ import common._
 import outputs.EnrichedEvent
 
 // Iglu Scala Client
-import iglu.client.{SchemaCriterion, JsonSchemaPair, Resolver}
+import iglu.client.{JsonSchemaPair, Resolver, SchemaCriterion}
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonMethods._
 
@@ -56,20 +56,12 @@ object Shredder {
   private val TypeHierarchyRoot = "events"
 
   // Self-describing schema for a ue_properties
-  private val UePropertiesSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow",
-    "unstruct_event",
-    "jsonschema",
-    1,
-    0)
+  private val UePropertiesSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", 1, 0)
 
   // Self-describing schema for a contexts
-  private val ContextsSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow",
-    "contexts",
-    "jsonschema",
-    1,
-    0)
+  private val ContextsSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "contexts", "jsonschema", 1, 0)
 
   /**
     * Shred the EnrichedEvent's two fields which
@@ -101,7 +93,7 @@ object Shredder {
 
     // Get our unstructured event and Lists of contexts and derived_contexts
     val ue = extractAndValidateUnstructEvent(event)
-    val c = extractAndValidateCustomContexts(event)
+    val c  = extractAndValidateCustomContexts(event)
     val dc = extractAndValidateDerivedContexts(event)
 
     // Joining all validated JSONs into a single validated List[JsonNode], collecting Failures too
@@ -123,8 +115,7 @@ object Shredder {
     */
   def extractAndValidateUnstructEvent(event: EnrichedEvent)(
       implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
-    val extracted: ValidatedNelMessage[JsonNodes] = flatten(
-      extractUnstructEvent(event))
+    val extracted: ValidatedNelMessage[JsonNodes] = flatten(extractUnstructEvent(event))
     validate(extracted)
   }
 
@@ -158,11 +149,9 @@ object Shredder {
     * @param resolver iglu resolver
     * @return validated list of pairs consist of schema and node
     */
-  private[shredder] def extractAndValidateContexts(json: String,
-                                                   field: String)(
+  private[shredder] def extractAndValidateContexts(json: String, field: String)(
       implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
-    val extracted: ValidatedNelMessage[JsonNodes] = flatten(
-      extractContexts(json, field))
+    val extracted: ValidatedNelMessage[JsonNodes] = flatten(extractContexts(json, field))
     validate(extracted)
   }
 
@@ -177,7 +166,7 @@ object Shredder {
     *         and on Failure a NonEmptyList of JsonNodes containing error messages
     */
   def extractUnstructEvent(event: EnrichedEvent)(
-      implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
+      implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] =
     for {
       v <- extractAndValidateJson("ue_properties",
                                   UePropertiesSchema,
@@ -187,7 +176,6 @@ object Shredder {
         j <- v
         l = List(j)
       } yield l
-  }
 
   /**
     * Extract list of contexts out of string
@@ -200,7 +188,7 @@ object Shredder {
     *         and on Failure a NonEmptyList of JsonNodes containing error messages
     */
   private[shredder] def extractContexts(json: String, field: String)(
-      implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
+      implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] =
     for {
       v <- extractAndValidateJson(field, ContextsSchema, Option(json))
     } yield
@@ -208,7 +196,6 @@ object Shredder {
         j <- v
         l = j.iterator.toList
       } yield l
-  }
 
   /**
     * Fetch Iglu Schema for each [[JsonNode]] in [[ValidatedNelMessage]] and validate this node against it
@@ -216,8 +203,7 @@ object Shredder {
     * @param validatedJsons list of valid JSONs supposed to be Self-describing
     * @return validated list of pairs consist of schema and node
     */
-  private[shredder] def validate(
-      validatedJsons: ValidatedNelMessage[JsonNodes])(
+  private[shredder] def validate(validatedJsons: ValidatedNelMessage[JsonNodes])(
       implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
     val validated = validatedJsons.map { (jsonNodes: List[JsonNode]) =>
       jsonNodes.map(_.validateAndIdentifySchema(false))
@@ -231,10 +217,10 @@ object Shredder {
     * @param o Option with List
     * @return empty list in case of None, or non-empty in case of some
     */
-  private[shredder] def flatten(o: Option[ValidatedNelMessage[JsonNodes]])
-    : ValidatedNelMessage[JsonNodes] = o match {
+  private[shredder] def flatten(
+      o: Option[ValidatedNelMessage[JsonNodes]]): ValidatedNelMessage[JsonNodes] = o match {
     case Some(vjl) => vjl
-    case None => List[JsonNode]().success
+    case None      => List[JsonNode]().success
   }
 
   /**
@@ -247,9 +233,7 @@ object Shredder {
     *        element
     * @return the partially complete TypeHierarchy
     */
-  private[shredder] def makePartialHierarchy(
-      rootId: String,
-      rootTstamp: String): TypeHierarchy =
+  private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
     TypeHierarchy(
       rootId = rootId,
       rootTstamp = rootTstamp,
@@ -281,9 +265,8 @@ object Shredder {
     *         contain the full schema key, plus the
     *         now-finalized hierarchy
     */
-  private def attachMetadata(
-      instanceSchemaPair: JsonSchemaPair,
-      partialHierarchy: TypeHierarchy): JsonSchemaPair = {
+  private def attachMetadata(instanceSchemaPair: JsonSchemaPair,
+                             partialHierarchy: TypeHierarchy): JsonSchemaPair = {
 
     val (schemaKey, instance) = instanceSchemaPair
 
@@ -347,7 +330,6 @@ object Shredder {
     * @param instance The JSON instance itself
     * @return the pimped ScalazArgs
     */
-  private def extractJson(field: String,
-                          instance: String): ValidatedNelMessage[JsonNode] =
+  private def extractJson(field: String, instance: String): ValidatedNelMessage[JsonNode] =
     JsonUtils.extractJson(field, instance).toProcessingMessageNel
 }

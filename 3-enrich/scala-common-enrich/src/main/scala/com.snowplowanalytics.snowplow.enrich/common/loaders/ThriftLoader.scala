@@ -35,7 +35,7 @@ import Scalaz._
 import Validation.FlatMap._
 
 // Iglu
-import iglu.client.{SchemaKey, SchemaCriterion}
+import iglu.client.{SchemaCriterion, SchemaKey}
 
 // Snowplow
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
@@ -51,12 +51,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
   private val thriftDeserializer = new TDeserializer
 
-  private val ExpectedSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow",
-    "CollectorPayload",
-    "thrift",
-    1,
-    0)
+  private val ExpectedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
 
   /**
     * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -69,8 +65,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     * @return either a set of validation errors or an Option-boxed
     *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
     */
-  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
+  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload =
     try {
 
       var schema = new SchemaSniffer
@@ -101,10 +96,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case e: Throwable =>
-        s"Error deserializing raw event: ${e.getMessage}"
-          .failureNel[Option[CollectorPayload]]
+        s"Error deserializing raw event: ${e.getMessage}".failureNel[Option[CollectorPayload]]
     }
-  }
 
   /**
     * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -117,8 +110,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     * @return either a set of validation errors or an Option-boxed
     *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
     */
-  private def convertSchema1(
-      line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+  private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
     var collectorPayload = new CollectorPayload1
     this.synchronized {
@@ -133,19 +125,17 @@ object ThriftLoader extends Loader[Array[Byte]] {
       collectorPayload.encoding
     )
 
-    val hostname = Option(collectorPayload.hostname)
-    val userAgent = Option(collectorPayload.userAgent)
-    val refererUri = Option(collectorPayload.refererUri)
+    val hostname      = Option(collectorPayload.hostname)
+    val userAgent     = Option(collectorPayload.userAgent)
+    val refererUri    = Option(collectorPayload.refererUri)
     val networkUserId = Option(collectorPayload.networkUserId)
 
     val headers = Option(collectorPayload.headers).map(_.toList).getOrElse(Nil)
 
-    val ip = IpAddressExtractor
-      .extractIpAddress(headers, collectorPayload.ipAddress)
-      .some // Required
+    val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
-      case None => "Request does not contain a path".failure
+      case None    => "Request does not contain a path".failure
       case Some(p) => CollectorApi.parse(p)
     }
 
@@ -181,8 +171,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
     * @return either a set of validation errors or an Option-boxed
     *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
     */
-  private def convertOldSchema(
-      line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+  private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
     var snowplowRawEvent = new SnowplowRawEvent
     this.synchronized {
@@ -197,16 +186,14 @@ object ThriftLoader extends Loader[Array[Byte]] {
       snowplowRawEvent.encoding
     )
 
-    val hostname = Option(snowplowRawEvent.hostname)
-    val userAgent = Option(snowplowRawEvent.userAgent)
-    val refererUri = Option(snowplowRawEvent.refererUri)
+    val hostname      = Option(snowplowRawEvent.hostname)
+    val userAgent     = Option(snowplowRawEvent.userAgent)
+    val refererUri    = Option(snowplowRawEvent.refererUri)
     val networkUserId = Option(snowplowRawEvent.networkUserId)
 
     val headers = Option(snowplowRawEvent.headers).map(_.toList).getOrElse(Nil)
 
-    val ip = IpAddressExtractor
-      .extractIpAddress(headers, snowplowRawEvent.ipAddress)
-      .some // Required
+    val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
     (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
       Some(

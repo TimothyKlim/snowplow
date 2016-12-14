@@ -47,15 +47,10 @@ import utils.ScalazJson4sUtils
   */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
-                                        "ua_parser_config",
-                                        "jsonschema",
-                                        1,
-                                        0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
-  def parse(
-      config: JValue,
-      schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment.type] =
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment.type] =
     isParseable(config, schemaKey).map(_ => UaParserEnrichment)
 }
 
@@ -73,35 +68,32 @@ case object UaParserEnrichment extends Enrichment {
   /*
    * Adds a period in front of a not-null version element
    */
-  def prependDot(versionElement: String): String = {
+  def prependDot(versionElement: String): String =
     if (versionElement != null) {
       "." + versionElement
     } else {
       ""
     }
-  }
 
   /*
    * Prepends space before the versionElement
    */
-  def prependSpace(versionElement: String): String = {
+  def prependSpace(versionElement: String): String =
     if (versionElement != null) {
       " " + versionElement
     } else {
       ""
     }
-  }
 
   /*
    * Checks for null value in versionElement for family parameter
    */
-  def checkNull(versionElement: String): String = {
+  def checkNull(versionElement: String): String =
     if (versionElement == null) {
       ""
     } else {
       versionElement
     }
-  }
 
   /**
     * Extracts the client attributes
@@ -117,41 +109,37 @@ case object UaParserEnrichment extends Enrichment {
     *         exception, boxed in a
     *         Scalaz Validation
     */
-  def extractUserAgent(
-      useragent: String): Validation[String, JsonAST.JObject] = {
+  def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] = {
 
     val c = try {
       uaParser.parse(useragent)
     } catch {
       case NonFatal(e) =>
-        return "Exception parsing useragent [%s]: [%s]"
-          .format(useragent, e.getMessage)
-          .failure
+        return "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).failure
     }
     // To display useragent version
-    val useragentVersion = checkNull(c.userAgent.family) + prependSpace(
-        c.userAgent.major) + prependDot(c.userAgent.minor) + prependDot(
-        c.userAgent.patch)
+    val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(
+        c.userAgent.minor) + prependDot(c.userAgent.patch)
 
     // To display operating system version
-    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(
-        c.os.minor) + prependDot(c.os.patch) + prependDot(c.os.patchMinor)
+    val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(
+        c.os.patch) + prependDot(c.os.patchMinor)
 
     val json =
       (("schema" -> "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0") ~
         ("data" ->
-          ("useragentFamily" -> c.userAgent.family) ~
-            ("useragentMajor" -> c.userAgent.major) ~
-            ("useragentMinor" -> c.userAgent.minor) ~
-            ("useragentPatch" -> c.userAgent.patch) ~
+          ("useragentFamily"    -> c.userAgent.family) ~
+            ("useragentMajor"   -> c.userAgent.major) ~
+            ("useragentMinor"   -> c.userAgent.minor) ~
+            ("useragentPatch"   -> c.userAgent.patch) ~
             ("useragentVersion" -> useragentVersion) ~
-            ("osFamily" -> c.os.family) ~
-            ("osMajor" -> c.os.major) ~
-            ("osMinor" -> c.os.minor) ~
-            ("osPatch" -> c.os.patch) ~
-            ("osPatchMinor" -> c.os.patchMinor) ~
-            ("osVersion" -> osVersion) ~
-            ("deviceFamily" -> c.device.family)))
+            ("osFamily"         -> c.os.family) ~
+            ("osMajor"          -> c.os.major) ~
+            ("osMinor"          -> c.os.minor) ~
+            ("osPatch"          -> c.os.patch) ~
+            ("osPatchMinor"     -> c.os.patchMinor) ~
+            ("osVersion"        -> osVersion) ~
+            ("deviceFamily"     -> c.device.family)))
 
     json.success
   }

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import scala.collection.JavaConversions._
 
 // Iglu
-import iglu.client.{SchemaCriterion, Resolver, SchemaKey}
+import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // Scalaz
@@ -86,8 +86,7 @@ object RedirectAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val originalParams = toMap(payload.querystring)
     if (originalParams.isEmpty) {
@@ -98,16 +97,14 @@ object RedirectAdapter extends Adapter {
           "Querystring does not contain u parameter: not a valid URI redirect".failureNel
         case Some(u) => {
           val json = buildUriRedirect(u)
-          val newParams: Validation[
-            NonEmptyList[String],
-            scala.collection.immutable.Map[String, String]] =
+          val newParams: Validation[NonEmptyList[String],
+                                    scala.collection.immutable.Map[String, String]] =
             if (originalParams.contains("e")) {
               // Already have an event so add the URI redirect as a context (more fiddly)
               def newCo =
-                Map("co" -> compact(toContexts(json)))
-                  .success[NonEmptyList[String]]
+                Map("co" -> compact(toContexts(json))).success[NonEmptyList[String]]
               (originalParams.get("cx"), originalParams.get("co")) match {
-                case (None, None) => newCo
+                case (None, None)                 => newCo
                 case (None, Some(co)) if co == "" => newCo
                 case (None, Some(co)) =>
                   addToExistingCo(json, co).map(str => Map("co" -> str))
@@ -121,8 +118,7 @@ object RedirectAdapter extends Adapter {
 
           val fixedParams = Map(
             "tv" -> TrackerVersion,
-            "p" -> originalParams
-              .getOrElse("p", TrackerPlatform) // Required field
+            "p"  -> originalParams.getOrElse("p", TrackerPlatform) // Required field
           )
 
           newParams.map { np =>
@@ -169,12 +165,9 @@ object RedirectAdapter extends Adapter {
     * @return an updated non-Base64-encoded self-
     *         describing contexts stringified JSON
     */
-  private def addToExistingCo(newContext: JValue,
-                              existing: String): Validated[String] =
+  private def addToExistingCo(newContext: JValue, existing: String): Validated[String] =
     for {
-      node <- JU
-        .extractJson("co|cx", existing)
-        .toValidationNel: Validated[JsonNode]
+      node <- JU.extractJson("co|cx", existing).toValidationNel: Validated[JsonNode]
       jvalue = fromJsonNode(node)
       merged = jvalue merge render("data" -> List(newContext))
     } yield compact(merged)
@@ -194,13 +187,10 @@ object RedirectAdapter extends Adapter {
     * @return an updated non-Base64-encoded self-
     *         describing contexts stringified JSON
     */
-  private def addToExistingCx(newContext: JValue,
-                              existing: String): Validated[String] =
+  private def addToExistingCx(newContext: JValue, existing: String): Validated[String] =
     for {
-      decoded <- CU
-        .decodeBase64Url("cx", existing)
-        .toValidationNel: Validated[String]
-      added <- addToExistingCo(newContext, decoded)
+      decoded <- CU.decodeBase64Url("cx", existing).toValidationNel: Validated[String]
+      added   <- addToExistingCo(newContext, decoded)
       recoded = CU.encodeBase64Url(added)
     } yield recoded
 

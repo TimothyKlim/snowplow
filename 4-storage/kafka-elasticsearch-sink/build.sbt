@@ -1,7 +1,7 @@
 lazy val akkaStreamKafkaVersion      = "0.13"
 lazy val akkaVersion                 = "2.4.14"
-lazy val doobieVersion               = "0.3.1-M2"
-lazy val elastic4sVersion            = "5.0.4"
+lazy val doobieVersion               = "0.3.1-M3"
+lazy val elastic4sVersion            = "5.1.2"
 lazy val igluClientVersion           = "0.3.2"
 lazy val postgresqlVersion           = "9.4.1212"
 lazy val scalazVersion               = "7.2.8"
@@ -92,7 +92,7 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
   .settings(noPublishSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "ch.qos.logback"                 % "logback-classic"         % "1.1.7",
+      "ch.qos.logback"                 % "logback-classic"         % "1.1.8",
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.8.5",
       "com.sksamuel.elastic4s"         %% "elastic4s-core"         % elastic4sVersion,
       "com.snowplowanalytics"          % "iglu-scala-client"       % igluClientVersion,
@@ -103,7 +103,7 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
       "com.typesafe.akka"          %% "akka-stream-kafka"      % akkaStreamKafkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging"          % "3.5.0",
       "com.zaxxer"                 % "HikariCP"                % "2.5.1",
-      "io.fcomb"                   %% "db-migration"           % "0.3.4",
+      "io.fcomb"                   %% "db-migration"           % "0.3.5",
       "org.apache.commons"         % "commons-lang3"           % "3.5" % "compile",
       "org.clapper"                %% "argot"                  % "1.0.4",
       "org.postgresql"             % "postgresql"              % postgresqlVersion exclude ("org.slf4j", "slf4j-simple"),
@@ -119,18 +119,20 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
     javaOptions in Universal ++= javaRunOptions.map(o => s"-J$o"),
     packageName in Universal := "dist",
     javaOptions in (Test, run) ++= javaRunOptions,
-    sourceGenerators in Compile += Def.task {
-      val file = (sourceManaged in Compile).value / "settings.scala"
-      IO.write(file,
-               """package com.snowplowanalytics.snowplow.storage.generated
-                 |object Settings {
-                 |  val organization = "%s"
-                 |  val version = "%s"
-                 |  val name = "%s"
-                 |}
-                 |""".stripMargin.format(organization.value, version.value, name.value))
-      Seq(file)
-    }.taskValue,
+    sourceGenerators in Compile += Def
+      .task {
+        val file = (sourceManaged in Compile).value / "settings.scala"
+        IO.write(file,
+                 """package com.snowplowanalytics.snowplow.storage.generated
+                   |object Settings {
+                   |  val organization = "%s"
+                   |  val version = "%s"
+                   |  val name = "%s"
+                   |}
+                   |""".stripMargin.format(organization.value, version.value, name.value))
+        Seq(file)
+      }
+      .taskValue,
     parallelExecution := true,
     fork in run := true
   )

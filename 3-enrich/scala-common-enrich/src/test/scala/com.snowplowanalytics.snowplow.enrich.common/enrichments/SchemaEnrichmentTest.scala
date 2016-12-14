@@ -30,10 +30,7 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class SchemaEnrichmentTest
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class SchemaEnrichmentTest extends Specification with DataTables with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
   val signupFormSubmitted =
@@ -47,26 +44,22 @@ class SchemaEnrichmentTest
 
   def e1 =
     "SPEC NAME" || "EVENT" | "EXPECTED SCHEMA" |
-      "page view" !! event("page_view") ! SchemaKey(
-        "com.snowplowanalytics.snowplow",
-        "page_view",
-        "jsonschema",
-        "1-0-0") |
-      "ping ping" !! event("page_ping") ! SchemaKey(
-        "com.snowplowanalytics.snowplow",
-        "page_ping",
-        "jsonschema",
-        "1-0-0") |
-      "transaction" !! event("transaction") ! SchemaKey(
-        "com.snowplowanalytics.snowplow",
-        "transaction",
-        "jsonschema",
-        "1-0-0") |
-      "transaction item" !! event("transaction_item") ! SchemaKey(
-        "com.snowplowanalytics.snowplow",
-        "transaction_item",
-        "jsonschema",
-        "1-0-0") |
+      "page view" !! event("page_view") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                    "page_view",
+                                                    "jsonschema",
+                                                    "1-0-0") |
+      "ping ping" !! event("page_ping") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                    "page_ping",
+                                                    "jsonschema",
+                                                    "1-0-0") |
+      "transaction" !! event("transaction") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                        "transaction",
+                                                        "jsonschema",
+                                                        "1-0-0") |
+      "transaction item" !! event("transaction_item") ! SchemaKey("com.snowplowanalytics.snowplow",
+                                                                  "transaction_item",
+                                                                  "jsonschema",
+                                                                  "1-0-0") |
       "struct event" !! event("struct") ! SchemaKey("com.google.analytics",
                                                     "event",
                                                     "jsonschema",

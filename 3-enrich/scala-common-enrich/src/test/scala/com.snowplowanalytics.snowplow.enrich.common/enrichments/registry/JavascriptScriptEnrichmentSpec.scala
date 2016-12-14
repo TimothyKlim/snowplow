@@ -34,9 +34,7 @@ import org.specs2.scalaz.ValidationMatchers
 /**
   * Tests the anonymzeIp function
   */
-class JavascriptScriptEnrichmentSpec
-    extends Specification
-    with ValidationMatchers {
+class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers {
   def is =
     "This is a specification to test the JavascriptScriptEnrichment" ^
       p ^

@@ -22,7 +22,7 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // Scala
 import scala.collection.JavaConversions._
@@ -73,8 +73,7 @@ object IgluAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val params = toMap(payload.querystring)
 
@@ -104,11 +103,10 @@ object IgluAdapter extends Adapter {
     * @param contentType The extracted contentType string
     * @param params The raw map of params from the querystring.
     */
-  private[registry] def payloadSdJsonToEvent(
-      payload: CollectorPayload,
-      body: String,
-      contentType: String,
-      params: Map[String, String]): ValidatedRawEvents =
+  private[registry] def payloadSdJsonToEvent(payload: CollectorPayload,
+                                             body: String,
+                                             contentType: String,
+                                             params: Map[String, String]): ValidatedRawEvents =
     contentType match {
       case "application/json" => sdJsonBodyToEvent(payload, body, params)
       case "application/json; charset=utf-8" =>
@@ -125,17 +123,15 @@ object IgluAdapter extends Adapter {
     * @param body The extracted body string
     * @param params The raw map of params from the querystring.
     */
-  private[registry] def sdJsonBodyToEvent(
-      payload: CollectorPayload,
-      body: String,
-      params: Map[String, String]): ValidatedRawEvents = {
+  private[registry] def sdJsonBodyToEvent(payload: CollectorPayload,
+                                          body: String,
+                                          params: Map[String, String]): ValidatedRawEvents = {
 
     implicit val formats = org.json4s.DefaultFormats
 
     parseJsonSafe(body) match {
       case Success(parsed) => {
-        ((parsed \ "schema").extractOpt[String],
-         (parsed \ "data").extractOpt[JObject]) match {
+        ((parsed \ "schema").extractOpt[String], (parsed \ "data").extractOpt[JObject]) match {
           case (Some(schemaUri), Some(data)) => {
             SchemaKey.parse(schemaUri) match {
               case Failure(procMsg) => procMsg.getMessage.failureNel
@@ -143,11 +139,8 @@ object IgluAdapter extends Adapter {
                 NonEmptyList(
                   RawEvent(
                     api = payload.api,
-                    parameters = toUnstructEventParams(TrackerVersion,
-                                                       params,
-                                                       schemaUri,
-                                                       data,
-                                                       "app"),
+                    parameters =
+                      toUnstructEventParams(TrackerVersion, params, schemaUri, data, "app"),
                     contentType = payload.contentType,
                     source = payload.source,
                     context = payload.context
@@ -176,10 +169,9 @@ object IgluAdapter extends Adapter {
     * @param schemaUri The schema-uri found
     * @param params The raw map of params from the querystring.
     */
-  private[registry] def payloadToEventWithSchema(
-      payload: CollectorPayload,
-      schemaUri: String,
-      params: Map[String, String]): ValidatedRawEvents =
+  private[registry] def payloadToEventWithSchema(payload: CollectorPayload,
+                                                 schemaUri: String,
+                                                 params: Map[String, String]): ValidatedRawEvents =
     SchemaKey.parse(schemaUri) match {
       case Failure(procMsg) => procMsg.getMessage.failureNel
       case Success(_) =>
@@ -222,11 +214,10 @@ object IgluAdapter extends Adapter {
     * @param params The query string parameters
     * @return a single validated event
     */
-  private[registry] def jsonBodyToEvent(
-      payload: CollectorPayload,
-      body: String,
-      schemaUri: String,
-      params: Map[String, String]): ValidatedRawEvents =
+  private[registry] def jsonBodyToEvent(payload: CollectorPayload,
+                                        body: String,
+                                        schemaUri: String,
+                                        params: Map[String, String]): ValidatedRawEvents =
     parseJsonSafe(body) match {
       case Success(parsed) => {
         if (parsed.children.isEmpty) {
@@ -259,27 +250,21 @@ object IgluAdapter extends Adapter {
     * @param params The query string parameters
     * @return a single validated event
     */
-  private[registry] def formBodyToEvent(
-      payload: CollectorPayload,
-      body: String,
-      schemaUri: String,
-      params: Map[String, String]): ValidatedRawEvents =
+  private[registry] def formBodyToEvent(payload: CollectorPayload,
+                                        body: String,
+                                        schemaUri: String,
+                                        params: Map[String, String]): ValidatedRawEvents =
     try {
       val bodyMap = toMap(
-        URLEncodedUtils
-          .parse(URI.create("http://localhost/?" + body), "UTF-8")
-          .toList)
-      val json = compact(render(bodyMap))
+        URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
+      val json  = compact(render(bodyMap))
       val event = parse(json)
 
       NonEmptyList(
         RawEvent(
           api = payload.api,
-          parameters = toUnstructEventParams(TrackerVersion,
-                                             (params - "schema"),
-                                             schemaUri,
-                                             event,
-                                             "srv"),
+          parameters =
+            toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, event, "srv"),
           contentType = payload.contentType,
           source = payload.source,
           context = payload.context

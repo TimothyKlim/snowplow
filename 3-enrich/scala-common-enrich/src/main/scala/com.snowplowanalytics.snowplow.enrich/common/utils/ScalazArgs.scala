@@ -79,10 +79,7 @@ class ScalazArgs(args: ScalazArgs.ListableArg) {
     */
   def requiredz(key: String): ValidatedMessage[String] = args.list(key) match {
     case Nil =>
-      "Required argument [%s] not found"
-        .format(key)
-        .toProcessingMessage
-        .failure[String]
+      "Required argument [%s] not found".format(key).toProcessingMessage.failure[String]
     case List(a) => a.success
     case _ =>
       "List of values found for argument [%s], should be one"
@@ -100,7 +97,7 @@ class ScalazArgs(args: ScalazArgs.ListableArg) {
     */
   def optionalz(key: String): ValidatedMessage[Option[String]] =
     args.list(key) match {
-      case Nil => None.success
+      case Nil     => None.success
       case List(a) => Some(a).success
       case _ =>
         "List of values found for argument [%s], should be at most one"

@@ -184,9 +184,7 @@ class PagePingWithContextSpec extends Specification with ValidationMatchers {
 
       Result.unit(
         for (idx <- PagePingWithContextSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(
-            PagePingWithContextSpec.expected(idx),
-            withIndex = idx)
+          fields(idx) must beFieldEqualTo(PagePingWithContextSpec.expected(idx), withIndex = idx)
         }
       )
     }

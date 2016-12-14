@@ -65,12 +65,11 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured JavascriptScriptEnrichment instance
     */
-  def parse(config: JValue, schemaKey: SchemaKey)
-    : ValidatedNelMessage[JavascriptScriptEnrichment] = {
+  def parse(config: JValue,
+            schemaKey: SchemaKey): ValidatedNelMessage[JavascriptScriptEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        encoded <- ScalazJson4sUtils
-          .extract[String](config, "parameters", "script")
+        encoded <- ScalazJson4sUtils.extract[String](config, "parameters", "script")
         raw <- ConversionUtils
           .decodeBase64Url("script", encoded)
           .toProcessingMessage // TODO: shouldn't be URL-safe
@@ -78,7 +77,6 @@ object JavascriptScriptEnrichmentConfig extends ParseableEnrichment {
         enrich = JavascriptScriptEnrichment(compiled)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -89,8 +87,8 @@ object JavascriptScriptEnrichment {
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
-    val In = s"${prefix}In"
-    val Out = s"${prefix}Out"
+    val In             = s"${prefix}In"
+    val Out            = s"${prefix}Out"
   }
 
   /**
@@ -140,11 +138,10 @@ object JavascriptScriptEnrichment {
     *         or an error String on Failure
     */
   implicit val formats = DefaultFormats
-  private[registry] def process(
-      script: Script,
-      event: EnrichedEvent): Validation[String, List[JObject]] = {
+  private[registry] def process(script: Script,
+                                event: EnrichedEvent): Validation[String, List[JObject]] = {
 
-    val cx = Context.enter()
+    val cx    = Context.enter()
     val scope = cx.initStandardObjects
 
     try {
@@ -184,14 +181,11 @@ object JavascriptScriptEnrichment {
     * Taken from http://stackoverflow.com/a/6690611/255627
     */
   import scala.language.higherKinds
-  private def failFastCast[A: Manifest, T[A] <: Traversable[A]](as: T[A],
-                                                                any: Any) = {
+  private def failFastCast[A: Manifest, T[A] <: Traversable[A]](as: T[A], any: Any) = {
     val res = any.asInstanceOf[T[A]]
     if (res.isEmpty) res
     else {
-      manifest[A]
-        .newArray(1)
-        .update(0, res.head) // force exception on wrong type
+      manifest[A].newArray(1).update(0, res.head) // force exception on wrong type
       res
     }
   }

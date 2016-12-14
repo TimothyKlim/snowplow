@@ -40,21 +40,17 @@ import scala.collection.JavaConverters._
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
 import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
-import io.github.cloudify.scala.aws.kinesis.Definitions.{
-  Stream,
-  PutResult,
-  Record
-}
+import io.github.cloudify.scala.aws.kinesis.Definitions.{PutResult, Record, Stream}
 import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 
 // Config
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future, Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -75,15 +71,15 @@ class KinesisSink(provider: AWSCredentialsProvider,
                   tracker: Option[Tracker])
     extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   private val name = inputType match {
     case InputType.Good => config.enrichedOutStream
-    case InputType.Bad => config.badOutStream
+    case InputType.Bad  => config.badOutStream
   }
 
-  private val maxBackoff = config.maxBackoff
-  private val minBackoff = config.minBackoff
+  private val maxBackoff      = config.maxBackoff
+  private val minBackoff      = config.minBackoff
   private val randomGenerator = new java.util.Random()
 
   // explicitly create a client so we can configure the end point
@@ -132,20 +128,18 @@ class KinesisSink(provider: AWSCredentialsProvider,
     *
     * @return The stream
     */
-  def loadStream(): Stream = {
+  def loadStream(): Stream =
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      error(
-        s"Cannot write because stream $name does not exist or is not active")
+      error(s"Cannot write because stream $name does not exist or is not active")
       System.exit(1)
       throw new RuntimeException("System.exit should never fail")
     }
-  }
 
-  val ByteThreshold = config.byteLimit
+  val ByteThreshold   = config.byteLimit
   val RecordThreshold = config.recordLimit
-  val TimeThreshold = config.timeLimit
+  val TimeThreshold   = config.timeLimit
   var nextRequestTime = 0L
 
   /**
@@ -235,11 +229,10 @@ class KinesisSink(provider: AWSCredentialsProvider,
     // Log BadRows
     inputType match {
       case InputType.Good => None
-      case InputType.Bad => events.foreach(e => debug(s"BadRow: ${e._1}"))
+      case InputType.Bad  => events.foreach(e => debug(s"BadRow: ${e._1}"))
     }
 
-    if (!EventStorage.currentBatch.isEmpty && System
-          .currentTimeMillis() > nextRequestTime) {
+    if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
       nextRequestTime = System.currentTimeMillis() + TimeThreshold
       true
     } else {
@@ -265,13 +258,13 @@ class KinesisSink(provider: AWSCredentialsProvider,
     *
     * @param batch Events to send
     */
-  def sendBatch(batch: List[(ByteBuffer, String)]): Unit = {
+  def sendBatch(batch: List[(ByteBuffer, String)]): Unit =
     if (!batch.isEmpty) {
       info(s"Writing ${batch.size} records to Kinesis stream $name")
-      var unsentRecords = batch
-      var backoffTime = minBackoff
+      var unsentRecords         = batch
+      var backoffTime           = minBackoff
       var sentBatchSuccessfully = false
-      var attemptNumber = 0
+      var attemptNumber         = 0
       while (!sentBatchSuccessfully) {
         attemptNumber += 1
 
@@ -292,8 +285,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
             unsentRecords = failedRecords
             logErrorsSummary(getErrorsSummary(failedResults))
             backoffTime = getNextBackoff(backoffTime)
-            error(
-              s"Retrying all failed records in $backoffTime milliseconds...")
+            error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
             val putSize: Long =
@@ -341,26 +333,21 @@ class KinesisSink(provider: AWSCredentialsProvider,
         }
       }
     }
-  }
 
   private[sinks] def getErrorsSummary(
-      badResponses: List[PutRecordsResultEntry])
-    : Map[String, (Long, String)] = {
+      badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] =
     badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) =>
       if (counts.contains(r.getErrorCode)) {
         counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
       } else {
         counts + (r.getErrorCode -> ((1, r.getErrorMessage)))
     })
-  }
 
-  private[sinks] def logErrorsSummary(
-      errorsSummary: Map[String, (Long, String)]): Unit = {
+  private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit =
     for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
       error(
         s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
     }
-  }
 
   /**
     * How long to wait before sending the next request
@@ -369,6 +356,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
     * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
     */
   private def getNextBackoff(lastBackoff: Long): Long =
-    (minBackoff + randomGenerator
-      .nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+    (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
+      .min(maxBackoff)
 }

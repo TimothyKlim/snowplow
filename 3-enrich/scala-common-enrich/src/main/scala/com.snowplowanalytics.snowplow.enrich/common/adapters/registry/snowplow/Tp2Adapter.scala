@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import scala.collection.JavaConversions._
 
 // Iglu
-import iglu.client.{SchemaCriterion, Resolver}
+import iglu.client.{Resolver, SchemaCriterion}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // Scalaz
@@ -55,12 +55,8 @@ object Tp2Adapter extends Adapter {
   }
 
   // Request body expected to validate against this JSON Schema
-  private val PayloadDataSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow",
-    "payload_data",
-    "jsonschema",
-    1,
-    0)
+  private val PayloadDataSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
 
   /**
     * Converts a CollectorPayload instance into N raw events.
@@ -72,8 +68,7 @@ object Tp2Adapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val qsParams = toMap(payload.querystring)
 
@@ -92,7 +87,7 @@ object Tp2Adapter extends Adapter {
         case (Some(bdy), Some(_)) => // Build our NEL of parameters
           for {
             json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
-            nel <- toParametersNel(json, qsParams)
+            nel  <- toParametersNel(json, qsParams)
           } yield nel
       }
 
@@ -122,9 +117,9 @@ object Tp2Adapter extends Adapter {
     * @return a NEL of Map[String, String] parameters
     *         on Succeess, a NEL of Strings on Failure
     */
-  private def toParametersNel(instance: JsonNode,
-                              mergeWith: RawEventParameters)
-    : Validated[NonEmptyList[RawEventParameters]] = {
+  private def toParametersNel(
+      instance: JsonNode,
+      mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
 
     val events: List[List[Validation[String, (String, String)]]] = for {
       event <- instance.iterator.toList
@@ -145,9 +140,11 @@ object Tp2Adapter extends Adapter {
     } yield
       (for {
         param <- params
-      } yield param).collect {
-        case Success(p) => p
-      }.toMap ++ mergeWith) // Overwrite with mergeWith
+      } yield param)
+        .collect {
+          case Success(p) => p
+        }
+        .toMap ++ mergeWith) // Overwrite with mergeWith
 
     (successes, failures) match {
       case (s :: ss, Nil) =>
@@ -168,9 +165,9 @@ object Tp2Adapter extends Adapter {
     *         on Success, or an error String on Failure.
     *
     */
-  private def toParameter(entry: JMapEntry[String, JsonNode])
-    : Validation[String, Tuple2[String, String]] = {
-    val key = entry.getKey
+  private def toParameter(
+      entry: JMapEntry[String, JsonNode]): Validation[String, Tuple2[String, String]] = {
+    val key      = entry.getKey
     val rawValue = entry.getValue
 
     Option(rawValue.textValue) match {
@@ -206,12 +203,8 @@ object Tp2Adapter extends Adapter {
       schemaCriterion: SchemaCriterion,
       instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
     for {
-      j <- (JU
-        .extractJson(field, instance)
-        .toValidationNel: Validated[JsonNode])
-      v <- j
-        .verifySchemaAndValidate(schemaCriterion, true)
-        .leftMap(_.map(_.toString))
+      j <- (JU.extractJson(field, instance).toValidationNel: Validated[JsonNode])
+      v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
     } yield v
 
 }

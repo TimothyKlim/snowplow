@@ -27,7 +27,7 @@ import akka.http.scaladsl.server._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 // Java
 import java.io.File
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
 import org.clapper.argot._
 
 // Config
-import com.typesafe.config.{ConfigFactory, Config, ConfigException}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -50,7 +50,7 @@ import sinks._
 // Main entry point of the Scala collector.
 object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   import ArgotConverters._ // Argument specifications
 
@@ -58,24 +58,22 @@ object ScalaCollector extends App {
     programName = generated.Settings.name,
     compactUsage = true,
     preUsage = Some(
-      "%s: Version %s. Copyright (c) 2015, %s.".format(
-        generated.Settings.name,
-        generated.Settings.version,
-        generated.Settings.organization))
+      "%s: Version %s. Copyright (c) 2015, %s.".format(generated.Settings.name,
+                                                       generated.Settings.version,
+                                                       generated.Settings.organization))
   )
 
   val defaultConfig = ConfigFactory.load()
 
   // Mandatory config argument
   val config =
-    parser.option[Config](List("config"), "filename", "Configuration file.") {
-      (c, opt) =>
-        val file = new File(c)
-        if (file.exists) ConfigFactory.parseFile(file)
-        else {
-          parser.usage("Configuration file \"%s\" does not exist".format(c))
-          ConfigFactory.empty()
-        }
+    parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
+      val file = new File(c)
+      if (file.exists) ConfigFactory.parseFile(file)
+      else {
+        parser.usage("Configuration file \"%s\" does not exist".format(c))
+        ConfigFactory.empty()
+      }
     }
 
   parser.parse(args)
@@ -86,25 +84,22 @@ object ScalaCollector extends App {
   val collectorConfig = new CollectorConfig(rawConf)
 
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
-  implicit val mat = ActorMaterializer()
+  implicit val mat    = ActorMaterializer()
 
-  lazy val executorService = new ScheduledThreadPoolExecutor(
-    collectorConfig.threadpoolSize)
+  lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
 
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kafka =>
       val good = new KafkaSink(collectorConfig, InputType.Good)
-      val bad = new KafkaSink(collectorConfig, InputType.Bad)
+      val bad  = new KafkaSink(collectorConfig, InputType.Bad)
       CollectorSinks(good, bad)
     case Sink.Kinesis =>
-      val good = KinesisSink
-        .createAndInitialize(collectorConfig, InputType.Good, executorService)
-      val bad = KinesisSink
-        .createAndInitialize(collectorConfig, InputType.Bad, executorService)
+      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good, executorService)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad)
     case Sink.Stdout =>
       val good = new StdoutSink(InputType.Good)
-      val bad = new StdoutSink(InputType.Bad)
+      val bad  = new StdoutSink(InputType.Bad)
       CollectorSinks(good, bad)
   }
 
@@ -112,9 +107,7 @@ object ScalaCollector extends App {
   val handler = new CollectorService(collectorConfig, sinks)
 
   Http()
-    .bindAndHandle(handler.routes,
-                   collectorConfig.interface,
-                   collectorConfig.port)
+    .bindAndHandle(handler.routes, collectorConfig.interface, collectorConfig.port)
     .onComplete {
       case Success(_) => info("Started")
       case Failure(e) =>
@@ -128,10 +121,9 @@ object ScalaCollector extends App {
 // Return Options from the configuration.
 object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
-    def getOptionalString(path: String): Option[String] = {
+    def getOptionalString(path: String): Option[String] =
       if (underlying.hasPath(path)) Some(underlying.getString(path))
       else None
-    }
   }
 }
 
@@ -152,13 +144,13 @@ class CollectorConfig(config: Config) {
   import Helper.RichConfig
 
   private val collector = config.getConfig("collector")
-  val interface = collector.getString("interface")
-  val port = collector.getInt("port")
-  val production = collector.getBoolean("production")
+  val interface         = collector.getString("interface")
+  val port              = collector.getInt("port")
+  val production        = collector.getBoolean("production")
 
-  private val p3p = collector.getConfig("p3p")
+  private val p3p  = collector.getConfig("p3p")
   val p3pPolicyRef = p3p.getString("policyref")
-  val p3pCP = p3p.getString("CP")
+  val p3pCP        = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
 
@@ -173,43 +165,43 @@ class CollectorConfig(config: Config) {
 
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
-    case "kafka" => Sink.Kafka
+    case "kafka"   => Sink.Kafka
     case "kinesis" => Sink.Kinesis
-    case "stdout" => Sink.Stdout
-    case "test" => Sink.Test
-    case _ => throw new RuntimeException("collector.sink.enabled unknown.")
+    case "stdout"  => Sink.Stdout
+    case "test"    => Sink.Test
+    case _         => throw new RuntimeException("collector.sink.enabled unknown.")
   }
 
-  private lazy val kafka = sink.getConfig("kafka")
+  private lazy val kafka      = sink.getConfig("kafka")
   private lazy val kafkaTopic = kafka.getConfig("topic")
 
-  lazy val kafkaHost = kafka.getString("host")
+  lazy val kafkaHost          = kafka.getString("host")
   lazy val kafkaTopicGoodName = kafkaTopic.getString("good")
-  lazy val kafkaTopicBadName = kafkaTopic.getString("bad")
+  lazy val kafkaTopicBadName  = kafkaTopic.getString("bad")
 
-  private lazy val kinesis = sink.getConfig("kinesis")
-  private lazy val aws = kinesis.getConfig("aws")
-  lazy val awsAccessKey = aws.getString("access-key")
-  lazy val awsSecretKey = aws.getString("secret-key")
-  private lazy val stream = kinesis.getConfig("stream")
-  lazy val streamGoodName = stream.getString("good")
-  lazy val streamBadName = stream.getString("bad")
+  private lazy val kinesis      = sink.getConfig("kinesis")
+  private lazy val aws          = kinesis.getConfig("aws")
+  lazy val awsAccessKey         = aws.getString("access-key")
+  lazy val awsSecretKey         = aws.getString("secret-key")
+  private lazy val stream       = kinesis.getConfig("stream")
+  lazy val streamGoodName       = stream.getString("good")
+  lazy val streamBadName        = stream.getString("bad")
   private lazy val streamRegion = stream.getString("region")
-  lazy val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
+  lazy val streamEndpoint       = s"https://kinesis.${streamRegion}.amazonaws.com"
 
   lazy val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
-    case _ => 10
+    case _    => 10
   }
 
-  lazy val buffer = kinesis.getConfig("buffer")
-  lazy val byteLimit = buffer.getInt("byte-limit")
+  lazy val buffer      = kinesis.getConfig("buffer")
+  lazy val byteLimit   = buffer.getInt("byte-limit")
   lazy val recordLimit = buffer.getInt("record-limit")
-  lazy val timeLimit = buffer.getInt("time-limit")
+  lazy val timeLimit   = buffer.getInt("time-limit")
 
   lazy val backoffPolicy = kinesis.getConfig("backoffPolicy")
-  lazy val minBackoff = backoffPolicy.getLong("minBackoff")
-  lazy val maxBackoff = backoffPolicy.getLong("maxBackoff")
+  lazy val minBackoff    = backoffPolicy.getLong("minBackoff")
+  lazy val maxBackoff    = backoffPolicy.getLong("maxBackoff")
 
   lazy val useIpAddressAsPartitionKey =
     getBooleanIfExists(sink, "kafka.useIpAddressAsPartitionKey") ||
@@ -218,7 +210,7 @@ class CollectorConfig(config: Config) {
   private def getBooleanIfExists(conf: Config, path: String) =
     conf.hasPath(path) && conf.getBoolean(path)
 
-  def cookieName = cookieConfig.map(_.name)
-  def cookieDomain = cookieConfig.flatMap(_.domain)
+  def cookieName       = cookieConfig.map(_.name)
+  def cookieDomain     = cookieConfig.flatMap(_.domain)
   def cookieExpiration = cookieConfig.map(_.expiration)
 }

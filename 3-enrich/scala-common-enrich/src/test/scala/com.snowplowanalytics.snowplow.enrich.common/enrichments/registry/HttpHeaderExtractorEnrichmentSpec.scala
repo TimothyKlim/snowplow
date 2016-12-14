@@ -27,9 +27,7 @@ import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-class HttpHeaderExtractorEnrichmentSpec
-    extends Specification
-    with ValidationMatchers {
+class HttpHeaderExtractorEnrichmentSpec extends Specification with ValidationMatchers {
   def is =
     "This is a specification to test the HttpHeaderExtractorEnrichment" ^
       p ^
@@ -45,8 +43,7 @@ class HttpHeaderExtractorEnrichmentSpec
 
     HttpHeaderExtractorEnrichment("X-Forwarded-For")
       .extract(List("X-Forwarded-For: 129.78.138.66, 129.78.64.103"))
-      .map(h => compact(render(h))) must_== expected.map(e =>
-      compact(render(parse(e))))
+      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
   }
 
   def e2 = {
@@ -56,16 +53,13 @@ class HttpHeaderExtractorEnrichmentSpec
 
     HttpHeaderExtractorEnrichment(".*")
       .extract(List("Accept: text/html"))
-      .map(h => compact(render(h))) must_== expected.map(e =>
-      compact(render(parse(e))))
+      .map(h => compact(render(h))) must_== expected.map(e => compact(render(parse(e))))
   }
 
   def e3 = {
     val expected = List()
 
-    HttpHeaderExtractorEnrichment(".*")
-      .extract(Nil)
-      .map(h => compact(render(h))) must_== expected.map(e =>
-      compact(render(parse(e))))
+    HttpHeaderExtractorEnrichment(".*").extract(Nil).map(h => compact(render(h))) must_== expected
+      .map(e => compact(render(parse(e))))
   }
 }

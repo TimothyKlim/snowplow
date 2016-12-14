@@ -59,21 +59,18 @@ object MiscEnrichments {
     * @return a Scalaz
     *         ValidatedString.
     */
-  val extractPlatform: (String, String) => ValidatedString = (field,
-                                                              platform) => {
+  val extractPlatform: (String, String) => ValidatedString = (field, platform) => {
     platform match {
-      case "web" => "web".success // Web, including Mobile Web
-      case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
-      case "app" => "app".success // General App
-      case "mob" => "mob".success // Mobile / Tablet
-      case "pc" => "pc".success // Desktop / Laptop / Netbook
+      case "web"  => "web".success  // Web, including Mobile Web
+      case "iot"  => "iot".success  // Internet of Things (e.g. Arduino tracker)
+      case "app"  => "app".success  // General App
+      case "mob"  => "mob".success  // Mobile / Tablet
+      case "pc"   => "pc".success   // Desktop / Laptop / Netbook
       case "cnsl" => "cnsl".success // Games Console
-      case "tv" => "tv".success // Connected TV
-      case "srv" => "srv".success // Server-side App
+      case "tv"   => "tv".success   // Connected TV
+      case "srv"  => "srv".success  // Server-side App
       case p =>
-        "Field [%s]: [%s] is not a supported tracking platform"
-          .format(field, p)
-          .failure
+        "Field [%s]: [%s] is not a supported tracking platform".format(field, p).failure
     }
   }
 
@@ -81,8 +78,7 @@ object MiscEnrichments {
     * Identity transform.
     * Straight passthrough.
     */
-  val identity: (String, String) => ValidatedString = (field, value) =>
-    value.success
+  val identity: (String, String) => ValidatedString = (field, value) => value.success
 
   /**
     * Make a String TSV safe

@@ -18,7 +18,7 @@ package adapters
 package registry
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // Scala
 import scala.util.control.NonFatal
@@ -37,7 +37,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // This project
-import loaders.{CollectorPayload, CollectorContext}
+import loaders.{CollectorContext, CollectorPayload}
 import utils.ConversionUtils
 
 /**
@@ -88,8 +88,7 @@ object CloudfrontAccessLogAdapter {
       *        schema lookup and validation. Not used
       * @return a validation boxing either a NEL of raw events or a NEL of failure strings
       */
-    def toRawEvents(payload: CollectorPayload)(
-        implicit resolver: Resolver): ValidatedRawEvents =
+    def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
       payload.body match {
         case Some(p) => {
           val fields = p.split("\t", -1)
@@ -112,7 +111,7 @@ object CloudfrontAccessLogAdapter {
             // Attempt to build the json, accumulating errors from unparseable fields
             def buildJson(errors: List[String],
                           fields: List[(String, String)],
-                          json: JObject): (List[String], JObject) = {
+                          json: JObject): (List[String], JObject) =
               fields match {
                 case Nil => (errors, json)
                 case head :: tail =>
@@ -122,30 +121,25 @@ object CloudfrontAccessLogAdapter {
                       buildJson(errors, tail, json ~ ((name, null)))
                     case ("timeTaken", field) =>
                       try {
-                        buildJson(errors,
-                                  tail,
-                                  json ~ (("timeTaken", field.toDouble)))
+                        buildJson(errors, tail, json ~ (("timeTaken", field.toDouble)))
                       } catch {
                         case e: NumberFormatException =>
-                          buildJson(
-                            "Field [timeTaken]: cannot convert [%s] to Double"
-                              .format(field) :: errors,
-                            tail,
-                            json)
+                          buildJson("Field [timeTaken]: cannot convert [%s] to Double".format(
+                                      field) :: errors,
+                                    tail,
+                                    json)
                       }
-                    case (name, field)
-                        if name == "csBytes" || name == "scBytes" =>
+                    case (name, field) if name == "csBytes" || name == "scBytes" =>
                       try {
                         buildJson(errors, tail, json ~ ((name, field.toInt)))
                       } catch {
                         case e: NumberFormatException =>
-                          buildJson("Field [%s]: cannot convert [%s] to Int"
-                                      .format(name, field) :: errors,
-                                    tail,
-                                    json)
+                          buildJson(
+                            "Field [%s]: cannot convert [%s] to Int".format(name, field) :: errors,
+                            tail,
+                            json)
                       }
-                    case (name, field)
-                        if name == "csReferer" || name == "csUserAgent" =>
+                    case (name, field) if name == "csReferer" || name == "csUserAgent" =>
                       ConversionUtils
                         .doubleDecode(name, field)
                         .fold(
@@ -153,16 +147,13 @@ object CloudfrontAccessLogAdapter {
                           s => buildJson(errors, tail, json ~ ((name, s)))
                         )
                     case ("csUriQuery", field) =>
-                      buildJson(
-                        errors,
-                        tail,
-                        json ~ (("csUriQuery",
-                                 ConversionUtils.singleEncodePcts(field))))
+                      buildJson(errors,
+                                tail,
+                                json ~ (("csUriQuery", ConversionUtils.singleEncodePcts(field))))
                     case (name, field) =>
                       buildJson(errors, tail, json ~ ((name, field)))
                   }
               }
-            }
 
             val (errors, ueJson) =
               buildJson(Nil, FieldNames zip schemaCompatibleFields, JObject())
@@ -180,13 +171,13 @@ object CloudfrontAccessLogAdapter {
             (validatedTstamp |@| failures) {
               (tstamp, e) =>
                 val ip = schemaCompatibleFields(3) match {
-                  case "" => None
+                  case ""       => None
                   case nonempty => nonempty.some
                 }
 
                 val qsParams: Map[String, String] =
                   schemaCompatibleFields(8) match {
-                    case "" => Map()
+                    case ""  => Map()
                     case url => Map("url" -> url)
                   }
 
@@ -209,8 +200,7 @@ object CloudfrontAccessLogAdapter {
                     parameters = parameters,
                     contentType = payload.contentType,
                     source = payload.source,
-                    context =
-                      CollectorContext(tstamp, ip, userAgent, None, Nil, None)
+                    context = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
                   ))
             }
           })

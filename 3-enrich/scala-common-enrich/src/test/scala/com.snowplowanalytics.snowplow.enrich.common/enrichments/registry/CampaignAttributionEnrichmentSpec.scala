@@ -25,9 +25,7 @@ import Scalaz._
 /**
   * Tests CampaignAttributionEnrichment
   */
-class CampaignAttributionEnrichmentSpec
-    extends Specification
-    with ValidationMatchers {
+class CampaignAttributionEnrichmentSpec extends Specification with ValidationMatchers {
   def is =
     "This is a specification to test the CampaignAttributionEnrichment" ^
       p ^
@@ -39,29 +37,29 @@ class CampaignAttributionEnrichmentSpec
       end
 
   val google_uri = Map("utm_source" -> "GoogleSearch",
-                       "utm_medium" -> "cpc",
-                       "utm_term" -> "native american tarot deck",
-                       "utm_content" -> "39254295088",
+                       "utm_medium"   -> "cpc",
+                       "utm_term"     -> "native american tarot deck",
+                       "utm_content"  -> "39254295088",
                        "utm_campaign" -> "uk-tarot--native-american")
 
   val omniture_uri = Map("cid" -> "uk-tarot--native-american")
 
   val heterogeneous_uri = Map("utm_source" -> "GoogleSearch",
-                              "source" -> "bad_source",
-                              "utm_medium" -> "cpc",
-                              "legacy_term" -> "bad_term",
-                              "utm_term" -> "native american tarot deck",
+                              "source"          -> "bad_source",
+                              "utm_medium"      -> "cpc",
+                              "legacy_term"     -> "bad_term",
+                              "utm_term"        -> "native american tarot deck",
                               "legacy_campaign" -> "bad_campaign",
-                              "cid" -> "uk-tarot--native-american")
+                              "cid"             -> "uk-tarot--native-american")
 
   val clickid_uri = Map("utm_source" -> "GoogleSearch",
-                        "source" -> "bad_source",
-                        "utm_medium" -> "cpc",
-                        "legacy_term" -> "bad_term",
-                        "utm_term" -> "native american tarot deck",
+                        "source"          -> "bad_source",
+                        "utm_medium"      -> "cpc",
+                        "legacy_term"     -> "bad_term",
+                        "utm_term"        -> "native american tarot deck",
                         "legacy_campaign" -> "bad_campaign",
-                        "cid" -> "uk-tarot--native-american",
-                        "msclkid" -> "500")
+                        "cid"             -> "uk-tarot--native-american",
+                        "msclkid"         -> "500")
 
   def e1 = {
     val config = CampaignAttributionEnrichment(
@@ -108,13 +106,7 @@ class CampaignAttributionEnrichmentSpec
     )
 
     config.extractMarketingFields(omniture_uri) must beSuccessful(
-      MarketingCampaign(None,
-                        None,
-                        None,
-                        None,
-                        Some("uk-tarot--native-american"),
-                        None,
-                        None))
+      MarketingCampaign(None, None, None, None, Some("uk-tarot--native-american"), None, None))
   }
 
   def e4 = {
@@ -145,9 +137,9 @@ class CampaignAttributionEnrichmentSpec
       List("utm_content"),
       List("utm_campaign", "cid", "legacy_campaign"),
       List(
-        "gclid" -> "Google",
+        "gclid"   -> "Google",
         "msclkid" -> "Microsoft",
-        "dclid" -> "DoubleClick"
+        "dclid"   -> "DoubleClick"
       )
     )
 

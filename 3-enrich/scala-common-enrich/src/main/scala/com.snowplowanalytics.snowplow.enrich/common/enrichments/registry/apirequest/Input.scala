@@ -59,7 +59,7 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
   // but it won't give user meaningful error message
   val validatedJsonPath = json.map(_.jsonPath).map(compileQuery) match {
     case Some(compiledQuery) => compiledQuery
-    case None => "No JSON Input with JSONPath was given".failure
+    case None                => "No JSON Input with JSONPath was given".failure
   }
 
   /**
@@ -72,7 +72,7 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
     case Some(pojoInput) => {
       try {
         val method = event.getClass.getMethod(pojoInput.field)
-        val value = Option(method.invoke(event)).map(_.toString)
+        val value  = Option(method.invoke(event)).map(_.toString)
         value.map(v => Map(key -> Tags.LastVal(v))).successNel
       } catch {
         case NonFatal(err) =>
@@ -107,13 +107,12 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
               s"Error: wrong field [$other] passed to Input.getFromJson. Should be one of: derived_contexts, contexts, unstruct_event".failureNel
           }
 
-        (validatedJson |@| validatedJsonPath.toValidationNel) {
-          (validJson, jsonPath) =>
-            validJson
-              .map(jsonPath.json4sQuery) // Query context/UE (always valid)
-              .map(wrapArray) // Check if array
-              .flatMap(stringifyJson) // Transform to valid string
-              .map(v => Map(key -> Tags.LastVal(v))) // Transform to Key-Value
+        (validatedJson |@| validatedJsonPath.toValidationNel) { (validJson, jsonPath) =>
+          validJson
+            .map(jsonPath.json4sQuery) // Query context/UE (always valid)
+            .map(wrapArray) // Check if array
+            .flatMap(stringifyJson) // Transform to valid string
+            .map(v => Map(key -> Tags.LastVal(v))) // Transform to Key-Value
         }
       }
       case None => emptyTemplateContext
@@ -178,8 +177,7 @@ object Input {
 
     val eventInputs = buildInputsMap(inputs.map(_.getFromEvent(event)))
     val jsonInputs = buildInputsMap(
-      inputs.map(
-        _.getFromJson(derivedContexts, customContexts, unstructEvent)))
+      inputs.map(_.getFromJson(derivedContexts, customContexts, unstructEvent)))
 
     eventInputs |+| jsonInputs
   }
@@ -192,18 +190,16 @@ object Input {
     * @param schemaCriterion part of URI
     * @return first (optional) self-desc JSON matched `schemaCriterion`
     */
-  def getBySchemaCriterion(contexts: List[JObject],
-                           schemaCriterion: String): Option[JValue] = {
+  def getBySchemaCriterion(contexts: List[JObject], schemaCriterion: String): Option[JValue] =
     criterionMatch(schemaCriterion).flatMap { criterion =>
       val matched = contexts.filter { context =>
         context.obj.exists {
           case ("schema", JString(schema)) => schema.startsWith(criterion)
-          case _ => false
+          case _                           => false
         }
       }
       matched.map(_ \ "data").headOption
     }
-  }
 
   /**
     * Transform Schema Criterion to plain string without asterisks
@@ -211,16 +207,14 @@ object Input {
     * @param schemaCriterion schema criterion of format "iglu:vendor/name/schematype/1-*-*"
     * @return schema criterion of format iglu:vendor/name/schematype/1-
     */
-  private def criterionMatch(schemaCriterion: String): Option[String] = {
+  private def criterionMatch(schemaCriterion: String): Option[String] =
     schemaCriterion match {
-      case criterionRegex(schema, "*", _, _) => s"$schema".some
-      case criterionRegex(schema, m, "*", _) => s"$schema$m-".some
+      case criterionRegex(schema, "*", _, _)   => s"$schema".some
+      case criterionRegex(schema, m, "*", _)   => s"$schema$m-".some
       case criterionRegex(schema, m, rev, "*") => s"$schema$m-$rev-".some
       case criterionRegex(schema, m, rev, add) => s"$schema$m-$rev-$add".some
-      case _ => None
+      case _                                   => None
     }
-
-  }
 
   /**
     * Build and merge template context out of list of all inputs
@@ -247,14 +241,14 @@ object Input {
     * @return some string best represenging JValue or None if there's no way to stringify it
     */
   private def stringifyJson(json: JValue): Option[String] = json match {
-    case JString(s) => s.some
+    case JString(s)    => s.some
     case JArray(array) => array.map(stringifyJson).mkString(",").some
-    case obj: JObject => compactJson(obj).some
-    case JInt(i) => i.toString.some
-    case JDouble(d) => d.toString.some
-    case JDecimal(d) => d.toString.some
-    case JBool(b) => b.toString.some
-    case JNull => "null".some // TODO: or None?
-    case JNothing => none
+    case obj: JObject  => compactJson(obj).some
+    case JInt(i)       => i.toString.some
+    case JDouble(d)    => d.toString.some
+    case JDecimal(d)   => d.toString.some
+    case JBool(b)      => b.toString.some
+    case JNull         => "null".some // TODO: or None?
+    case JNothing      => none
   }
 }

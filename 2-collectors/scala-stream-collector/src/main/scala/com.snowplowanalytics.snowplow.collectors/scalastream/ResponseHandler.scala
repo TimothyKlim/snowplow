@@ -57,8 +57,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
-  val pixel = Base64.decodeBase64(
-    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
+  val pixel = Base64.decodeBase64("R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
 }
 
 // Receive requests and store data into an output sink.
@@ -91,7 +90,7 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String = requestCookie match {
       case Some(rc) => rc.value
-      case None => UUID.randomUUID.toString
+      case None     => UUID.randomUUID.toString
     }
 
     // Construct an event object from the request.
@@ -115,7 +114,7 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     refererUri.foreach(event.refererUri = _)
     event.headers = request.headers.flatMap {
       case _: `Remote-Address` | _: `Raw-Request-URI` => None
-      case other => Some(other.toString)
+      case other                                      => Some(other.toString)
     }
 
     // Set the content type
@@ -143,7 +142,7 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     }
 
     val policyRef = config.p3pPolicyRef
-    val CP = config.p3pCP
+    val CP        = config.p3pCP
 
     val headersWithoutCookie = List(
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
@@ -179,16 +178,13 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
             val everythingSerialized = new String(
               SplitBatch.ThriftSerializer.get().serialize(event))
             badRequest -> sinks.bad.storeRawEvents(
-              List(
-                createBadRow(event,
-                             s"Redirect failed due to lack of u parameter")),
+              List(createBadRow(event, s"Redirect failed due to lack of u parameter")),
               partitionKey)
           }
         }
       } catch {
         case NonFatal(e) => {
-          val everythingSerialized = new String(
-            SplitBatch.ThriftSerializer.get().serialize(event))
+          val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
           badRequest -> sinks.bad.storeRawEvents(
             List(createBadRow(event, s"Redirect failed due to error $e")),
             partitionKey)
@@ -226,10 +222,10 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
       "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
   )
 
-  def healthy = HttpResponse(StatusCodes.OK)
+  def healthy    = HttpResponse(StatusCodes.OK)
   def badRequest = HttpResponse(StatusCodes.BadRequest)
-  def notFound = HttpResponse(StatusCodes.NotFound)
-  def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
+  def notFound   = HttpResponse(StatusCodes.NotFound)
+  def timeout    = HttpResponse(status = 500, entity = s"Request timed out.")
 
   /**
     * Creates an Access-Control-Allow-Origin header which specifically
@@ -239,9 +235,11 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     * @return Header
     */
   private def getAccessControlAllowOriginHeader(request: HttpRequest) = {
-    val value: HttpOriginRange = request.headers.collectFirst {
-      case `Origin`(origins) => HttpOriginRange(origins: _*)
-    }.getOrElse(HttpOriginRange.`*`)
+    val value: HttpOriginRange = request.headers
+      .collectFirst {
+        case `Origin`(origins) => HttpOriginRange(origins: _*)
+      }
+      .getOrElse(HttpOriginRange.`*`)
     `Access-Control-Allow-Origin`(value)
   }
 
@@ -252,9 +250,7 @@ final class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks) {
     * @param message
     * @return Bad row
     */
-  private def createBadRow(event: CollectorPayload,
-                           message: String): Array[Byte] = {
-    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)),
-           NonEmptyList(message)).toCompactJson.getBytes(UTF_8)
-  }
+  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] =
+    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message)).toCompactJson
+      .getBytes(UTF_8)
 }

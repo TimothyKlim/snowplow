@@ -11,16 +11,11 @@ import akka.stream.Materializer
 import akka.stream.scaladsl._
 
 // Kafka
-import org.apache.kafka.common.serialization.{
-  ByteArraySerializer,
-  StringSerializer
-}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.apache.kafka.clients.producer.ProducerRecord
 
 final class KafkaSink(config: KinesisEnrichConfig,
-                      inputType: InputType.InputType)(
-    implicit sys: ActorSystem,
-    mat: Materializer)
+                      inputType: InputType.InputType)(implicit sys: ActorSystem, mat: Materializer)
     extends ISink {
 
   type Record = ProducerRecord[String, Array[Byte]]
@@ -39,7 +34,7 @@ final class KafkaSink(config: KinesisEnrichConfig,
 
   private val topicName = inputType match {
     case InputType.Good => config.enrichedOutStream
-    case InputType.Bad => config.badOutStream
+    case InputType.Bad  => config.badOutStream
   }
 
   /**
@@ -54,11 +49,13 @@ final class KafkaSink(config: KinesisEnrichConfig,
     * @return Whether to checkpoint
     */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
-    Source(events).map {
-      case (e, key) =>
-        println(new String(e.getBytes))
-        new ProducerRecord[String, Array[Byte]](topicName, key, e.getBytes)
-    }.runWith(toConsumer)
+    Source(events)
+      .map {
+        case (e, key) =>
+          println(new String(e.getBytes))
+          new ProducerRecord[String, Array[Byte]](topicName, key, e.getBytes)
+      }
+      .runWith(toConsumer)
     !events.isEmpty
   }
 

@@ -40,186 +40,182 @@ class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers {
   def e1 = {
     val inputs = List(
       Input("user", pojo = Some(PojoInput("user_id")), json = None),
-      Input(
-        "user",
-        pojo = None,
-        json = Some(JsonInput(
-          "contexts",
-          "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-          "$.userId"))),
+      Input("user",
+            pojo = None,
+            json = Some(
+              JsonInput("contexts",
+                        "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+                        "$.userId"))),
       Input("client", pojo = Some(PojoInput("app_id")), json = None)
     )
-    val api = HttpApi(
-      "GET",
-      "http://api.acme.com/users/{{client}}/{{user}}?format=json",
-      1000,
-      Authentication(Some(HttpBasic(Some("xxx"), None))))
-    val output = Output("iglu:com.acme/user/jsonschema/1-0-0",
-                        Some(JsonOutput("$.record")))
-    val cache = Cache(3000, 60)
+    val api = HttpApi("GET",
+                      "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+                      1000,
+                      Authentication(Some(HttpBasic(Some("xxx"), None))))
+    val output = Output("iglu:com.acme/user/jsonschema/1-0-0", Some(JsonOutput("$.record")))
+    val cache  = Cache(3000, 60)
     val config = ApiRequestEnrichment(inputs, api, List(output), cache)
 
     val configuration = parseJson(
       """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "api_request_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "key": "user",
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "key": "user",
-      |          "json": {
-      |            "field": "contexts",
-      |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-      |            "jsonPath": "$.userId"
-      |          }
-      |        },
-      |        {
-      |          "key": "client",
-      |          "pojo": {
-      |            "field": "app_id"
-      |          }
-      |        }
-      |      ],
-      |      "api": {
-      |        "http": {
-      |          "method": "GET",
-      |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
-      |          "timeout": 1000,
-      |          "authentication": {
-      |            "httpBasic": {
-      |              "username": "xxx",
-      |              "password": null
-      |            }
-      |          }
-      |        }
-      |      },
-      |      "outputs": [{
-      |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |        "json": {
-      |          "jsonPath": "$.record"
-      |        }
-      |      }],
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+         |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+         |    "name": "api_request_enrichment_config",
+         |    "enabled": true,
+         |    "parameters": {
+         |      "inputs": [
+         |        {
+         |          "key": "user",
+         |          "pojo": {
+         |            "field": "user_id"
+         |          }
+         |        },
+         |        {
+         |          "key": "user",
+         |          "json": {
+         |            "field": "contexts",
+         |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+         |            "jsonPath": "$.userId"
+         |          }
+         |        },
+         |        {
+         |          "key": "client",
+         |          "pojo": {
+         |            "field": "app_id"
+         |          }
+         |        }
+         |      ],
+         |      "api": {
+         |        "http": {
+         |          "method": "GET",
+         |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+         |          "timeout": 1000,
+         |          "authentication": {
+         |            "httpBasic": {
+         |              "username": "xxx",
+         |              "password": null
+         |            }
+         |          }
+         |        }
+         |      },
+         |      "outputs": [{
+         |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+         |        "json": {
+         |          "jsonPath": "$.record"
+         |        }
+         |      }],
+         |      "cache": {
+         |        "size": 3000,
+         |        "ttl": 60
+         |      }
+         |    }
+         |  }""".stripMargin)
 
-    ApiRequestEnrichmentConfig
-      .parse(configuration, SCHEMA_KEY) must beSuccessful(config)
+    ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beSuccessful(config)
   }
 
   def e2 = {
     val configuration = parseJson(
       """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "api_request_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "key": "user",
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "key": "user"
-      |        },
-      |        {
-      |          "key": "client",
-      |          "pojo": {
-      |            "field": "app_id"
-      |          }
-      |        }
-      |      ],
-      |      "api": {
-      |        "http": {
-      |          "method": "GET",
-      |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
-      |          "timeout": 1000,
-      |          "authentication": {
-      |            "httpBasic": {
-      |              "username": "xxx",
-      |              "password": "yyy"
-      |            }
-      |          }
-      |        }
-      |      },
-      |      "outputs": [{
-      |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |        "json": {
-      |          "jsonPath": "$.record"
-      |        }
-      |      }],
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+         |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+         |    "name": "api_request_enrichment_config",
+         |    "enabled": true,
+         |    "parameters": {
+         |      "inputs": [
+         |        {
+         |          "key": "user",
+         |          "pojo": {
+         |            "field": "user_id"
+         |          }
+         |        },
+         |        {
+         |          "key": "user"
+         |        },
+         |        {
+         |          "key": "client",
+         |          "pojo": {
+         |            "field": "app_id"
+         |          }
+         |        }
+         |      ],
+         |      "api": {
+         |        "http": {
+         |          "method": "GET",
+         |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+         |          "timeout": 1000,
+         |          "authentication": {
+         |            "httpBasic": {
+         |              "username": "xxx",
+         |              "password": "yyy"
+         |            }
+         |          }
+         |        }
+         |      },
+         |      "outputs": [{
+         |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+         |        "json": {
+         |          "jsonPath": "$.record"
+         |        }
+         |      }],
+         |      "cache": {
+         |        "size": 3000,
+         |        "ttl": 60
+         |      }
+         |    }
+         |  }""".stripMargin)
     ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
   }
 
   def e3 = {
     val configuration = parseJson(
       """|{
-      |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
-      |    "name": "api_request_enrichment_config",
-      |    "enabled": true,
-      |    "parameters": {
-      |      "inputs": [
-      |        {
-      |          "key": "user",
-      |          "pojo": {
-      |            "field": "user_id"
-      |          }
-      |        },
-      |        {
-      |          "key": "client",
-      |          "pojo": {
-      |            "field": "app_id"
-      |          },
-      |         "json": {
-      |            "field": "contexts",
-      |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
-      |            "jsonPath": "$.userId"
-      |         }
-      |        }
-      |      ],
-      |      "api": {
-      |        "http": {
-      |          "method": "GET",
-      |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
-      |          "timeout": 1000,
-      |          "authentication": {
-      |            "httpBasic": {
-      |              "username": "xxx",
-      |              "password": "yyy"
-      |            }
-      |          }
-      |        }
-      |      },
-      |      "outputs": [{
-      |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-      |        "json": {
-      |          "jsonPath": "$.record"
-      |        }
-      |      }],
-      |      "cache": {
-      |        "size": 3000,
-      |        "ttl": 60
-      |      }
-      |    }
-      |  }""".stripMargin)
+         |    "vendor": "com.snowplowanalytics.snowplow.enrichments",
+         |    "name": "api_request_enrichment_config",
+         |    "enabled": true,
+         |    "parameters": {
+         |      "inputs": [
+         |        {
+         |          "key": "user",
+         |          "pojo": {
+         |            "field": "user_id"
+         |          }
+         |        },
+         |        {
+         |          "key": "client",
+         |          "pojo": {
+         |            "field": "app_id"
+         |          },
+         |         "json": {
+         |            "field": "contexts",
+         |            "schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+         |            "jsonPath": "$.userId"
+         |         }
+         |        }
+         |      ],
+         |      "api": {
+         |        "http": {
+         |          "method": "GET",
+         |          "uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+         |          "timeout": 1000,
+         |          "authentication": {
+         |            "httpBasic": {
+         |              "username": "xxx",
+         |              "password": "yyy"
+         |            }
+         |          }
+         |        }
+         |      },
+         |      "outputs": [{
+         |        "schema": "iglu:com.acme/user/jsonschema/1-0-0",
+         |        "json": {
+         |          "jsonPath": "$.record"
+         |        }
+         |      }],
+         |      "cache": {
+         |        "size": 3000,
+         |        "ttl": 60
+         |      }
+         |    }
+         |  }""".stripMargin)
     ApiRequestEnrichmentConfig.parse(configuration, SCHEMA_KEY) must beFailing
   }
 }

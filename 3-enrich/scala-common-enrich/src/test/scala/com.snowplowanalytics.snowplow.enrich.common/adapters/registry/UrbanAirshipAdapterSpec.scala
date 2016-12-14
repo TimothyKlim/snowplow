@@ -36,84 +36,74 @@ import org.json4s.jackson.JsonMethods._
 class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
-  implicit val formats = DefaultFormats
+  implicit val formats  = DefaultFormats
 
   object Shared {
-    val api = CollectorApi("com.urbanairship.connect", "v1")
+    val api       = CollectorApi("com.urbanairship.connect", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
-      None,
-      "37.157.33.123".some,
-      None,
-      None,
-      Nil,
-      None) // NB the collector timestamp is set to None!
+    val context   = CollectorContext(None, "37.157.33.123".some, None, None, Nil, None) // NB the collector timestamp is set to None!
   }
 
   "toRawEvents" should {
 
     val validPayload =
       """
-                         |{
-                         |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
-                         |  "offset": "1",
-                         |  "occurred": "2015-11-13T16:31:52.393Z",
-                         |  "processed": "2015-11-13T16:31:52.393Z",
-                         |  "device": {
-                         |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
-                         |  },
-                         |  "body": {
-                         |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
-                         |  },
-                         |  "type": "CLOSE"
-                         |}
-                         |""".stripMargin
+        |{
+        |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
+        |  "offset": "1",
+        |  "occurred": "2015-11-13T16:31:52.393Z",
+        |  "processed": "2015-11-13T16:31:52.393Z",
+        |  "device": {
+        |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
+        |  },
+        |  "body": {
+        |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
+        |  },
+        |  "type": "CLOSE"
+        |}
+        |""".stripMargin
 
     val invalidEvent =
       """
-                         |{
-                         |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
-                         |  "offset": "1",
-                         |  "occurred": "2015-11-13T16:31:52.393Z",
-                         |  "processed": "2015-11-13T16:31:52.393Z",
-                         |  "device": {
-                         |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
-                         |  },
-                         |  "body": {
-                         |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
-                         |  },
-                         |  "type": "NOT_AN_EVENT_TYPE"
-                         |}
-                         |""".stripMargin
+        |{
+        |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
+        |  "offset": "1",
+        |  "occurred": "2015-11-13T16:31:52.393Z",
+        |  "processed": "2015-11-13T16:31:52.393Z",
+        |  "device": {
+        |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
+        |  },
+        |  "body": {
+        |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
+        |  },
+        |  "type": "NOT_AN_EVENT_TYPE"
+        |}
+        |""".stripMargin
 
-    val payload = CollectorPayload(Shared.api,
-                                   Nil,
-                                   None,
-                                   validPayload.some,
-                                   Shared.cljSource,
-                                   Shared.context)
+    val payload =
+      CollectorPayload(Shared.api, Nil, None, validPayload.some, Shared.cljSource, Shared.context)
     val actual = UrbanAirshipAdapter.toRawEvents(payload)
 
     val expectedUnstructEventJson =
       """|{
-                               |  "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-                               |  "data":{
-                               |    "schema":"iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0",
-                               |    "data":{
-                               |        "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
-                               |         "offset": "1",
-                               |         "occurred": "2015-11-13T16:31:52.393Z",
-                               |         "processed": "2015-11-13T16:31:52.393Z",
-                               |         "device": {
-                               |             "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
-                               |         },
-                               |         "body": {
-                               |           "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
-                               |         },
-                               |         "type": "CLOSE"
-                               |    }
-                               |  }
-                               |}
+         |  "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+         |  "data":{
+         |    "schema":"iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0",
+         |    "data":{
+         |        "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
+         |         "offset": "1",
+         |         "occurred": "2015-11-13T16:31:52.393Z",
+         |         "processed": "2015-11-13T16:31:52.393Z",
+         |         "device": {
+         |             "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
+         |         },
+         |         "body": {
+         |           "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
+         |         },
+         |         "type": "CLOSE"
+         |    }
+         |  }
+         |}
                              """.stripMargin
 
     val expectedCompactedUnstructEvent =
@@ -130,7 +120,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       val correctType = (parse(validPayload) \ "type").extract[String]
       correctType must be equalTo ("CLOSE")
 
-      val items = actual.toList.head.toList
+      val items      = actual.toList.head.toList
       val sentSchema = (parse(items.head.parameters("ue_pr")) \ "data") \ "schema"
       sentSchema.extract[String] must beEqualTo(
         """iglu:com.urbanairship.connect/CLOSE/jsonschema/1-0-0""")
@@ -147,12 +137,8 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
     }
 
     "reject unparsable json" in {
-      val payload = CollectorPayload(Shared.api,
-                                     Nil,
-                                     None,
-                                     """{ """.some,
-                                     Shared.cljSource,
-                                     Shared.context)
+      val payload =
+        CollectorPayload(Shared.api, Nil, None, """{ """.some, Shared.cljSource, Shared.context)
       UrbanAirshipAdapter.toRawEvents(payload) must beFailing
     }
 
@@ -176,8 +162,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       val res = UrbanAirshipAdapter.toRawEvents(payload)
 
       res must beFailing(
-        NonEmptyList(
-          "Content type of a/type provided, expected None for UrbanAirship"))
+        NonEmptyList("Content type of a/type provided, expected None for UrbanAirship"))
     }
 
     "populate content-type as None (it's not applicable)" in {
@@ -205,8 +190,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       actual match {
         case Success(successes) => {
           val event = successes.head
-          compact(parse(event.parameters("ue_pr"))) must beEqualTo(
-            expectedCompactedUnstructEvent)
+          compact(parse(event.parameters("ue_pr"))) must beEqualTo(expectedCompactedUnstructEvent)
         }
         case _ => ko("payload was not accepted")
       }
@@ -226,8 +210,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
       actual match {
         case Success(successes) => {
           val event = successes.head
-          event.parameters("eid") must beEqualTo(
-            "e3314efb-9058-dbaf-c4bb-b754fca73613") // id field value
+          event.parameters("eid") must beEqualTo("e3314efb-9058-dbaf-c4bb-b754fca73613") // id field value
         }
         case _ => ko("payload was not populated")
       }

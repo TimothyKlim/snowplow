@@ -23,8 +23,7 @@ import outputs.EnrichedEvent
 // Specs2
 import org.specs2.Specification
 
-class ShredderSpec
-    extends Specification /*with DataTables with ValidationMatchers*/ {
+class ShredderSpec extends Specification /*with DataTables with ValidationMatchers*/ {
   def is =
     "This is a specification to test the Shredder functionality" ^
       p ^
@@ -32,7 +31,7 @@ class ShredderSpec
       "shred should extract the JSONs from an unstructured event with multiple contexts" ! e2 ^
       end
 
-  val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+  val EventId            = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
 
   implicit val resolver = SpecHelpers.IgluResolver

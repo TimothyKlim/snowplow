@@ -62,14 +62,13 @@ object EnrichmentManager {
     *         either failure Strings or a
     *         NonHiveOutput.
     */
-  def enrichEvent(
-      registry: EnrichmentRegistry,
-      hostEtlVersion: String,
-      etlTstamp: DateTime,
-      raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
+  def enrichEvent(registry: EnrichmentRegistry,
+                  hostEtlVersion: String,
+                  etlTstamp: DateTime,
+                  raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
-    val unitSuccess = ().success[String]
+    val unitSuccess    = ().success[String]
     val unitSuccessNel = ().successNel[String]
 
     // 1. Enrichments not expected to.failure
@@ -82,7 +81,7 @@ object EnrichmentManager {
         e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
         e.v_etl = ME.etlVersion(hostEtlVersion)
         e.etl_tstamp = EE.toTimestamp(etlTstamp)
-        e.network_userid = raw.context.userId.orNull // May be updated later by 'nuid'
+        e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
         e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
         e
     }
@@ -149,9 +148,7 @@ object EnrichmentManager {
         ("f_gears", (CU.stringToBooleanlikeJByte, "br_features_gears")),
         ("f_ag", (CU.stringToBooleanlikeJByte, "br_features_silverlight")),
         ("cookie", (CU.stringToBooleanlikeJByte, "br_cookies")),
-        ("res",
-         (CE.extractViewDimensions,
-          ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
+        ("res", (CE.extractViewDimensions, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
         ("cd", (ME.toTsvSafe, "br_colordepth")),
         ("tz", (ME.toTsvSafe, "os_timezone")),
         ("refr", (ME.toTsvSafe, "page_referrer")),
@@ -218,13 +215,16 @@ object EnrichmentManager {
     // The load fails if the collector version is not set
     val collectorVersionSet = event.v_collector match {
       case ("" | null) => "Collector version not set".failure
-      case _ => unitSuccess
+      case _           => unitSuccess
     }
 
     // Potentially update the page_url and set the page URL components
     val pageUri =
       WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
-    for (uri <- pageUri; u <- uri) {
+    for {
+      uri <- pageUri
+      u   <- uri
+    } {
       // Update the page_url
       event.page_url = u.toString
 
@@ -275,7 +275,7 @@ object EnrichmentManager {
     Option(event.user_ipaddress).map(ip =>
       event.user_ipaddress = registry.getAnonIpEnrichment match {
         case Some(anon) => anon.anonymizeIp(ip)
-        case None => ip
+        case None       => ip
     })
 
     // Parse the useragent using user-agent-utils
@@ -312,7 +312,7 @@ object EnrichmentManager {
         case Some(uap) => {
           Option(event.useragent) match {
             case Some(ua) => uap.extractUserAgent(ua).map(_.some)
-            case None => None.success // No fields updated
+            case None     => None.success // No fields updated
           }
         }
         case None => None.success
@@ -359,7 +359,10 @@ object EnrichmentManager {
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
-    for (uri <- refererUri; u <- uri) {
+    for {
+      uri <- refererUri
+      u   <- uri
+    } {
 
       // Set the URL components
       val components = CU.explodeUri(u)
@@ -441,7 +444,7 @@ object EnrichmentManager {
     // Validate unstructured event
     val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
       case Failure(msgs) => msgs.map(_.toString).failure
-      case Success(ue) => ue.success
+      case Success(ue)   => ue.success
     }
 
     // Extract the event vendor/name/format/version
@@ -472,7 +475,7 @@ object EnrichmentManager {
     // Execute the JavaScript scripting enrichment
     val jsScript = registry.getJavascriptScriptEnrichment match {
       case Some(jse) => jse.process(event)
-      case None => Nil.success
+      case None      => Nil.success
     }
 
     // Execute cookie extractor enrichment
@@ -497,10 +500,9 @@ object EnrichmentManager {
     // Fetch weather context
     val weatherContext = registry.getWeatherEnrichment match {
       case Some(we) => {
-        we.getWeatherContext(
-            Option(event.geo_latitude),
-            Option(event.geo_longitude),
-            Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
+        we.getWeatherContext(Option(event.geo_latitude),
+                             Option(event.geo_longitude),
+                             Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp))
           .map(_.some)
       }
       case None => None.success
@@ -574,9 +576,8 @@ object EnrichmentManager {
         apiRequestContexts |@|
         sqlQueryContexts |@|
         extractSchema.toValidationNel |@|
-        weatherContext.toValidationNel) {
-        (_, _, _, _, _, _, _, _, _, _, _, _) =>
-          ()
+        weatherContext.toValidationNel) { (_, _, _, _, _, _, _, _, _, _, _, _) =>
+        ()
       }
     (first |@| second) { (_, _) =>
       event

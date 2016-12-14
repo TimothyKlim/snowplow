@@ -184,9 +184,7 @@ class PageViewWithContextSpec extends Specification with ValidationMatchers {
 
       Result.unit(
         for (idx <- PageViewWithContextSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(
-            PageViewWithContextSpec.expected(idx),
-            withIndex = idx)
+          fields(idx) must beFieldEqualTo(PageViewWithContextSpec.expected(idx), withIndex = idx)
         }
       )
     }

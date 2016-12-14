@@ -63,16 +63,15 @@ object BuildSettings {
                                      organization,
                                      scalaVersion) map { (d, v, n, o, sv) =>
       val file = d / "settings.scala"
-      IO.write(
-        file,
-        """package com.snowplowanalytics.snowplow.enrich.common.generated
-      |object ProjectSettings {
-      |  val version = "%s"
-      |  val name = "%s"
-      |  val organization = "%s"
-      |  val scalaVersion = "%s"
-      |}
-      |""".stripMargin.format(v, n, o, sv))
+      IO.write(file,
+               """package com.snowplowanalytics.snowplow.enrich.common.generated
+                 |object ProjectSettings {
+                 |  val version = "%s"
+                 |  val name = "%s"
+                 |  val organization = "%s"
+                 |  val scalaVersion = "%s"
+                 |}
+                 |""".stripMargin.format(v, n, o, sv))
       Seq(file)
     })
 
@@ -97,8 +96,7 @@ object BuildSettings {
   import bintray.BintrayKeys._
   // Bintray publishing settings
   lazy val publishSettings = bintraySettings ++ Seq[Setting[_]](
-      licenses += ("Apache-2.0", url(
-        "http://www.apache.org/licenses/LICENSE-2.0.html")),
+      licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
       bintrayOrganization := Some("fcomb"),
       bintrayRepository := "maven"
     )

@@ -63,20 +63,18 @@ object BuildSettings {
   // Makes our SBT app settings available from within the app
   lazy val scalifySettings = Seq(
     sourceGenerators in Compile <+=
-      (sourceManaged in Compile, version, name, organization) map {
-        (d, v, n, o) =>
-          val file = d / "settings.scala"
-          IO.write(
-            file,
-            s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
-      |object Settings {
-      |  val organization = "$o"
-      |  val version = "$v"
-      |  val name = "$n"
-      |  val shortName = "ssc"
-      |}
-      |""".stripMargin)
-          Seq(file)
+      (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
+        val file = d / "settings.scala"
+        IO.write(file,
+                 s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
+                    |object Settings {
+                    |  val organization = "$o"
+                    |  val version = "$v"
+                    |  val name = "$n"
+                    |  val shortName = "ssc"
+                    |}
+                    |""".stripMargin)
+        Seq(file)
       })
 
   lazy val javaRunOptions = Seq(

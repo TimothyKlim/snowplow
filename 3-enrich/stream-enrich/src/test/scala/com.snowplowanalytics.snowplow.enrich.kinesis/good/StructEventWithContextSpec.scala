@@ -167,9 +167,7 @@ object StructEventWithContextSpec {
   )
 }
 
-class StructEventWithContextSpec
-    extends Specification
-    with ValidationMatchers {
+class StructEventWithContextSpec extends Specification with ValidationMatchers {
 
   "Stream Enrich" should {
 
@@ -186,9 +184,8 @@ class StructEventWithContextSpec
 
       Result.unit(
         for (idx <- StructEventWithContextSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(
-            StructEventWithContextSpec.expected(idx),
-            withIndex = idx)
+          fields(idx) must beFieldEqualTo(StructEventWithContextSpec.expected(idx),
+                                          withIndex = idx)
         }
       )
     }

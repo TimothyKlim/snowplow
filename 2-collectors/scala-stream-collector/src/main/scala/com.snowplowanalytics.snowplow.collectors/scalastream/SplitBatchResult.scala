@@ -26,5 +26,4 @@ import scalastream.sinks._
   * @param goodBatches List of batches of events
   * @param failedBigEvents List of events that were too large
   */
-final case class SplitBatchResult(goodBatches: List[List[String]],
-                                  failedBigEvents: List[String])
+final case class SplitBatchResult(goodBatches: List[List[String]], failedBigEvents: List[String])

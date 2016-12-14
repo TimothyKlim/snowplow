@@ -39,18 +39,16 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
   * using the same methods from AbstractSource as the other
   * sources.
   */
-class TestSource(
-    config: KinesisEnrichConfig,
-    igluResolver: Resolver,
-    enrichmentRegistry: EnrichmentRegistry,
-    tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
+class TestSource(config: KinesisEnrichConfig,
+                 igluResolver: Resolver,
+                 enrichmentRegistry: EnrichmentRegistry,
+                 tracker: Option[Tracker])(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
     * Never-ending processing loop over source stream.
     * Not supported for TestSource.
     */
-  def run = {
+  def run =
     throw new RuntimeException("run() should not be called on TestSource")
-  }
 }

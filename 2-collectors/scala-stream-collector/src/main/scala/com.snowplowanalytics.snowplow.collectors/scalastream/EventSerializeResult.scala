@@ -27,5 +27,4 @@ import scalastream.sinks._
   * @param good All good results
   * @param bad All bad results
   */
-final case class EventSerializeResult(good: List[Array[Byte]],
-                                      bad: List[Array[Byte]])
+final case class EventSerializeResult(good: List[Array[Byte]], bad: List[Array[Byte]])

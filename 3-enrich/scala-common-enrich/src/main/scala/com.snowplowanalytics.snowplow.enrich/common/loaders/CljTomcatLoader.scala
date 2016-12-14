@@ -39,25 +39,25 @@ object CljTomcatLoader extends Loader[String] {
   // Adapted and evolved from the Clojure Collector's
   // regular expression
   private val CljTomcatRegex = {
-    val w = "[\\s]+" // Whitespace regex
+    val w  = "[\\s]+"  // Whitespace regex
     val ow = "(?:" + w // Non-capturing optional whitespace begins
 
     // Our regex follows. Try debuggex.com if it doesn't make sense
-    ("^([\\S]+)" + // Date          / date
-      w + "([\\S]+)" + // Time          / time
-      w + "(-)" + // -             / x-edge-location    added for consistency with CloudFront
-      w + "([\\S]+)" + // BytesSent     / sc-bytes
-      w + "([\\S]+)" + // IPAddress     / c-ip
-      w + "([\\S]+)" + // Operation     / cs-method
-      w + "([\\S]+)" + // Domain        / cs(Host)
-      w + "([\\S]+)" + // Object        / cs-uri-stem
-      w + "([\\S]+)" + // HttpStatus    / sc-status
-      w + "([\\S]+)" + // Referer       / cs(Referer)
-      w + "([\\S]+)" + // UserAgent     / cs(User Agent)
-      w + "([\\S]+)" + // Querystring   / cs-uri-query
-      ow + "-" + // -             / cs(Cookie)         added for consistency with CloudFront
-      w + "-" + // -             / x-edge-result-type added for consistency with CloudFront
-      w + "-)?" + // -             / x-edge-request-id  added for consistency with CloudFront
+    ("^([\\S]+)" +       // Date          / date
+      w + "([\\S]+)" +   // Time          / time
+      w + "(-)" +        // -             / x-edge-location    added for consistency with CloudFront
+      w + "([\\S]+)" +   // BytesSent     / sc-bytes
+      w + "([\\S]+)" +   // IPAddress     / c-ip
+      w + "([\\S]+)" +   // Operation     / cs-method
+      w + "([\\S]+)" +   // Domain        / cs(Host)
+      w + "([\\S]+)" +   // Object        / cs-uri-stem
+      w + "([\\S]+)" +   // HttpStatus    / sc-status
+      w + "([\\S]+)" +   // Referer       / cs(Referer)
+      w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
+      w + "([\\S]+)" +   // Querystring   / cs-uri-query
+      ow + "-" +         // -             / cs(Cookie)         added for consistency with CloudFront
+      w + "-" +          // -             / x-edge-result-type added for consistency with CloudFront
+      w + "-)?" +        // -             / x-edge-request-id  added for consistency with CloudFront
       ow + "([\\S]+)?" + // ContentType   /                    POST support
       w + "([\\S]+)?)?$").r // PostBody      /                    POST support
   }
@@ -88,9 +88,7 @@ object CljTomcatLoader extends Loader[String] {
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
       val contentType = (for {
         enc <- ct
-        raw = ConversionUtils.decodeString(CollectorEncoding,
-                                           "Content type",
-                                           enc)
+        raw = ConversionUtils.decodeString(CollectorEncoding, "Content type", enc)
       } yield raw).sequenceU
       val body = (for {
         b64 <- bdy
@@ -120,64 +118,24 @@ object CljTomcatLoader extends Loader[String] {
 
     line match {
       // A. For a request, to CljTomcat collector <= v0.6.0
-      case CljTomcatRegex(date,
-                          time,
-                          _,
-                          _,
-                          ip,
-                          _,
-                          _,
-                          objct,
-                          _,
-                          refr,
-                          ua,
-                          qs,
-                          null,
-                          null) =>
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
         build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable
 
       // B. For a request without body or content type, to CljTomcat collector >= v0.7.0
       // TODO: really we ought to be matching on "-", not-"-" and not-"-", "-" as well
-      case CljTomcatRegex(date,
-                          time,
-                          _,
-                          _,
-                          ip,
-                          _,
-                          _,
-                          objct,
-                          _,
-                          refr,
-                          ua,
-                          qs,
-                          "-",
-                          "-") =>
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, "-", "-") =>
         build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable
 
       // C: For a request with content type and/or body, to CljTomcat collector >= v0.7.0
 
       // C.1 Not a POST request
-      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _)
-          if op.toUpperCase != "POST" =>
+      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
         s"Operation must be POST, not ${op.toUpperCase}, if request content type and/or body are provided"
           .failureNel[Option[CollectorPayload]]
 
       // C.2 A POST, let's check we can discern API format
       // TODO: we should check for nulls/"-"s for ct and body below
-      case CljTomcatRegex(date,
-                          time,
-                          _,
-                          _,
-                          ip,
-                          _,
-                          _,
-                          objct,
-                          _,
-                          refr,
-                          ua,
-                          qs,
-                          ct,
-                          bdy) =>
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, bdy) =>
         build(qs, date, time, ip, ua, refr, objct, ct.some, bdy.some)
 
       // D. Row not recognised

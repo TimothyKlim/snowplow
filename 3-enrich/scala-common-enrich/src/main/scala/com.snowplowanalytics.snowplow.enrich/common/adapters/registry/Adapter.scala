@@ -24,7 +24,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // Scalaz
 import scalaz._
@@ -52,10 +52,8 @@ trait Adapter {
                                         "1-0-0").toSchemaUri
 
   // The Iglu schema URI for a Snowplow custom contexts
-  private val Contexts = SchemaKey("com.snowplowanalytics.snowplow",
-                                   "contexts",
-                                   "jsonschema",
-                                   "1-0-1").toSchemaUri
+  private val Contexts =
+    SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-1").toSchemaUri
 
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => JObject
@@ -70,9 +68,8 @@ trait Adapter {
     Set("nuid", "aid", "cv", "eid", "ttm", "url")
 
   // Datetime format we need to convert timestamps to
-  val JsonSchemaDateTimeFormat = DateTimeFormat
-    .forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    .withZone(DateTimeZone.UTC)
+  val JsonSchemaDateTimeFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
     * Returns an updated event JSON where
@@ -93,11 +90,10 @@ trait Adapter {
     * @return the updated JSON with valid date-time
     *         values in the tsFieldKey fields
     */
-  private[registry] def cleanupJsonEventValues(
-      json: JValue,
-      eventOpt: Option[(String, String)],
-      tsFieldKey: String,
-      toSeconds: Long => Long): JValue = {
+  private[registry] def cleanupJsonEventValues(json: JValue,
+                                               eventOpt: Option[(String, String)],
+                                               tsFieldKey: String,
+                                               toSeconds: Long => Long): JValue = {
 
     def toStringField(value: Long): JString = {
       val dt: DateTime = new DateTime(toSeconds(value))
@@ -144,8 +140,7 @@ trait Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents
 
   /**
     * Converts a NonEmptyList of name:value
@@ -155,8 +150,7 @@ trait Adapter {
     * @return the name:value pairs in Map form
     */
   // TODO: can this become private?
-  protected[registry] def toMap(
-      parameters: List[NameValuePair]): Map[String, String] =
+  protected[registry] def toMap(parameters: List[NameValuePair]): Map[String, String] =
     parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 
   /**
@@ -173,10 +167,9 @@ trait Adapter {
     * @return a formatter function which converts
     *         RawEventParameters into a cleaned JObject
     */
-  protected[registry] def buildFormatter(
-      bools: List[String] = Nil,
-      ints: List[String] = Nil,
-      dateTimes: JU.DateTimeFields = None): FormatterFunc = {
+  protected[registry] def buildFormatter(bools: List[String] = Nil,
+                                         ints: List[String] = Nil,
+                                         dateTimes: JU.DateTimeFields = None): FormatterFunc = {
 
     (parameters: RawEventParameters) =>
       for {
@@ -206,12 +199,11 @@ trait Adapter {
     * @return the raw-event parameters for a valid
     *         Snowplow unstructured event
     */
-  protected[registry] def toUnstructEventParams(
-      tracker: String,
-      parameters: RawEventParameters,
-      schema: String,
-      formatter: FormatterFunc,
-      platform: String): RawEventParameters = {
+  protected[registry] def toUnstructEventParams(tracker: String,
+                                                parameters: RawEventParameters,
+                                                schema: String,
+                                                formatter: FormatterFunc,
+                                                platform: String): RawEventParameters = {
 
     val params = formatter(parameters - ("nuid", "aid", "cv", "p"))
 
@@ -223,9 +215,9 @@ trait Adapter {
         ))
     }
 
-    Map("tv" -> tracker,
-        "e" -> "ue",
-        "p" -> parameters.getOrElse("p", platform), // Required field
+    Map("tv"    -> tracker,
+        "e"     -> "ue",
+        "p"     -> parameters.getOrElse("p", platform), // Required field
         "ue_pr" -> json) ++
       parameters.filterKeys(AcceptedQueryParameters)
   }
@@ -276,12 +268,11 @@ trait Adapter {
     * @return the raw-event parameters for a valid
     *         Snowplow unstructured event
     */
-  protected[registry] def toUnstructEventParams(
-      tracker: String,
-      qsParams: RawEventParameters,
-      schema: String,
-      eventJson: JValue,
-      platform: String): RawEventParameters = {
+  protected[registry] def toUnstructEventParams(tracker: String,
+                                                qsParams: RawEventParameters,
+                                                schema: String,
+                                                eventJson: JValue,
+                                                platform: String): RawEventParameters = {
 
     val json = compact {
       toUnstructEvent(
@@ -290,9 +281,9 @@ trait Adapter {
       )
     }
 
-    Map("tv" -> tracker,
-        "e" -> "ue",
-        "p" -> qsParams.getOrElse("p", platform), // Required field
+    Map("tv"    -> tracker,
+        "e"     -> "ue",
+        "p"     -> qsParams.getOrElse("p", platform), // Required field
         "ue_pr" -> json) ++
       qsParams.filterKeys(AcceptedQueryParameters)
   }
@@ -348,10 +339,9 @@ trait Adapter {
     * @return the schema for the event or a Failure-boxed String
     *         if we cannot recognize the event type
     */
-  protected[registry] def lookupSchema(
-      eventOpt: Option[String],
-      vendor: String,
-      eventSchemaMap: Map[String, String]): Validated[String] =
+  protected[registry] def lookupSchema(eventOpt: Option[String],
+                                       vendor: String,
+                                       eventSchemaMap: Map[String, String]): Validated[String] =
     eventOpt match {
       case None =>
         s"$vendor event failed: type parameter not provided - cannot determine event type".failureNel
@@ -389,11 +379,10 @@ trait Adapter {
     * @return the schema for the event or a Failure-boxed String
     *         if we cannot recognize the event type
     */
-  protected[registry] def lookupSchema(
-      eventOpt: Option[String],
-      vendor: String,
-      index: Int,
-      eventSchemaMap: Map[String, String]): Validated[String] =
+  protected[registry] def lookupSchema(eventOpt: Option[String],
+                                       vendor: String,
+                                       index: Int,
+                                       eventSchemaMap: Map[String, String]): Validated[String] =
     eventOpt match {
       case None =>
         s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".failureNel

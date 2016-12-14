@@ -87,7 +87,7 @@ object CollectorApi {
     *         CollectorApi or a Failure String.
     */
   def parse(path: String): Validation[String, CollectorApi] = path match {
-    case ApiPathRegex(vnd, ver) => CollectorApi(vnd, ver).success
+    case ApiPathRegex(vnd, ver)  => CollectorApi(vnd, ver).success
     case _ if isIceRequest(path) => SnowplowTp1.success
     case _ =>
       s"Request path ${path} does not match (/)vendor/version(/) pattern nor is a legacy /i(ce.png) request".failure
@@ -104,7 +104,7 @@ object CollectorApi {
     */
   protected[loaders] def isIceRequest(path: String): Boolean =
     path.startsWith("/ice.png") || // Legacy name for /i
-      path.equals("/i") || // Legacy name for /com.snowplowanalytics.snowplow/tp1
+      path.equals("/i") ||         // Legacy name for /com.snowplowanalytics.snowplow/tp1
       path.startsWith("/i?")
 }
 

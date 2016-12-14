@@ -40,8 +40,7 @@ import Input.ExtractedValue
 case class Cache(size: Int, ttl: Int) {
 
   private val cache =
-    new SynchronizedLruMap[IntMap[ExtractedValue],
-                           (ThrowableXor[List[JObject]], Int)](size)
+    new SynchronizedLruMap[IntMap[ExtractedValue], (ThrowableXor[List[JObject]], Int)](size)
 
   /**
     * Get a value if it's not outdated
@@ -49,7 +48,7 @@ case class Cache(size: Int, ttl: Int) {
     * @param key HTTP URL
     * @return validated JSON as it was fetched from DB if found
     */
-  def get(key: IntMap[ExtractedValue]): Option[ThrowableXor[List[JObject]]] = {
+  def get(key: IntMap[ExtractedValue]): Option[ThrowableXor[List[JObject]]] =
     cache.get(key) match {
       case Some((value, _)) if ttl == 0 => Some(value)
       case Some((value, created)) =>
@@ -61,7 +60,6 @@ case class Cache(size: Int, ttl: Int) {
         }
       case _ => None
     }
-  }
 
   /**
     * Put a value into cache with current timestamp
@@ -69,8 +67,7 @@ case class Cache(size: Int, ttl: Int) {
     * @param key all inputs Map
     * @param value context object (with Iglu URI, not just plain JSON)
     */
-  def put(key: IntMap[ExtractedValue],
-          value: ThrowableXor[List[JObject]]): Unit = {
+  def put(key: IntMap[ExtractedValue], value: ThrowableXor[List[JObject]]): Unit = {
     val now = (new DateTime().getMillis / 1000).toInt
     cache.put(key, (value, now))
   }

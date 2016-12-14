@@ -80,20 +80,19 @@ class SplitBatchSpec extends WordSpec with Matchers {
     "Reject an oversized GET CollectorPayload" in {
       val payload = new CollectorPayload()
       payload.setQuerystring("x" * 1000)
-      val actual = SplitBatch.splitAndSerializePayload(payload, 100)
+      val actual    = SplitBatch.splitAndSerializePayload(payload, 100)
       val errorJson = parse(new String(actual.bad.head), false)
       errorJson \ "size" should ===(JInt(1019))
       errorJson \ "errors" should ===(
-        JArray(List(JObject(
-          List(("level", JString("error")),
-               ("message", JString("Cannot split record with null body")))))))
+        JArray(List(JObject(List(("level", JString("error")),
+                                 ("message", JString("Cannot split record with null body")))))))
       actual.good shouldBe empty
     }
 
     "Reject an oversized POST CollectorPayload with an unparseable body" in {
       val payload = new CollectorPayload()
       payload.setBody("s" * 1000)
-      val actual = SplitBatch.splitAndSerializePayload(payload, 100)
+      val actual    = SplitBatch.splitAndSerializePayload(payload, 100)
       val errorJson = parse(new String(actual.bad.head), false)
       errorJson \ "size" should ===(JInt(1019))
     }
@@ -111,12 +110,9 @@ class SplitBatchSpec extends WordSpec with Matchers {
       payload.setPath("p" * 1000)
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
       actual.bad.size should ===(1)
-      parse(new String(actual.bad.head), false) \ "errors" should ===(
-        JArray(List(JObject(List(
-          ("level", JString("error")),
-          ("message",
-           JString(
-             "Even without the body, the serialized event is too large")))))))
+      parse(new String(actual.bad.head), false) \ "errors" should ===(JArray(List(JObject(
+        List(("level", JString("error")),
+             ("message", JString("Even without the body, the serialized event is too large")))))))
     }
 
     "Split a CollectorPayload with three large events and four very large events" in {

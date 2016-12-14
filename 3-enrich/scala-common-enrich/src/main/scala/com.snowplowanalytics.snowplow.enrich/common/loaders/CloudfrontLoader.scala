@@ -57,11 +57,11 @@ object CloudfrontLoader extends Loader[String] {
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private val CfRegex = {
-    val w = "[\\s]+" // Whitespace regex
+    val w  = "[\\s]+"  // Whitespace regex
     val ow = "(?:" + w // Optional whitespace begins
 
     // Our regex follows
-    ("([\\S]+)" + // Date          / date
+    ("([\\S]+)" +      // Date          / date
       w + "([\\S]+)" + // Time          / time
       w + "([\\S]+)" + // EdgeLocation  / x-edge-location
       w + "([\\S]+)" + // BytesSent     / sc-bytes
@@ -73,13 +73,13 @@ object CloudfrontLoader extends Loader[String] {
       w + "([\\S]+)" + // Referer       / cs(Referer)
       w + "([\\S]+)" + // UserAgent     / cs(User Agent)
       w + "([\\S]+)" + // Querystring   / cs-uri-query
-      ow + "[\\S]*" + // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
-      w + "[\\S]+" + // ResultType    / x-edge-result-type added 12 Sep 2012
+      ow + "[\\S]*" +  // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
+      w + "[\\S]+" +   // ResultType    / x-edge-result-type added 12 Sep 2012
       w + "[\\S]+)?" + // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
-      ow + "[\\S]+" + // XHostHeader   / x-host-header      added 21 Oct 2013
-      w + "[\\S]+" + // CsProtocol    / cs-protocol        added 21 Oct 2013
+      ow + "[\\S]+" +  // XHostHeader   / x-host-header      added 21 Oct 2013
+      w + "[\\S]+" +   // CsProtocol    / cs-protocol        added 21 Oct 2013
       w + "[\\S]+)?" + // CsBytes       / cs-bytes           added 21 Oct 2013
-      ow + "[\\S]+" + // TimeTaken     / time-taken         added 29 Apr 2014
+      ow + "[\\S]+" +  // TimeTaken     / time-taken         added 29 Apr 2014
       w + ".*)?").r // Anything added in the future by Amazon
   }
 
@@ -101,8 +101,7 @@ object CloudfrontLoader extends Loader[String] {
         None.success
 
       // 2. Not a GET request
-      case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _)
-          if op.toUpperCase != "GET" =>
+      case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
         s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}"
           .failureNel[Option[CollectorPayload]]
 
@@ -118,8 +117,8 @@ object CloudfrontLoader extends Loader[String] {
 
         // No validation (yet) on the below
         val userAgent = singleEncodePcts(ua)
-        val refr = singleEncodePcts(rfr)
-        val referer = toOption(refr) map toCleanUri
+        val refr      = singleEncodePcts(rfr)
+        val referer   = toOption(refr) map toCleanUri
 
         val api = CollectorApi.parse(objct)
 
@@ -181,8 +180,8 @@ object CloudfrontLoader extends Loader[String] {
     */
   def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
-    case Some("") => None
-    case s => s // Leaves any other Some(x) or None as-is
+    case Some("")  => None
+    case s         => s // Leaves any other Some(x) or None as-is
   }
 
   /**

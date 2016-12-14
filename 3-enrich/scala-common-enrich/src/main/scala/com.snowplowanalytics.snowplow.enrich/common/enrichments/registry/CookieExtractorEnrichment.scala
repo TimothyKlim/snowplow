@@ -53,17 +53,13 @@ object CookieExtractorEnrichmentConfig extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured CookieExtractorEnrichment instance
     */
-  def parse(
-      config: JValue,
-      schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CookieExtractorEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        cookieNames <- ScalazJson4sUtils
-          .extract[List[String]](config, "parameters", "cookies")
+        cookieNames <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "cookies")
         enrich = CookieExtractorEnrichment(cookieNames)
       } yield enrich).toValidationNel
     })
-  }
 }
 
 /**
@@ -80,26 +76,27 @@ case class CookieExtractorEnrichment(
   def extract(headers: List[String]): List[JsonAST.JObject] = {
     // rfc6265 - sections 4.2.1 and 4.2.2
 
-    val cookies = headers.flatMap { header =>
-      header.split(":", 2) match {
-        case Array("Cookie", value) =>
-          val nameValuePairs = BasicHeaderValueParser.parseParameters(
-            value,
-            BasicHeaderValueParser.INSTANCE)
+    val cookies = headers
+      .flatMap { header =>
+        header.split(":", 2) match {
+          case Array("Cookie", value) =>
+            val nameValuePairs =
+              BasicHeaderValueParser.parseParameters(value, BasicHeaderValueParser.INSTANCE)
 
-          val filtered = nameValuePairs.filter { nvp =>
-            cookieNames.contains(nvp.getName)
-          }
+            val filtered = nameValuePairs.filter { nvp =>
+              cookieNames.contains(nvp.getName)
+            }
 
-          Some(filtered)
-        case _ => None
+            Some(filtered)
+          case _ => None
+        }
       }
-    }.flatten
+      .flatten
 
     cookies.map { cookie =>
       (("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
         ("data" ->
-          ("name" -> cookie.getName) ~
+          ("name"    -> cookie.getName) ~
             ("value" -> cookie.getValue)))
     }
   }

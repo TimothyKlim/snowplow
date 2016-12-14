@@ -22,18 +22,12 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import loaders.{
-  TsvLoader,
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource, TsvLoader}
 import utils.ConversionUtils
 import SpecHelpers._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
@@ -55,7 +49,7 @@ class CloudfrontAccessLogAdapterSpec
       end
 
   implicit val resolver = SpecHelpers.IgluResolver
-  val loader = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
+  val loader            = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
 
   val doubleEncodedUa =
     "Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36"
@@ -70,21 +64,20 @@ class CloudfrontAccessLogAdapterSpec
   val url = "http://snowplowanalytics.com/analytics/index.html"
 
   object Shared {
-    val api = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log")
+    val api    = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log")
     val source = CollectorSource("tsv", "UTF-8", None)
-    val context = CollectorContext(
-      DateTime.parse("2013-10-07T23:35:30.000Z").some,
-      "255.255.255.255".some,
-      singleEncodedUa.some,
-      None,
-      Nil,
-      None)
+    val context = CollectorContext(DateTime.parse("2013-10-07T23:35:30.000Z").some,
+                                   "255.255.255.255".some,
+                                   singleEncodedUa.some,
+                                   None,
+                                   Nil,
+                                   None)
   }
 
   object Expected {
     val staticNoPlatform = Map(
-      "tv" -> "com.amazon.aws.cloudfront/wd_access_log",
-      "e" -> "ue",
+      "tv"  -> "com.amazon.aws.cloudfront/wd_access_log",
+      "e"   -> "ue",
       "url" -> url
     )
     val static = staticNoPlatform ++ Map(
@@ -99,28 +92,27 @@ class CloudfrontAccessLogAdapterSpec
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(
-      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
       s"""|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-0",
-              |"data":{
-                |"dateTime":"2013-10-07T23:35:30Z",
-                |"xEdgeLocation":"c",
-                |"scBytes":100,
-                |"cIp":"255.255.255.255",
-                |"csMethod":"f",
-                |"csHost":"g",
-                |"csUriStem":"h",
-                |"scStatus":"i",
-                |"csReferer":"$url",
-                |"csUserAgent":"$unEncodedUa",
-                |"csUriQuery":"$singleEncodedQs"
-              |}
-            |}
+          |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+          |"data":{
+          |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-0",
+          |"data":{
+          |"dateTime":"2013-10-07T23:35:30Z",
+          |"xEdgeLocation":"c",
+          |"scBytes":100,
+          |"cIp":"255.255.255.255",
+          |"csMethod":"f",
+          |"csHost":"g",
+          |"csUriStem":"h",
+          |"scStatus":"i",
+          |"csReferer":"$url",
+          |"csUserAgent":"$unEncodedUa",
+          |"csUriQuery":"$singleEncodedQs"
+          |}
+          |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
@@ -141,31 +133,30 @@ class CloudfrontAccessLogAdapterSpec
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(
-      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
       s"""|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-1",
-              |"data":{
-                |"dateTime":"2013-10-07T23:35:30Z",
-                |"xEdgeLocation":"c",
-                |"scBytes":100,
-                |"cIp":"255.255.255.255",
-                |"csMethod":"f",
-                |"csHost":"g",
-                |"csUriStem":"h",
-                |"scStatus":"i",
-                |"csReferer":"$url",
-                |"csUserAgent":"$unEncodedUa",
-                |"csUriQuery":"$singleEncodedQs",
-                |"csCookie":"m",
-                |"xEdgeResultType":"n",
-                |"xEdgeRequestId":"o"
-              |}
-            |}
+          |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+          |"data":{
+          |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-1",
+          |"data":{
+          |"dateTime":"2013-10-07T23:35:30Z",
+          |"xEdgeLocation":"c",
+          |"scBytes":100,
+          |"cIp":"255.255.255.255",
+          |"csMethod":"f",
+          |"csHost":"g",
+          |"csUriStem":"h",
+          |"scStatus":"i",
+          |"csReferer":"$url",
+          |"csUserAgent":"$unEncodedUa",
+          |"csUriQuery":"$singleEncodedQs",
+          |"csCookie":"m",
+          |"xEdgeResultType":"n",
+          |"xEdgeRequestId":"o"
+          |}
+          |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
@@ -186,34 +177,33 @@ class CloudfrontAccessLogAdapterSpec
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(
-      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
       s"""|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-2",
-              |"data":{
-                |"dateTime":"2013-10-07T23:35:30Z",
-                |"xEdgeLocation":"c",
-                |"scBytes":100,
-                |"cIp":"255.255.255.255",
-                |"csMethod":"f",
-                |"csHost":"g",
-                |"csUriStem":"h",
-                |"scStatus":"i",
-                |"csReferer":"$url",
-                |"csUserAgent":"$unEncodedUa",
-                |"csUriQuery":"$singleEncodedQs",
-                |"csCookie":"m",
-                |"xEdgeResultType":"n",
-                |"xEdgeRequestId":"o",
-                |"xHostHeader":"p",
-                |"csProtocol":"q",
-                |"csBytes":90
-              |}
-            |}
+          |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+          |"data":{
+          |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-2",
+          |"data":{
+          |"dateTime":"2013-10-07T23:35:30Z",
+          |"xEdgeLocation":"c",
+          |"scBytes":100,
+          |"cIp":"255.255.255.255",
+          |"csMethod":"f",
+          |"csHost":"g",
+          |"csUriStem":"h",
+          |"scStatus":"i",
+          |"csReferer":"$url",
+          |"csUserAgent":"$unEncodedUa",
+          |"csUriQuery":"$singleEncodedQs",
+          |"csCookie":"m",
+          |"xEdgeResultType":"n",
+          |"xEdgeRequestId":"o",
+          |"xHostHeader":"p",
+          |"csProtocol":"q",
+          |"csBytes":90
+          |}
+          |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
@@ -234,35 +224,34 @@ class CloudfrontAccessLogAdapterSpec
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(
-      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
       s"""|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-3",
-              |"data":{
-                |"dateTime":"2013-10-07T23:35:30Z",
-                |"xEdgeLocation":"c",
-                |"scBytes":100,
-                |"cIp":"255.255.255.255",
-                |"csMethod":"f",
-                |"csHost":"g",
-                |"csUriStem":"h",
-                |"scStatus":"i",
-                |"csReferer":"$url",
-                |"csUserAgent":"$unEncodedUa",
-                |"csUriQuery":"$singleEncodedQs",
-                |"csCookie":"m",
-                |"xEdgeResultType":"n",
-                |"xEdgeRequestId":"o",
-                |"xHostHeader":"p",
-                |"csProtocol":"q",
-                |"csBytes":90,
-                |"timeTaken":0.001
-              |}
-            |}
+          |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+          |"data":{
+          |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-3",
+          |"data":{
+          |"dateTime":"2013-10-07T23:35:30Z",
+          |"xEdgeLocation":"c",
+          |"scBytes":100,
+          |"cIp":"255.255.255.255",
+          |"csMethod":"f",
+          |"csHost":"g",
+          |"csUriStem":"h",
+          |"scStatus":"i",
+          |"csReferer":"$url",
+          |"csUserAgent":"$unEncodedUa",
+          |"csUriQuery":"$singleEncodedQs",
+          |"csCookie":"m",
+          |"xEdgeResultType":"n",
+          |"xEdgeRequestId":"o",
+          |"xHostHeader":"p",
+          |"csProtocol":"q",
+          |"csBytes":90,
+          |"timeTaken":0.001
+          |}
+          |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
@@ -283,39 +272,38 @@ class CloudfrontAccessLogAdapterSpec
 
     val payload = loader.toCollectorPayload(input)
 
-    val actual = payload.map(
-      _.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
+    val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
       s"""|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-4",
-              |"data":{
-                |"dateTime":"2013-10-07T23:35:30Z",
-                |"xEdgeLocation":"c",
-                |"scBytes":100,
-                |"cIp":"255.255.255.255",
-                |"csMethod":"f",
-                |"csHost":"g",
-                |"csUriStem":"h",
-                |"scStatus":"i",
-                |"csReferer":"$url",
-                |"csUserAgent":"$unEncodedUa",
-                |"csUriQuery":"$singleEncodedQs",
-                |"csCookie":"m",
-                |"xEdgeResultType":"n",
-                |"xEdgeRequestId":"o",
-                |"xHostHeader":"p",
-                |"csProtocol":"q",
-                |"csBytes":90,
-                |"timeTaken":0.001,
-                |"xForwardedFor":"r",
-                |"sslProtocol":"s",
-                |"sslCipher":"t",
-                |"xEdgeResponseResultType":"u"
-              |}
-            |}
+          |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+          |"data":{
+          |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-4",
+          |"data":{
+          |"dateTime":"2013-10-07T23:35:30Z",
+          |"xEdgeLocation":"c",
+          |"scBytes":100,
+          |"cIp":"255.255.255.255",
+          |"csMethod":"f",
+          |"csHost":"g",
+          |"csUriStem":"h",
+          |"scStatus":"i",
+          |"csReferer":"$url",
+          |"csUserAgent":"$unEncodedUa",
+          |"csUriQuery":"$singleEncodedQs",
+          |"csCookie":"m",
+          |"xEdgeResultType":"n",
+          |"xEdgeRequestId":"o",
+          |"xHostHeader":"p",
+          |"csProtocol":"q",
+          |"csBytes":90,
+          |"timeTaken":0.001,
+          |"xForwardedFor":"r",
+          |"sslProtocol":"s",
+          |"sslCipher":"t",
+          |"xEdgeResponseResultType":"u"
+          |}
+          |}
           |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
@@ -340,19 +328,18 @@ class CloudfrontAccessLogAdapterSpec
     val actual =
       CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
-    actual must beFailing(NonEmptyList(
-      "Access log TSV line contained 5 fields, expected 12, 15, 18, 19, or 23"))
+    actual must beFailing(
+      NonEmptyList("Access log TSV line contained 5 fields, expected 12, 15, 18, 19, or 23"))
   }
 
   def e7 = {
     val params = toNameValuePairs()
-    val payload = CollectorPayload(
-      Shared.api,
-      params,
-      None,
-      "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
-      Shared.source,
-      Shared.context)
+    val payload = CollectorPayload(Shared.api,
+                                   params,
+                                   None,
+                                   "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some,
+                                   Shared.source,
+                                   Shared.context)
     val actual =
       CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 

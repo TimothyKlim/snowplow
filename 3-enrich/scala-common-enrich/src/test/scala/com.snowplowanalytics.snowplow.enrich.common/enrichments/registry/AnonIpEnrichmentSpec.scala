@@ -37,8 +37,7 @@ class AnonIpEnrichmentSpec extends Specification with DataTables {
       "invalid, anonymize 3" !! "999.123.777.2" ! AnonOctets(3) ! "999.x.x.x" |
       "invalid, anonymize 4" !! "hello;goodbye" ! AnonOctets(3) ! "hello;goodbye" |
       "empty, anonymize 2" !! null ! AnonOctets(2) ! null |
-      "empty, anonymize 4" !! "" ! AnonOctets(4) ! "x" |> {
-      (_, ip, octets, expected) =>
-        AnonIpEnrichment(octets).anonymizeIp(ip) must_== expected
+      "empty, anonymize 4" !! "" ! AnonOctets(4) ! "x" |> { (_, ip, octets, expected) =>
+      AnonIpEnrichment(octets).anonymizeIp(ip) must_== expected
     }
 }

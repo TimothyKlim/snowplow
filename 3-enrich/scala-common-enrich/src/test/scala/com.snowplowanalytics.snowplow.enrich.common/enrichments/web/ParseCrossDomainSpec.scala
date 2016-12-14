@@ -24,10 +24,7 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class ParseCrossDomainSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the parseCrossDomain function" ^
       p ^
@@ -43,19 +40,16 @@ class ParseCrossDomainSpec
   def e2 = {
     val expected =
       "Field [sp_dtm]: [not-a-timestamp] is not in the expected format (ms since epoch)"
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beFailing(
-      expected)
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.not-a-timestamp")) must beFailing(expected)
   }
 
   def e3 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beSuccessful(
-      ("abc".some, None))
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "abc")) must beSuccessful(("abc".some, None))
 
   def e4 =
     PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beSuccessful(
       ("abc".some, "2015-03-13 11:19:21.368".some))
 
   def e5 =
-    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beSuccessful(
-      None -> None)
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beSuccessful(None -> None)
 }

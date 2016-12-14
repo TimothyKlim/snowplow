@@ -39,9 +39,8 @@ object EventEnrichments {
   /**
     * A Redshift-compatible timestamp format
     */
-  private val TstampFormat = DateTimeFormat
-    .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-    .withZone(DateTimeZone.UTC)
+  private val TstampFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
   /**
     * Converts a Joda DateTime into
@@ -69,8 +68,7 @@ object EventEnrichments {
     * @param Optional collectorTstamp
     * @return Validation boxing the result of making the timestamp Redshift-compatible
     */
-  def formatCollectorTstamp(
-      collectorTstamp: Option[DateTime]): Validation[String, String] = {
+  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] =
     collectorTstamp match {
       case None => "No collector_tstamp set".failure
       case Some(t) => {
@@ -82,7 +80,6 @@ object EventEnrichments {
         }
       }
     }
-  }
 
   /**
     * Calculate the derived timestamp
@@ -112,11 +109,9 @@ object EventEnrichments {
         ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
           case (Some(dst), Some(dct), Some(ct)) => {
             val startTstamp = fromTimestamp(dct)
-            val endTstamp = fromTimestamp(dst)
+            val endTstamp   = fromTimestamp(dst)
             if (startTstamp.isBefore(endTstamp)) {
-              toTimestamp(
-                fromTimestamp(ct)
-                  .minus(new Period(startTstamp, endTstamp))).some
+              toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
             } else {
               ct.some
             }
@@ -144,10 +139,9 @@ object EventEnrichments {
     *         error message if the
     *         format was invalid
     */
-  val extractTimestamp: (String, String) => ValidatedString = (field,
-                                                               tstamp) =>
+  val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
-      val dt = new DateTime(tstamp.toLong)
+      val dt              = new DateTime(tstamp.toLong)
       val timestampString = toTimestamp(dt)
       if (timestampString.startsWith("-")) {
         s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".failure
@@ -184,9 +178,7 @@ object EventEnrichments {
       case "pv" => "page_view".success
       case "pp" => "page_ping".success
       case ec =>
-        "Field [%s]: [%s] is not a recognised event code"
-          .format(field, ec)
-          .failure
+        "Field [%s]: [%s] is not a recognised event code".format(field, ec).failure
   }
 
   /**

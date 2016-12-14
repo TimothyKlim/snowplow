@@ -49,8 +49,7 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
     val cache = Cache(3, 2)
     cache.put("http://api.acme.com/url", JInt(42).success)
     Thread.sleep(3000)
-    cache.get("http://api.acme.com/url") must beNone and (cache.actualLoad must beEqualTo(
-      0))
+    cache.get("http://api.acme.com/url") must beNone and (cache.actualLoad must beEqualTo(0))
   }
 
   def e3 = {
@@ -58,7 +57,6 @@ class CacheSpec extends Specification with ValidationMatchers with Mockito {
     cache.put("http://api.acme.com/url1", JInt(32).success)
     cache.put("http://api.acme.com/url2", JInt(42).success)
     cache.put("http://api.acme.com/url3", JInt(52).success)
-    cache.get("http://api.acme.com/url1") must beNone and (cache.actualLoad must beEqualTo(
-      2))
+    cache.get("http://api.acme.com/url1") must beNone and (cache.actualLoad must beEqualTo(2))
   }
 }

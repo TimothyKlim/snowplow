@@ -47,8 +47,8 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
                                         0)
 
   // Creates a UserAgentUtilsEnrichment instance from a JValue
-  def parse(config: JValue, schemaKey: SchemaKey)
-    : ValidatedNelMessage[UserAgentUtilsEnrichment.type] =
+  def parse(config: JValue,
+            schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] =
     isParseable(config, schemaKey).map(_ => UserAgentUtilsEnrichment)
 }
 
@@ -98,14 +98,12 @@ case object UserAgentUtilsEnrichment extends Enrichment {
     *         exception, boxed in a
     *         Scalaz Validation
     */
-  def extractClientAttributes(
-      useragent: String): Validation[String, ClientAttributes] = {
-
+  def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] =
     try {
-      val ua = UserAgent.parseUserAgentString(useragent)
-      val b = ua.getBrowser
-      val v = Option(ua.getBrowserVersion)
-      val os = ua.getOperatingSystem
+      val ua             = UserAgent.parseUserAgentString(useragent)
+      val b              = ua.getBrowser
+      val v              = Option(ua.getBrowserVersion)
+      val os             = ua.getOperatingSystem
       val isMobileDevice = os.getDeviceType() == DeviceType.MOBILE
       ClientAttributes(browserName = b.getName,
                        browserFamily = b.getGroup.getName,
@@ -119,9 +117,6 @@ case object UserAgentUtilsEnrichment extends Enrichment {
                        deviceIsMobile = isMobileDevice).success
     } catch {
       case NonFatal(e) =>
-        "Exception parsing useragent [%s]: [%s]"
-          .format(useragent, e.getMessage)
-          .failure
+        "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).failure
     }
-  }
 }

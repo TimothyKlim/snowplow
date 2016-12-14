@@ -60,9 +60,7 @@ object SplitBatch {
     *                 needed to join separate event JSONs in a single array
     * @return split batch containing list of good batches and list of events that were too big
     */
-  def split(input: List[String],
-            maximum: Long,
-            joinSize: Long = 1): SplitBatchResult = {
+  def split(input: List[String], maximum: Long, joinSize: Long = 1): SplitBatchResult = {
 
     @tailrec
     def iterbatch(l: List[String],
@@ -85,11 +83,7 @@ object SplitBatch {
         } else if (headSize + currentTotal + joinSize > maximum) {
           iterbatch(l, Nil, 0, currentBatch :: acc, failedBigEvents)
         } else {
-          iterbatch(t,
-                    h :: currentBatch,
-                    headSize + currentTotal + joinSize,
-                    acc,
-                    failedBigEvents)
+          iterbatch(t, h :: currentBatch, headSize + currentTotal + joinSize, acc, failedBigEvents)
         }
       }
     }
@@ -105,12 +99,11 @@ object SplitBatch {
     * @param event Incoming CollectorPayload
     * @return a List of Good and Bad events
     */
-  def splitAndSerializePayload(event: CollectorPayload,
-                               maxBytes: Long): EventSerializeResult = {
+  def splitAndSerializePayload(event: CollectorPayload, maxBytes: Long): EventSerializeResult = {
 
-    val serializer = ThriftSerializer.get()
+    val serializer           = ThriftSerializer.get()
     val everythingSerialized = serializer.serialize(event)
-    val wholeEventBytes = ByteBuffer.wrap(everythingSerialized).capacity
+    val wholeEventBytes      = ByteBuffer.wrap(everythingSerialized).capacity
 
     // If the event is below the size limit, no splitting is necessary
     if (wholeEventBytes < maxBytes) {
@@ -119,10 +112,8 @@ object SplitBatch {
       event.getBody match {
         case null => {
           // Event was a GET
-          val err = "Cannot split record with null body"
-          val payload = BadRow
-            .oversizedRow(wholeEventBytes, NonEmptyList(err))
-            .getBytes(UTF_8)
+          val err     = "Cannot split record with null body"
+          val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
           EventSerializeResult(Nil, List(payload))
         }
         case body => {
@@ -140,9 +131,7 @@ object SplitBatch {
             if (wholeEventBytes - initialBodyDataBytes >= maxBytes) {
               val err =
                 "Even without the body, the serialized event is too large"
-              val payload = BadRow
-                .oversizedRow(wholeEventBytes, NonEmptyList(err))
-                .getBytes(UTF_8)
+              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
               EventSerializeResult(Nil, List(payload))
             } else {
 
@@ -152,19 +141,18 @@ object SplitBatch {
               val individualEvents: Option[List[String]] =
                 bodyDataArray.children.map(compact) match {
                   case Nil => None
-                  case xs => Some(xs)
+                  case xs  => Some(xs)
                 }
 
-              val batchedIndividualEvents = individualEvents.map(
-                split(_, maxBytes - wholeEventBytes + initialBodyDataBytes))
+              val batchedIndividualEvents =
+                individualEvents.map(split(_, maxBytes - wholeEventBytes + initialBodyDataBytes))
 
               batchedIndividualEvents match {
 
                 case None => {
                   val err = "Bad record with no data field"
-                  val payload = BadRow
-                    .oversizedRow(wholeEventBytes, NonEmptyList(err))
-                    .getBytes(UTF_8)
+                  val payload =
+                    BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
                   EventSerializeResult(Nil, List(payload))
                 }
 
@@ -173,18 +161,16 @@ object SplitBatch {
                   // Copy all data from the original payload into the smaller payloads
                   val goodList = batches.goodBatches.map(batch => {
                     val payload = event.deepCopy()
-                    val data = batch.map(evt => parse(evt, false))
-                    val body = getGoodRow(bodySchema, data)
+                    val data    = batch.map(evt => parse(evt, false))
+                    val body    = getGoodRow(bodySchema, data)
                     payload.setBody(body)
                     serializer.serialize(payload)
                   })
 
                   val badList = batches.failedBigEvents.map(event => {
                     val size = ByteBuffer.wrap(event.getBytes(UTF_8)).capacity
-                    val err = "Failed event with body still being too large"
-                    BadRow
-                      .oversizedRow(size, NonEmptyList(err))
-                      .getBytes(UTF_8)
+                    val err  = "Failed event with body still being too large"
+                    BadRow.oversizedRow(size, NonEmptyList(err)).getBytes(UTF_8)
                   })
 
                   // Return Good and Bad Lists
@@ -194,10 +180,8 @@ object SplitBatch {
             }
           } catch {
             case e: Exception => {
-              val err = s"Could not parse payload body %s".format(e.getMessage)
-              val payload = BadRow
-                .oversizedRow(wholeEventBytes, NonEmptyList(err))
-                .getBytes(UTF_8)
+              val err     = s"Could not parse payload body %s".format(e.getMessage)
+              val payload = BadRow.oversizedRow(wholeEventBytes, NonEmptyList(err)).getBytes(UTF_8)
               EventSerializeResult(Nil, List(payload))
             }
           }
@@ -212,10 +196,9 @@ object SplitBatch {
     * @param schema The schema for this event
     * @param data A List of JValues to embed for this event
     */
-  private def getGoodRow(schema: JValue, data: List[JValue]): String = {
+  private def getGoodRow(schema: JValue, data: List[JValue]): String =
     compact(
       ("schema" -> schema) ~
         ("data" -> data)
     )
-  }
 }

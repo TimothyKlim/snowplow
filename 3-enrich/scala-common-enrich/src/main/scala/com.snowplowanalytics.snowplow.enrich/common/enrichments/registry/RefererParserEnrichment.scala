@@ -51,11 +51,8 @@ import utils.ScalazJson4sUtils
   */
 object RefererParserEnrichment extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
-                                        "referer_parser",
-                                        "jsonschema",
-                                        1,
-                                        0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
 
   /**
     * Creates a RefererParserEnrichment instance from a JValue.
@@ -65,17 +62,13 @@ object RefererParserEnrichment extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured RefererParserEnrichment instance
     */
-  def parse(
-      config: JValue,
-      schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param <- ScalazJson4sUtils
-          .extract[List[String]](config, "parameters", "internalDomains")
+        param <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
         enrich = RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -111,10 +104,9 @@ case class RefererParserEnrichment(
     * @return a Tuple3 containing referer medium,
     *         source and term, all Strings
     */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
     for {
       r <- RefererParser.parse(uri, pageHost, domains)
       t = r.term.flatMap(t => CU.fixTabsNewlines(t))
     } yield termLens.set(r, t)
-  }
 }

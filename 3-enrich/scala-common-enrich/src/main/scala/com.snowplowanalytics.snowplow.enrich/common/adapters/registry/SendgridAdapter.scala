@@ -20,7 +20,7 @@ package registry
 // Scalaz
 import com.fasterxml.jackson.core.JsonParseException
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
 import scalaz.Scalaz._
@@ -59,35 +59,17 @@ object SendgridAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "processed" -> SchemaKey("com.sendgrid",
-                             "processed",
-                             "jsonschema",
-                             "1-0-0").toSchemaUri,
-    "dropped" -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "1-0-0").toSchemaUri,
-    "delivered" -> SchemaKey("com.sendgrid",
-                             "delivered",
-                             "jsonschema",
-                             "1-0-0").toSchemaUri,
-    "deferred" -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "1-0-0").toSchemaUri,
-    "bounce" -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "1-0-0").toSchemaUri,
-    "open" -> SchemaKey("com.sendgrid", "open", "jsonschema", "1-0-0").toSchemaUri,
-    "click" -> SchemaKey("com.sendgrid", "click", "jsonschema", "1-0-0").toSchemaUri,
-    "spamreport" -> SchemaKey("com.sendgrid",
-                              "spamreport",
-                              "jsonschema",
-                              "1-0-0").toSchemaUri,
-    "unsubscribe" -> SchemaKey("com.sendgrid",
-                               "unsubscribe",
-                               "jsonschema",
-                               "1-0-0").toSchemaUri,
-    "group_unsubscribe" -> SchemaKey("com.sendgrid",
-                                     "group_unsubscribe",
-                                     "jsonschema",
-                                     "1-0-0").toSchemaUri,
-    "group_resubscribe" -> SchemaKey("com.sendgrid",
-                                     "group_resubscribe",
-                                     "jsonschema",
-                                     "1-0-0").toSchemaUri
+    "processed"         -> SchemaKey("com.sendgrid", "processed", "jsonschema", "1-0-0").toSchemaUri,
+    "dropped"           -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "1-0-0").toSchemaUri,
+    "delivered"         -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "1-0-0").toSchemaUri,
+    "deferred"          -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "1-0-0").toSchemaUri,
+    "bounce"            -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "1-0-0").toSchemaUri,
+    "open"              -> SchemaKey("com.sendgrid", "open", "jsonschema", "1-0-0").toSchemaUri,
+    "click"             -> SchemaKey("com.sendgrid", "click", "jsonschema", "1-0-0").toSchemaUri,
+    "spamreport"        -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "1-0-0").toSchemaUri,
+    "unsubscribe"       -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "group_unsubscribe" -> SchemaKey("com.sendgrid", "group_unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
@@ -100,53 +82,48 @@ object SendgridAdapter extends Adapter {
     * @return a list of validated events, successes will be the corresponding raw events
     *         failures will contain a non empty list of the reason(s) for the particular event failing
     */
-  private def payloadBodyToEvents(
-      body: String,
-      payload: CollectorPayload): List[Validated[RawEvent]] = {
+  private def payloadBodyToEvents(body: String,
+                                  payload: CollectorPayload): List[Validated[RawEvent]] =
     try {
 
       val parsed = parse(body)
 
       if (parsed.children.isEmpty) {
-        return List(
-          s"$VendorName event failed json sanity check: has no events".failureNel)
+        return List(s"$VendorName event failed json sanity check: has no events".failureNel)
       }
 
       for ((itm, index) <- parsed.children.zipWithIndex)
         yield {
-          val eventType = (itm \\ "event").extractOpt[String]
+          val eventType   = (itm \\ "event").extractOpt[String]
           val queryString = toMap(payload.querystring)
 
-          lookupSchema(eventType, VendorName, index, EventSchemaMap) map {
-            schema =>
-              {
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(
-                    TrackerVersion,
-                    queryString,
-                    schema,
-                    cleanupJsonEventValues(itm,
-                                           ("event", eventType.get).some,
-                                           "timestamp",
-                                           _ * 1000),
-                    "srv"),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )
-              }
+          lookupSchema(eventType, VendorName, index, EventSchemaMap) map { schema =>
+            {
+              RawEvent(
+                api = payload.api,
+                parameters =
+                  toUnstructEventParams(TrackerVersion,
+                                        queryString,
+                                        schema,
+                                        cleanupJsonEventValues(itm,
+                                                               ("event", eventType.get).some,
+                                                               "timestamp",
+                                                               _ * 1000),
+                                        "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            }
           }
         }
 
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
-        List(
-          s"$VendorName event failed to parse into JSON: [$exception]".failureNel)
+        List(s"$VendorName event failed to parse into JSON: [$exception]".failureNel)
       }
     }
-  }
 
   /**
     * Converts a CollectorPayload instance into raw events.
@@ -161,16 +138,13 @@ object SendgridAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) =>
         s"Request body is empty: no ${VendorName} event to process".failureNel
       case (_, None) =>
         s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failureNel
-      case (_, Some(ct))
-          if Try(new ContentType(ct).getBaseType)
-            .getOrElse(ct) != ContentType =>
+      case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType =>
         s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failureNel
       case (Some(body), _) => {
         val events = payloadBodyToEvents(body, payload)

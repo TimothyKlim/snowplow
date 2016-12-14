@@ -38,23 +38,23 @@ object SpecHelpers {
   // Standard Iglu configuration
   private val igluConfig =
     """|{
-          |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-          |"data": {
-            |"cacheSize": 500,
-            |"repositories": [
-              |{
-                |"name": "Iglu Central",
-                |"priority": 0,
-                |"vendorPrefixes": [ "com.snowplowanalytics" ],
-                |"connection": {
-                  |"http": {
-                    |"uri": "http://iglucentral.com"
-                  |}
-                |}
-              |}
-            |]
-          |}
-        |}""".stripMargin.replaceAll("[\n\r]", "")
+       |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+       |"data": {
+       |"cacheSize": 500,
+       |"repositories": [
+       |{
+       |"name": "Iglu Central",
+       |"priority": 0,
+       |"vendorPrefixes": [ "com.snowplowanalytics" ],
+       |"connection": {
+       |"http": {
+       |"uri": "http://iglucentral.com"
+       |}
+       |}
+       |}
+       |]
+       |}
+       |}""".stripMargin.replaceAll("[\n\r]", "")
 
   /**
     * Builds an Iglu resolver from
@@ -63,9 +63,8 @@ object SpecHelpers {
   val IgluResolver = (for {
     json <- JsonUtils.extractJson(igluConfigField, igluConfig)
     reso <- Resolver.parse(json)
-  } yield reso).getOrElse(
-    throw new RuntimeException(
-      "Could not build an Iglu resolver, should never happen"))
+  } yield reso)
+    .getOrElse(throw new RuntimeException("Could not build an Iglu resolver, should never happen"))
 
   private type NvPair = Tuple2[String, String]
 

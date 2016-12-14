@@ -25,17 +25,12 @@ import Scalaz._
 import org.json4s._
 
 // Snowplow
-import loaders.{
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 import utils.ConversionUtils
 import SpecHelpers._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
@@ -67,22 +62,21 @@ class IgluAdapterSpec
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
-    val api = CollectorApi("com.snowplowanalytics.iglu", "v1")
-    val cfSource = CollectorSource("cloudfront", "UTF-8", None)
+    val api       = CollectorApi("com.snowplowanalytics.iglu", "v1")
+    val cfSource  = CollectorSource("cloudfront", "UTF-8", None)
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(
-      DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
-      "37.157.33.123".some,
-      None,
-      None,
-      Nil,
-      None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+                                   "37.157.33.123".some,
+                                   None,
+                                   None,
+                                   Nil,
+                                   None)
   }
 
   object Expected {
     val staticNoPlatform = Map(
       "tv" -> "com.snowplowanalytics.iglu-v1",
-      "e" -> "ue"
+      "e"  -> "ue"
     )
     val static = staticNoPlatform ++ Map(
         "p" -> "app"
@@ -91,37 +85,32 @@ class IgluAdapterSpec
 
   def e1 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-0",
-      "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name" -> "download",
+      "schema"         -> "iglu:com.acme/campaign/jsonschema/1-0-0",
+      "user"           -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+      "name"           -> "download",
       "publisher_name" -> "Organic",
-      "source" -> "",
-      "tracking_id" -> "",
-      "ad_unit" -> ""
+      "source"         -> "",
+      "tracking_id"    -> "",
+      "ad_unit"        -> ""
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedJson =
       """|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.acme/campaign/jsonschema/1-0-0",
-              |"data":{
-                |"name":"download",
-                |"source":null,
-                |"ad_unit":null,
-                |"tracking_id":null,
-                |"publisher_name":"Organic",
-                |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
-              |}
-            |}
-          |}""".stripMargin.replaceAll("[\n\r]", "")
+         |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+         |"data":{
+         |"schema":"iglu:com.acme/campaign/jsonschema/1-0-0",
+         |"data":{
+         |"name":"download",
+         |"source":null,
+         |"ad_unit":null,
+         |"tracking_id":null,
+         |"publisher_name":"Organic",
+         |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
+         |}
+         |}
+         |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
       NonEmptyList(
@@ -134,92 +123,78 @@ class IgluAdapterSpec
 
   def e2 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-0",
-      "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name" -> "install",
-      "source" -> "newsfeed",
+      "schema"      -> "iglu:com.acme/campaign/jsonschema/1-0-0",
+      "user"        -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+      "name"        -> "install",
+      "source"      -> "newsfeed",
       "tracking_id" -> "3353af9c-e298-2cf3-9f1c-b377a9c84dad",
-      "ad_unit" -> "UN-11-b",
-      "aid" -> "webhooks"
+      "ad_unit"     -> "UN-11-b",
+      "aid"         -> "webhooks"
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedMap = {
       val json =
         """|{
-              |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-              |"data":{
-                |"schema":"iglu:com.acme/campaign/jsonschema/1-0-0",
-                |"data":{
-                  |"name":"install",
-                  |"source":"newsfeed",
-                  |"ad_unit":"UN-11-b",
-                  |"tracking_id":"3353af9c-e298-2cf3-9f1c-b377a9c84dad",
-                  |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
-                |}
-              |}
-            |}""".stripMargin.replaceAll("[\n\r]", "")
+           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+           |"data":{
+           |"schema":"iglu:com.acme/campaign/jsonschema/1-0-0",
+           |"data":{
+           |"name":"install",
+           |"source":"newsfeed",
+           |"ad_unit":"UN-11-b",
+           |"tracking_id":"3353af9c-e298-2cf3-9f1c-b377a9c84dad",
+           |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
+           |}
+           |}
+           |}""".stripMargin.replaceAll("[\n\r]", "")
       Map(
         "ue_pr" -> json,
-        "aid" -> "webhooks"
+        "aid"   -> "webhooks"
       )
     }
 
-    actual must beSuccessful(
-      NonEmptyList(
-        RawEvent(Shared.api,
-                 Expected.static ++ expectedMap,
-                 None,
-                 Shared.cfSource,
-                 Shared.context)))
+    actual must beSuccessful(NonEmptyList(
+      RawEvent(Shared.api, Expected.static ++ expectedMap, None, Shared.cfSource, Shared.context)))
   }
 
   def e3 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/2-0-0",
-      "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name" -> "retarget",
-      "source" -> "newsfeed",
+      "schema"      -> "iglu:com.acme/campaign/jsonschema/2-0-0",
+      "user"        -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+      "name"        -> "retarget",
+      "source"      -> "newsfeed",
       "tracking_id" -> "",
-      "ad_unit" -> "UN-11-b",
-      "aid" -> "my webhook project",
-      "cv" -> "clj-0.5.0-tom-0.0.4",
-      "nuid" -> ""
+      "ad_unit"     -> "UN-11-b",
+      "aid"         -> "my webhook project",
+      "cv"          -> "clj-0.5.0-tom-0.0.4",
+      "nuid"        -> ""
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cljSource,
-                                   Shared.context)
+    val payload =
+      CollectorPayload(Shared.api, params, None, None, Shared.cljSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
     val expectedMap = {
       val json =
         """|{
-              |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-              |"data":{
-                |"schema":"iglu:com.acme/campaign/jsonschema/2-0-0",
-                |"data":{
-                  |"name":"retarget",
-                  |"source":"newsfeed",
-                  |"ad_unit":"UN-11-b",
-                  |"tracking_id":null,
-                  |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
-                |}
-              |}
-            |}""".stripMargin.replaceAll("[\n\r]", "")
+           |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+           |"data":{
+           |"schema":"iglu:com.acme/campaign/jsonschema/2-0-0",
+           |"data":{
+           |"name":"retarget",
+           |"source":"newsfeed",
+           |"ad_unit":"UN-11-b",
+           |"tracking_id":null,
+           |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
+           |}
+           |}
+           |}""".stripMargin.replaceAll("[\n\r]", "")
       Map(
         "ue_pr" -> json,
-        "aid" -> "my webhook project",
-        "cv" -> "clj-0.5.0-tom-0.0.4",
-        "nuid" -> ""
+        "aid"   -> "my webhook project",
+        "cv"    -> "clj-0.5.0-tom-0.0.4",
+        "nuid"  -> ""
       )
     }
 
@@ -235,94 +210,70 @@ class IgluAdapterSpec
   def e4 = {
     val params = toNameValuePairs(
       "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1",
-      "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name" -> "download",
-      "p" -> "mob"
+      "user"   -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+      "name"   -> "download",
+      "p"      -> "mob"
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
     val expectedJson =
       """|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.acme/campaign/jsonschema/1-0-1",
-              |"data":{
-                |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-                |"name":"download"
-              |}
-            |}
-          |}""".stripMargin.replaceAll("[\n\r]", "")
+         |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+         |"data":{
+         |"schema":"iglu:com.acme/campaign/jsonschema/1-0-1",
+         |"data":{
+         |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+         |"name":"download"
+         |}
+         |}
+         |}""".stripMargin.replaceAll("[\n\r]", "")
 
     actual must beSuccessful(
       NonEmptyList(
         RawEvent(Shared.api,
-                 Expected.staticNoPlatform ++ Map("p" -> "mob",
-                                                  "ue_pr" -> expectedJson),
+                 Expected.staticNoPlatform ++ Map("p" -> "mob", "ue_pr" -> expectedJson),
                  None,
                  Shared.cfSource,
                  Shared.context)))
   }
 
   def e5 = {
-    val params = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val params  = toNameValuePairs()
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(
-      NonEmptyList(
-        "Iglu event failed: is not a sd-json or a valid GET or POST request"))
+      NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
   }
 
   def e6 = {
     val params = toNameValuePairs(
       "some_param" -> "foo",
-      "p" -> "mob"
+      "p"          -> "mob"
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(
-      NonEmptyList(
-        "Iglu event failed: is not a sd-json or a valid GET or POST request"))
+      NonEmptyList("Iglu event failed: is not a sd-json or a valid GET or POST request"))
   }
 
   def e7 = {
     val params = toNameValuePairs(
       "schema" -> "iglooooooo://blah"
     )
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   None,
-                                   Shared.cfSource,
-                                   Shared.context)
-    val actual = IgluAdapter.toRawEvents(payload)
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual  = IgluAdapter.toRawEvents(payload)
 
-    actual must beFailing(
-      NonEmptyList("iglooooooo://blah is not a valid Iglu-format schema URI"))
+    actual must beFailing(NonEmptyList("iglooooooo://blah is not a valid Iglu-format schema URI"))
   }
 
   def e8 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param" -> "foo",
-      "p" -> "mob"
+      "p"          -> "mob"
     )
     val jsonStr = """{"key":"value", "everwets":"processed"}"""
     val payload = CollectorPayload(Shared.api,
@@ -336,9 +287,9 @@ class IgluAdapterSpec
     val expected = RawEvent(
       Shared.api,
       Map(
-        "tv" -> "com.snowplowanalytics.iglu-v1",
-        "e" -> "ue",
-        "p" -> "mob",
+        "tv"    -> "com.snowplowanalytics.iglu-v1",
+        "e"     -> "ue",
+        "p"     -> "mob",
         "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"key":"value","everwets":"processed"}}}"""),
       "application/json".some,
       Shared.cljSource,
@@ -349,9 +300,9 @@ class IgluAdapterSpec
 
   def e9 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param" -> "foo",
-      "p" -> "mob"
+      "p"          -> "mob"
     )
     val jsonStr = """{"key":"value", "everwets":"processed"}"""
     val payload = CollectorPayload(Shared.api,
@@ -367,9 +318,9 @@ class IgluAdapterSpec
 
   def e10 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param" -> "foo",
-      "p" -> "mob"
+      "p"          -> "mob"
     )
     val jsonStr = """{}"""
     val payload = CollectorPayload(Shared.api,
@@ -381,28 +332,22 @@ class IgluAdapterSpec
     val actual = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(
-      NonEmptyList(
-        "Iglu event failed json sanity check: has no key-value pairs"))
+      NonEmptyList("Iglu event failed json sanity check: has no key-value pairs"))
   }
 
   def e11 = {
     val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1",
+      "schema"     -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param" -> "foo",
-      "p" -> "mob"
+      "p"          -> "mob"
     )
     val jsonStr = """{"key":"value"}"""
-    val payload = CollectorPayload(Shared.api,
-                                   params,
-                                   None,
-                                   jsonStr.some,
-                                   Shared.cljSource,
-                                   Shared.context)
+    val payload =
+      CollectorPayload(Shared.api, params, None, jsonStr.some, Shared.cljSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(
-      NonEmptyList(
-        "Iglu event failed: ContentType must be set for a POST payload"))
+      NonEmptyList("Iglu event failed: ContentType must be set for a POST payload"))
   }
 
   def e12 = {
@@ -420,9 +365,9 @@ class IgluAdapterSpec
     val expected = RawEvent(
       Shared.api,
       Map(
-        "tv" -> "com.snowplowanalytics.iglu-v1",
-        "e" -> "ue",
-        "p" -> "mob",
+        "tv"    -> "com.snowplowanalytics.iglu-v1",
+        "e"     -> "ue",
+        "p"     -> "mob",
         "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"some_param":"foo"}}}"""),
       "application/json".some,
       Shared.cljSource,
@@ -447,8 +392,7 @@ class IgluAdapterSpec
   }
 
   def e14 = {
-    val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1")
+    val params  = toNameValuePairs("schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1")
     val jsonStr = """{"some_param":"foo"}"""
     val payload = CollectorPayload(Shared.api,
                                    params,
@@ -462,8 +406,7 @@ class IgluAdapterSpec
   }
 
   def e15 = {
-    val params = toNameValuePairs(
-      "schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1")
+    val params      = toNameValuePairs("schema" -> "iglu:com.acme/campaign/jsonschema/1-0-1")
     val formBodyStr = "some_param=foo&hello=world"
     val payload = CollectorPayload(Shared.api,
                                    params,
@@ -476,9 +419,9 @@ class IgluAdapterSpec
     val expected = RawEvent(
       Shared.api,
       Map(
-        "tv" -> "com.snowplowanalytics.iglu-v1",
-        "e" -> "ue",
-        "p" -> "srv",
+        "tv"    -> "com.snowplowanalytics.iglu-v1",
+        "e"     -> "ue",
+        "p"     -> "srv",
         "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"some_param":"foo","hello":"world"}}}"""),
       "application/x-www-form-urlencoded".some,
       Shared.cljSource,

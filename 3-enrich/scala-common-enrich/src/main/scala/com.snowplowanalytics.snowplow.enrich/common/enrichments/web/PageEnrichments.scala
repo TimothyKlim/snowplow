@@ -50,10 +50,8 @@ object PageEnrichments {
     *         error, wrapped in a
     *         Validation
     */
-  def extractPageUri(
-      fromReferer: Option[String],
-      fromTracker: Option[String]): Validation[String, Option[URI]] = {
-
+  def extractPageUri(fromReferer: Option[String],
+                     fromTracker: Option[String]): Validation[String, Option[URI]] =
     (fromReferer, fromTracker) match {
       case (Some(r), None) => CU.stringToUri(r)
       case (None, Some(t)) => CU.stringToUri(t)
@@ -62,7 +60,6 @@ object PageEnrichments {
       case (None, None) =>
         None.success // No page URI available. Not a failable offence
     }
-  }
 
   /**
     * Extract the referrer domain user ID and timestamp from the "_sp={{DUID}}.{{TSTAMP}}"
@@ -71,8 +68,8 @@ object PageEnrichments {
     * @param qsMap The querystring converted to a map
     * @return Validation boxing a pair of optional strings corresponding to the two fields
     */
-  def parseCrossDomain(qsMap: Map[String, String])
-    : Validation[String, (Option[String], Option[String])] = {
+  def parseCrossDomain(
+      qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] =
     qsMap.get("_sp") match {
       case Some("") => (None, None).success
       case Some(sp) => {
@@ -89,5 +86,4 @@ object PageEnrichments {
       }
       case None => (None -> None).success
     }
-  }
 }

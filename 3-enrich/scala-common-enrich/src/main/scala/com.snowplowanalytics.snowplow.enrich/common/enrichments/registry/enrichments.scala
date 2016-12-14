@@ -57,8 +57,7 @@ trait ParseableEnrichment {
     *        to be checked
     * @return The JSON or an error message, boxed
     */
-  def isParseable(config: JValue,
-                  schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
+  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] =
     if (supportedSchema matches schemaKey) {
       config.success
     } else {
@@ -68,5 +67,4 @@ trait ParseableEnrichment {
         .failure
         .toValidationNel
     }
-  }
 }

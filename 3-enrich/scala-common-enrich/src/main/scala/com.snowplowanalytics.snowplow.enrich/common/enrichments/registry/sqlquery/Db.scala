@@ -32,8 +32,7 @@ import Input.ExtractedValue
   * @param postgresql optional container for PostgreSQL configuration
   * @param mysql optional container for MySQL configuration
   */
-case class Db(postgresql: Option[PostgresqlDb] = None,
-              mysql: Option[MysqlDb] = None) {
+case class Db(postgresql: Option[PostgresqlDb] = None, mysql: Option[MysqlDb] = None) {
   private val realDb: Rdbms = (postgresql, mysql) match {
     case (Some(_), Some(_)) =>
       throw new MappingException(
@@ -54,8 +53,8 @@ case class Db(postgresql: Option[PostgresqlDb] = None,
     * @param placeholderMap IntMap with input values
     * @return filled placeholder or error (unlikely)
     */
-  def createStatement(sql: String, placeholderMap: IntMap[ExtractedValue])
-    : ThrowableXor[PreparedStatement] =
+  def createStatement(sql: String,
+                      placeholderMap: IntMap[ExtractedValue]): ThrowableXor[PreparedStatement] =
     realDb.createEmptyStatement(sql).map { preparedStatement =>
       placeholderMap.foreach {
         case (index, value) =>

@@ -57,9 +57,7 @@ object ClientEnrichments {
     *         error message, boxed in a
     *         Scalaz Validation
     */
-  val extractViewDimensions: (String,
-                              String) => Validation[String,
-                                                    ViewDimensionsTuple] =
+  val extractViewDimensions: (String, String) => Validation[String, ViewDimensionsTuple] =
     (field, res) =>
       res match {
         case ResRegex(width, height) =>
@@ -72,9 +70,7 @@ object ClientEnrichments {
                 .failure
           }
         case _ =>
-          "Field [%s]: [%s] does not contain valid view dimensions"
-            .format(field, res)
-            .failure
+          "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).failure
     }
 
 }

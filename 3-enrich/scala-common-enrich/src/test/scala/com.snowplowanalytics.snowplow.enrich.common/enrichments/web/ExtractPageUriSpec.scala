@@ -26,10 +26,7 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class ExtractPageUriSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the extractPageUri function" ^
       p ^
@@ -44,9 +41,9 @@ class ExtractPageUriSpec
 
   // Valid URI combinations
   val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"
-  val customUri = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
+  val customUri   = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
   val originalURI = new URI(originalUri)
-  val customURI = new URI(customUri)
+  val customURI   = new URI(customUri)
 
   def e2 =
     "SPEC NAME" || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
@@ -56,8 +53,7 @@ class ExtractPageUriSpec
       "collector and tracker URIs differ - use tracker" !! originalUri.some ! customUri.some ! customURI.some |> {
 
       (_, fromReferer, fromTracker, expected) =>
-        PageEnrichments
-          .extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
+        PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }
 
   // Truncate
@@ -66,7 +62,6 @@ class ExtractPageUriSpec
 
   // See https://github.com/snowplow/snowplow/issues/268 for background behind this test
   def e3 =
-    PageEnrichments
-      .extractPageUri(originalUri.some, truncatedUri.some) must beSuccessful(
+    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beSuccessful(
       truncatedURI.some)
 }

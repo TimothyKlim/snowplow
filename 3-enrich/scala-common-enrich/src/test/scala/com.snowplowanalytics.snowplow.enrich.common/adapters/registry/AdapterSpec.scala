@@ -34,33 +34,28 @@ import org.json4s.jackson.JsonMethods._
 
 // Snowplow
 import SpecHelpers._
-import loaders.{
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
+import loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the Adapter trait's functionality"                                                  ^
-                                                                                                                      p^
-  "toMap should convert a list of name-value pairs into a map"                                                         ! e1^
-  "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event"              ! e2^
-  "toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event"         ! e3^
-  "lookupSchema must return a Success Nel for a valid key being passed against an event-schema map"                    ! e4^
-  "lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map"                 ! e5^
-  "lookupSchema must return a Failure Nel with an index if one is passed to it"                                        ! e6^
-  "rawEventsListProcessor must return a Failure Nel if there are any Failures in the list"                             ! e7^
-  "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success"                       ! e8^
-  "cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format"          ! e9^
-  "cleanupJsonEventValues must remove key-pairs if specified"                                                          ! e10^
-                                                                                                                       end
+class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
+  def is =
+    "This is a specification to test the Adapter trait's functionality" ^
+      p ^
+      "toMap should convert a list of name-value pairs into a map" ! e1 ^
+      "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event" ! e2 ^
+      "toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event" ! e3 ^
+      "lookupSchema must return a Success Nel for a valid key being passed against an event-schema map" ! e4 ^
+      "lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map" ! e5 ^
+      "lookupSchema must return a Failure Nel with an index if one is passed to it" ! e6 ^
+      "rawEventsListProcessor must return a Failure Nel if there are any Failures in the list" ! e7 ^
+      "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success" ! e8 ^
+      "cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format" ! e9 ^
+      "cleanupJsonEventValues must remove key-pairs if specified" ! e10 ^
+      end
   // TODO: add test for buildFormatter()
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -70,13 +65,18 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   object Shared {
-    val api = CollectorApi("com.adapter", "v1")
+    val api       = CollectorApi("com.adapter", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some,
+                                   "37.157.33.123".some,
+                                   None,
+                                   None,
+                                   Nil,
+                                   None)
     val contentType = "application/x-www-form-urlencoded"
   }
 
-  private val SchemaMap = Map (
+  private val SchemaMap = Map(
     "adapterTest" -> "iglu:com.adaptertest/test/jsonschema/1-0-0"
   )
 
@@ -86,7 +86,8 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e2 = {
-    val params = BaseAdapter.toUnstructEventParams("tv", Map[String, String](), "iglu:foo", _ => List[JField](), "app")
+    val params = BaseAdapter
+      .toUnstructEventParams("tv", Map[String, String](), "iglu:foo", _ => List[JField](), "app")
     params must_== Map(
       "tv"    -> "tv",
       "e"     -> "ue",
@@ -96,8 +97,15 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e3 = {
-    val shared = Map("nuid" -> "123", "aid" -> "42", "cv" -> "clj-tomcat", "p" -> "srv", "eid" -> "321", "ttm" -> "2015-11-13T16:31:52.393Z", "url" -> "http://localhost")
-    val params = BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField](), "app")
+    val shared = Map("nuid" -> "123",
+                     "aid" -> "42",
+                     "cv"  -> "clj-tomcat",
+                     "p"   -> "srv",
+                     "eid" -> "321",
+                     "ttm" -> "2015-11-13T16:31:52.393Z",
+                     "url" -> "http://localhost")
+    val params =
+      BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField](), "app")
     params must_== shared ++ Map(
       "tv"    -> "tv",
       "e"     -> "ue",
@@ -113,50 +121,88 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
     BaseAdapter.lookupSchema("adapterTest".some, "Adapter", SchemaMap) must beSuccessful(expected)
   }
 
-  def e5 = 
-    "SPEC NAME"                 || "SCHEMA TYPE"      | "EXPECTED OUTPUT"                                                                 |
-    "Failing, nothing passed"   !! None               ! "Adapter event failed: type parameter not provided - cannot determine event type" |
-    "Failing, empty type"       !! Some("")           ! "Adapter event failed: type parameter is empty - cannot determine event type"     |
-    "Failing, bad type passed"  !! Some("bad")        ! "Adapter event failed: type parameter [bad] not recognized"                       |> {
-      (_, et, expected) => BaseAdapter.lookupSchema(et, "Adapter", SchemaMap) must beFailing(NonEmptyList(expected))
-  }
+  def e5 =
+    "SPEC NAME" || "SCHEMA TYPE" | "EXPECTED OUTPUT" |
+      "Failing, nothing passed" !! None ! "Adapter event failed: type parameter not provided - cannot determine event type" |
+      "Failing, empty type" !! Some("") ! "Adapter event failed: type parameter is empty - cannot determine event type" |
+      "Failing, bad type passed" !! Some("bad") ! "Adapter event failed: type parameter [bad] not recognized" |> {
+      (_, et, expected) =>
+        BaseAdapter.lookupSchema(et, "Adapter", SchemaMap) must beFailing(NonEmptyList(expected))
+    }
 
   def e6 = {
-    val expected = "Adapter event at index [2] failed: type parameter not provided - cannot determine event type"
+    val expected =
+      "Adapter event at index [2] failed: type parameter not provided - cannot determine event type"
     BaseAdapter.lookupSchema(None, "Adapter", 2, SchemaMap) must beFailing(NonEmptyList(expected))
   }
 
   def e7 = {
-    val rawEvent = RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context)
-    val validatedRawEventsList = List(Success(rawEvent), Failure(NonEmptyList("This is a failure string-1")), Failure(NonEmptyList("This is a failure string-2")))
+    val rawEvent = RawEvent(Shared.api,
+                            Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
+                            Shared.contentType.some,
+                            Shared.cljSource,
+                            Shared.context)
+    val validatedRawEventsList = List(Success(rawEvent),
+                                      Failure(NonEmptyList("This is a failure string-1")),
+                                      Failure(NonEmptyList("This is a failure string-2")))
     val expected = NonEmptyList("This is a failure string-1", "This is a failure string-2")
     BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beFailing(expected)
   }
 
   def e8 = {
-    val rawEvent = RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context)
-    val validatedRawEventsList = List(Success(rawEvent),Success(rawEvent),Success(rawEvent))
-    val expected = NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context),RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context),RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context))
+    val rawEvent = RawEvent(Shared.api,
+                            Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
+                            Shared.contentType.some,
+                            Shared.cljSource,
+                            Shared.context)
+    val validatedRawEventsList = List(Success(rawEvent), Success(rawEvent), Success(rawEvent))
+    val expected = NonEmptyList(RawEvent(Shared.api,
+                                         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
+                                         Shared.contentType.some,
+                                         Shared.cljSource,
+                                         Shared.context),
+                                RawEvent(Shared.api,
+                                         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
+                                         Shared.contentType.some,
+                                         Shared.cljSource,
+                                         Shared.context),
+                                RawEvent(Shared.api,
+                                         Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"),
+                                         Shared.contentType.some,
+                                         Shared.cljSource,
+                                         Shared.context))
     BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beSuccessful(expected)
   }
 
   def e9 =
-      "SPEC NAME"                       || "JSON"                                               | "EXPECTED OUTPUT"                                                                                                              |
-      "Change one value"                !! """{"ts":1415709559}"""                              ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                      |
-      "Change multiple values"          !! """{"ts":1415709559,"ts":1415700000}"""              ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
-      "Change nested values"            !! """{"ts":1415709559,"nested":{"ts":1415700000}}"""   ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
-      "Change nested string values"     !! """{"ts":1415709559,"nested":{"ts":"1415700000"}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
-      "JStrings should also be changed" !! """{"ts":"1415709559"}"""                            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                                    |> {
-      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts", _ * 1000) mustEqual expected
+    "SPEC NAME" || "JSON" | "EXPECTED OUTPUT" |
+      "Change one value" !! """{"ts":1415709559}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")))) |
+      "Change multiple values" !! """{"ts":1415709559,"ts":1415700000}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")),
+             ("ts", JString("2014-11-11T10:00:00.000Z")))) |
+      "Change nested values" !! """{"ts":1415709559,"nested":{"ts":1415700000}}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")),
+             ("nested", JObject(List(("ts", JString("2014-11-11T10:00:00.000Z"))))))) |
+      "Change nested string values" !! """{"ts":1415709559,"nested":{"ts":"1415700000"}}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")),
+             ("nested", JObject(List(("ts", JString("2014-11-11T10:00:00.000Z"))))))) |
+      "JStrings should also be changed" !! """{"ts":"1415709559"}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")))) |> { (_, json, expected) =>
+      BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts", _ * 1000) mustEqual expected
     }
 
   def e10 =
-      "SPEC NAME"                         || "JSON"                                                      | "EXPECTED OUTPUT"                                                                                                        |
-      "Remove 'event'->'type'"            !! """{"an_event":"type"}"""                                   ! JObject(List())                                                                                                          |
-      "Not remove existing values"        !! """{"abc":1415709559, "an_event":"type", "cba":"type"}"""   ! JObject(List(("abc",JInt(1415709559)),("cba",JString("type"))))                                                          |
-      "Works with ts value subs"          !! """{"ts":1415709559, "an_event":"type", "abc":"type"}"""    ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("abc",JString("type"))))                                        |
-      "Removes nested values"             !! """{"abc":"abc","nested":{"an_event":"type"}}"""            ! JObject(List(("abc", JString("abc")),("nested", JObject(List()))))                                                                |> {
-      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("an_event", "type").some, "ts", _ * 1000) mustEqual expected
-  }
+    "SPEC NAME" || "JSON" | "EXPECTED OUTPUT" |
+      "Remove 'event'->'type'" !! """{"an_event":"type"}""" ! JObject(List()) |
+      "Not remove existing values" !! """{"abc":1415709559, "an_event":"type", "cba":"type"}""" ! JObject(
+        List(("abc", JInt(1415709559)), ("cba", JString("type")))) |
+      "Works with ts value subs" !! """{"ts":1415709559, "an_event":"type", "abc":"type"}""" ! JObject(
+        List(("ts", JString("2014-11-11T12:39:19.000Z")), ("abc", JString("type")))) |
+      "Removes nested values" !! """{"abc":"abc","nested":{"an_event":"type"}}""" ! JObject(
+        List(("abc", JString("abc")), ("nested", JObject(List())))) |> { (_, json, expected) =>
+      BaseAdapter
+        .cleanupJsonEventValues(parse(json), ("an_event", "type").some, "ts", _ * 1000) mustEqual expected
+    }
 
 }

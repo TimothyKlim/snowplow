@@ -25,10 +25,10 @@ import Scalaz._
 import Validation.FlatMap._
 
 // Config
-import com.typesafe.config.{ConfigFactory, Config, ConfigException}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 
 // Specs2
-import org.specs2.matcher.{Matcher, Expectable}
+import org.specs2.matcher.{Expectable, Matcher}
 import org.specs2.matcher.Matchers._
 
 // json4s
@@ -98,22 +98,19 @@ object SpecHelpers {
     */
   class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
 
-    private val field = OutputFields(index)
+    private val field  = OutputFields(index)
     private val regexp = useRegexp(field)
 
     def apply[S <: String](actual: Expectable[S]) = {
 
-      lazy val successMsg = s"$field: ${actual.description} %s $expected"
-        .format(if (regexp) "matches" else "equals")
+      lazy val successMsg =
+        s"$field: ${actual.description} %s $expected".format(if (regexp) "matches" else "equals")
 
       lazy val failureMsg =
         s"$field: ${actual.description} does not %s $expected"
           .format(if (regexp) "match" else "equal")
 
-      result(equalsOrMatches(regexp, actual.value, expected),
-             successMsg,
-             failureMsg,
-             actual)
+      result(equalsOrMatches(regexp, actual.value, expected), successMsg, failureMsg, actual)
     }
 
     /**
@@ -129,17 +126,13 @@ object SpecHelpers {
       * @return true if the actual equals or
       * matches expected, false otherwise
       */
-    private def equalsOrMatches(useRegexp: Boolean,
-                                actual: String,
-                                expected: String): Boolean = {
-
+    private def equalsOrMatches(useRegexp: Boolean, actual: String, expected: String): Boolean =
       if (useRegexp) {
         val pattern = Pattern.compile(expected)
         pattern.matcher(actual).matches
       } else {
         actual == expected
       }
-    }
 
     /**
       * Whether a field in EnrichedEvent needs
@@ -162,77 +155,74 @@ object SpecHelpers {
 
     val enrichmentConfig =
       """|{
-      |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
-      |"data": [
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "anon_ip",
-            |"enabled": true,
-            |"parameters": {
-              |"anonOctets": 1
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "ip_lookups",
-            |"enabled": true,
-            |"parameters": {
-              |"geo": {
-                |"database": "GeoIPCity.dat",
-                |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-              |}
-            |}
-          |}  
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "campaign_attribution",
-            |"enabled": true,
-            |"parameters": {
-              |"mapping": "static",
-              |"fields": {
-                |"mktMedium": ["utm_medium", "medium"],
-                |"mktSource": ["utm_source", "source"],
-                |"mktTerm": ["utm_term", "legacy_term"],
-                |"mktContent": ["utm_content"],
-                |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
-              |}
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "user_agent_utils_config",
-            |"enabled": true,
-            |"parameters": {
-            |}
-          |}
-        |},
-        |{
-          |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
-          |"data": {
-            |"vendor": "com.snowplowanalytics.snowplow",
-            |"name": "referer_parser",
-            |"enabled": true,
-            |"parameters": {
-              |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
-            |}
-          |}  
-        |}              
-      |]
-    |}""".stripMargin
-        .replaceAll("[\n\r]", "")
-        .stripMargin
-        .replaceAll("[\n\r]", "")
+         |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
+         |"data": [
+         |{
+         |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+         |"data": {
+         |"vendor": "com.snowplowanalytics.snowplow",
+         |"name": "anon_ip",
+         |"enabled": true,
+         |"parameters": {
+         |"anonOctets": 1
+         |}
+         |}
+         |},
+         |{
+         |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+         |"data": {
+         |"vendor": "com.snowplowanalytics.snowplow",
+         |"name": "ip_lookups",
+         |"enabled": true,
+         |"parameters": {
+         |"geo": {
+         |"database": "GeoIPCity.dat",
+         |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+         |}
+         |}
+         |}  
+         |},
+         |{
+         |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+         |"data": {
+         |"vendor": "com.snowplowanalytics.snowplow",
+         |"name": "campaign_attribution",
+         |"enabled": true,
+         |"parameters": {
+         |"mapping": "static",
+         |"fields": {
+         |"mktMedium": ["utm_medium", "medium"],
+         |"mktSource": ["utm_source", "source"],
+         |"mktTerm": ["utm_term", "legacy_term"],
+         |"mktContent": ["utm_content"],
+         |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+         |}
+         |}
+         |}
+         |},
+         |{
+         |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
+         |"data": {
+         |"vendor": "com.snowplowanalytics.snowplow",
+         |"name": "user_agent_utils_config",
+         |"enabled": true,
+         |"parameters": {
+         |}
+         |}
+         |},
+         |{
+         |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+         |"data": {
+         |"vendor": "com.snowplowanalytics.snowplow",
+         |"name": "referer_parser",
+         |"enabled": true,
+         |"parameters": {
+         |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+         |}
+         |}  
+         |}              
+         |]
+         |}""".stripMargin.replaceAll("[\n\r]", "").stripMargin.replaceAll("[\n\r]", "")
 
     val config =
       """
@@ -315,16 +305,14 @@ enrich {
 
     val enrichmentRegistry = (for {
       registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-      reg <- EnrichmentRegistry
-        .parse(fromJsonNode(registryConfig), true)
-        .leftMap(_.toString)
+      reg            <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
     } yield reg) fold (
         e => throw new RuntimeException(e),
         s => s
       )
 
     val conf = ConfigFactory.parseString(config)
-    val kec = new KinesisEnrichConfig(conf)
+    val kec  = new KinesisEnrichConfig(conf)
 
     new TestSource(kec, resolver, enrichmentRegistry, None)(null, null)
   }

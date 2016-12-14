@@ -32,14 +32,13 @@ object IpAddressExtractor {
     * @return True client IP address
     */
   @tailrec
-  def extractIpAddress(headers: List[String], lastIp: String): String = {
+  def extractIpAddress(headers: List[String], lastIp: String): String =
     headers match {
       case h :: t =>
         h.toLowerCase match {
           case IpExtractionRegex(originalIpAddress) => originalIpAddress
-          case _ => extractIpAddress(t, lastIp)
+          case _                                    => extractIpAddress(t, lastIp)
         }
       case Nil => lastIp
     }
-  }
 }

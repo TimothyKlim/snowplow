@@ -59,7 +59,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow
 import sinks._
-import common.outputs.{EnrichedEvent, BadRow}
+import common.outputs.{BadRow, EnrichedEvent}
 import common.loaders.ThriftLoader
 import common.enrichments.EnrichmentRegistry
 import common.enrichments.EnrichmentManager
@@ -87,7 +87,7 @@ object AbstractSource {
 
       val jsonWithoutLine = parse(value) removeField {
         case ("line", _) => true
-        case _ => false
+        case _           => false
       }
 
       compact(render({ ("size" -> size): JValue } merge jsonWithoutLine))
@@ -96,8 +96,7 @@ object AbstractSource {
       case NonFatal(e) =>
         BadRow.oversizedRow(
           size,
-          NonEmptyList(
-            "Unable to extract errors field from original oversized bad row JSON"))
+          NonEmptyList("Unable to extract errors field from original oversized bad row JSON"))
     }
   }
 
@@ -164,19 +163,20 @@ abstract class AbstractSource(
       case Sink.Kinesis =>
         new KinesisSink(kinesisProvider, config, inputType, tracker).some
       case Sink.Stdouterr => new StdouterrSink(inputType).some
-      case Sink.Test => None
+      case Sink.Test      => None
     }
 
   implicit val resolver: Resolver = igluResolver
 
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
-  def tabSeparateEnrichedEvent(output: EnrichedEvent): String = {
-    output.getClass.getDeclaredFields.map { field =>
-      field.setAccessible(true)
-      Option(field.get(output)).getOrElse("")
-    }.mkString("\t")
-  }
+  def tabSeparateEnrichedEvent(output: EnrichedEvent): String =
+    output.getClass.getDeclaredFields
+      .map { field =>
+        field.setAccessible(true)
+        Option(field.get(output)).getOrElse("")
+      }
+      .mkString("\t")
 
   /**
     * Convert incoming binary Thrift records to lists of enriched events
@@ -185,8 +185,7 @@ abstract class AbstractSource(
     * @return List containing successful or failed events, each with a
     *         partition key
     */
-  def enrichEvents(binaryData: Array[Byte])
-    : List[Validation[(String, String), (String, String)]] = {
+  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload =
       ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] =
@@ -217,7 +216,7 @@ abstract class AbstractSource(
     */
   def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
     val enrichedEvents = binaryData.flatMap(enrichEvents(_))
-    val successes = enrichedEvents collect { case Success(s) => s }
+    val successes      = enrichedEvents collect { case Success(s) => s }
     val sizeUnadjustedFailures = enrichedEvents collect {
       case Failure(s) => s
     }
@@ -236,15 +235,14 @@ abstract class AbstractSource(
 
     val sizeBasedFailures = for {
       (value, key) <- tooBigSuccesses
-      m <- MaxRecordSize
+      m            <- MaxRecordSize
     } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
     val successesTriggeredFlush =
       sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
     val failuresTriggeredFlush =
       badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
-    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(
-          true)) {
+    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
 
       // Block until the records have been sent to Kinesis
       sink.foreach(_.flush)
@@ -260,7 +258,7 @@ abstract class AbstractSource(
     * @return boolean size decision
     */
   private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
-    case None => false
+    case None    => false
     case Some(m) => AbstractSource.getSize(evt) >= m
   }
 

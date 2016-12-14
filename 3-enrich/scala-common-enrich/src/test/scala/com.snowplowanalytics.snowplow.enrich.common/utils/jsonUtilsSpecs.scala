@@ -25,10 +25,7 @@ import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class ValidateAndReformatJsonSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class ValidateAndReformatJsonSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the validateAndReformatJson function" ^
       p ^
@@ -52,8 +49,7 @@ class ValidateAndReformatJsonSpec
       {
         "a": 23
       }""" ! """{"a":23}""" |> { (_, str, expected) =>
-      JsonUtils.validateAndReformatJson(FieldName, str) must beSuccessful(
-        expected)
+      JsonUtils.validateAndReformatJson(FieldName, str) must beSuccessful(expected)
     }
 
   def err1 =
@@ -73,10 +69,8 @@ class ValidateAndReformatJsonSpec
       "Empty string" !! "" ! err1 |
       "Double colons" !! """{"a"::2}""" ! err2("""{"a"::2}""", ':', 58, 7) |
       "Random noise" !! "^45fj_" ! err2("^45fj_", '^', 94, 2) |
-      "Bad key" !! """{9:"a"}""" ! err3("""{9:"a"}""", '9', 57) |> {
-      (_, str, expected) =>
-        JsonUtils.validateAndReformatJson(FieldName, str) must beFailing(
-          expected)
+      "Bad key" !! """{9:"a"}""" ! err3("""{9:"a"}""", '9', 57) |> { (_, str, expected) =>
+      JsonUtils.validateAndReformatJson(FieldName, str) must beFailing(expected)
     }
 
 }

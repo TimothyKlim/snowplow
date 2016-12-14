@@ -58,9 +58,8 @@ object BadRow {
                    errors: NonEmptyList[String],
                    tstamp: Long = System.currentTimeMillis()): String =
     compact(
-      ("size" -> size) ~
-        ("errors" -> errors.toList.map(e =>
-          fromJsonNode(e.toProcessingMessage.asJson))) ~
+      ("size"             -> size) ~
+        ("errors"         -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
         ("failure_tstamp" -> tstamp)
     )
 }
@@ -83,8 +82,8 @@ case class BadRow(line: String,
     * @return the TypeHierarchy as a json4s JValue
     */
   def toJValue: JValue =
-    ("line" -> line) ~
-      ("errors" -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
+    ("line"             -> line) ~
+      ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
       ("failure_tstamp" -> getTimestamp(tstamp))
 
   /**

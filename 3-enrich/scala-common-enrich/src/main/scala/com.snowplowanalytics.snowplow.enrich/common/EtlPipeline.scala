@@ -33,8 +33,8 @@ import Scalaz._
 import Validation.FlatMap._
 
 // This project
-import adapters.{RawEvent, AdapterRegistry}
-import enrichments.{EnrichmentRegistry, EnrichmentManager}
+import adapters.{AdapterRegistry, RawEvent}
+import enrichments.{EnrichmentManager, EnrichmentRegistry}
 import outputs.EnrichedEvent
 
 /**
@@ -68,21 +68,20 @@ object EtlPipeline {
                     etlVersion: String,
                     etlTstamp: DateTime,
                     input: ValidatedMaybeCollectorPayload)(
-      implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
+      implicit resolver: Resolver): List[ValidatedEnrichedEvent] =
     try {
       input match {
         case Success(Some(payload)) =>
           AdapterRegistry
             .toRawEvents(payload)
             .map(_.map { event =>
-              EnrichmentManager
-                .enrichEvent(registry, etlVersion, etlTstamp, event)
+              EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
             }) match {
             case Success(nel) => nel.toList
-            case Failure(f) => List(f.failure)
+            case Failure(f)   => List(f.failure)
           }
         case Success(None) => Nil
-        case Failure(f) => List(f.failure)
+        case Failure(f)    => List(f.failure)
       }
     } catch {
       case NonFatal(nf) => {
@@ -91,5 +90,4 @@ object EtlPipeline {
         List(s"Unexpected error processing events: $errorWriter".failureNel)
       }
     }
-  }
 }

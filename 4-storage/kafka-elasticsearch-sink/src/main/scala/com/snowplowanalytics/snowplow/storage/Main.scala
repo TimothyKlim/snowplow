@@ -107,9 +107,11 @@ object Main extends App {
     case PostgresSinkConfig(config) => new sink.Postgres(config)
   }
 
-  inStream.source.map {
-    case (msg, offset)                         => (Transformer.transform(msg), offset)
-  }.collect { case ((_, Success(rec)), offset) => (rec, offset) }
+  inStream.source
+    .map {
+      case (msg, offset) => (Transformer.transform(msg), offset)
+    }
+    .collect { case ((_, Success(rec)), offset) => (rec, offset) }
     .via(outStream.flow)
     .runWith(inStream.commitSink)
 

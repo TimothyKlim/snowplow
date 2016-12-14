@@ -15,7 +15,7 @@ package enrichments
 
 // Specs2 & ScalaCheck
 import org.specs2.mutable.{Specification => MutSpecification}
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.DataTables
 import org.scalacheck._
 
@@ -49,9 +49,7 @@ class ExtractPlatformSpec extends Specification with DataTables {
 
   val FieldName = "p"
   def err: (String) => String =
-    input =>
-      "Field [%s]: [%s] is not a supported tracking platform"
-        .format(FieldName, input)
+    input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
 
   def is =
     "Extracting platforms with extractPlatform should work" ! e1
@@ -68,9 +66,8 @@ class ExtractPlatformSpec extends Specification with DataTables {
       "valid iot (internet of things)" !! "iot" ! "iot".success |
       "invalid empty" !! "" ! err("").failure |
       "invalid null" !! null ! err(null).failure |
-      "invalid platform" !! "ma" ! err("ma").failure |> {
-      (_, input, expected) =>
-        MiscEnrichments.extractPlatform(FieldName, input) must_== expected
+      "invalid platform" !! "ma" ! err("ma").failure |> { (_, input, expected) =>
+      MiscEnrichments.extractPlatform(FieldName, input) must_== expected
     }
 }
 
@@ -97,35 +94,35 @@ class FormatDerivedContextsSpec extends MutSpecification {
       val derivedContextsList = List(
         (("schema" -> "iglu:com.acme/user/jsonschema/1-0-0") ~
           ("data" ->
-            ("type" -> "tester") ~
+            ("type"   -> "tester") ~
               ("name" -> "bethany"))),
-        (("schema" -> "iglu:com.acme/design/jsonschema/1-0-0") ~
+        (("schema"    -> "iglu:com.acme/design/jsonschema/1-0-0") ~
           ("data" ->
-            ("color" -> "red") ~
+            ("color"      -> "red") ~
               ("fontSize" -> 14)))
       )
 
       val expected =
         """
-      |{
-        |"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
-        |"data":[
-        |{
+          |{
+          |"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
+          |"data":[
+          |{
           |"schema":"iglu:com.acme/user/jsonschema/1-0-0",
           |"data":{
-            |"type":"tester",
-            |"name":"bethany"
+          |"type":"tester",
+          |"name":"bethany"
           |}
-        |},
-        |{
+          |},
+          |{
           |"schema":"iglu:com.acme/design/jsonschema/1-0-0",
           |"data":{
-            |"color":"red",
-            |"fontSize":14
-            |}
+          |"color":"red",
+          |"fontSize":14
           |}
-        |]
-      |}""".stripMargin.replaceAll("[\n\r]", "")
+          |}
+          |]
+          |}""".stripMargin.replaceAll("[\n\r]", "")
 
       MiscEnrichments.formatDerivedContexts(derivedContextsList) must_== expected
     }

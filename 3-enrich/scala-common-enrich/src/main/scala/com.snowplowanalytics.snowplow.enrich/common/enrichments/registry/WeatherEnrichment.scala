@@ -34,7 +34,7 @@ import Validation.FlatMap._
 import org.joda.time.{DateTime, DateTimeZone}
 
 // json4s
-import org.json4s.{JValue, JObject, DefaultFormats}
+import org.json4s.{DefaultFormats, JObject, JValue}
 import org.json4s.Extraction
 import org.json4s.JsonDSL._
 
@@ -57,37 +57,25 @@ import enrichments.EventEnrichments
   */
 object WeatherEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion(
-    "com.snowplowanalytics.snowplow.enrichments",
-    "weather_enrichment_config",
-    "jsonschema",
-    1,
-    0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments",
+                                        "weather_enrichment_config",
+                                        "jsonschema",
+                                        1,
+                                        0)
 
-  def parse(config: JValue,
-            schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[WeatherEnrichment] =
     isParseable(config, schemaKey).flatMap { conf =>
       {
         (for {
-          apiKey <- ScalazJson4sUtils
-            .extract[String](config, "parameters", "apiKey")
-          cacheSize <- ScalazJson4sUtils
-            .extract[Int](config, "parameters", "cacheSize")
-          geoPrecision <- ScalazJson4sUtils
-            .extract[Int](config, "parameters", "geoPrecision")
-          apiHost <- ScalazJson4sUtils
-            .extract[String](config, "parameters", "apiHost")
-          timeout <- ScalazJson4sUtils
-            .extract[Int](config, "parameters", "timeout")
-          enrich = WeatherEnrichment(apiKey,
-                                     cacheSize,
-                                     geoPrecision,
-                                     apiHost,
-                                     timeout)
+          apiKey       <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
+          cacheSize    <- ScalazJson4sUtils.extract[Int](config, "parameters", "cacheSize")
+          geoPrecision <- ScalazJson4sUtils.extract[Int](config, "parameters", "geoPrecision")
+          apiHost      <- ScalazJson4sUtils.extract[String](config, "parameters", "apiHost")
+          timeout      <- ScalazJson4sUtils.extract[Int](config, "parameters", "timeout")
+          enrich = WeatherEnrichment(apiKey, cacheSize, geoPrecision, apiHost, timeout)
         } yield enrich).toValidationNel
       }
     }
-  }
 }
 
 /**
@@ -150,14 +138,13 @@ case class WeatherEnrichment(apiKey: String,
                          time: Option[DateTime]): Validation[String, JObject] =
     (latitude, longitude, time) match {
       case (Some(lat), Some(lon), Some(t)) =>
-        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).flatMap {
-          weatherStamp =>
-            val transformedWeather = transformWeather(weatherStamp)
-            Extraction.decompose(transformedWeather) match {
-              case obj: JObject => obj.success
-              case _ =>
-                s"Couldn't transform weather object $transformedWeather into JSON".failure // Shouldn't ever happen
-            }
+        getCachedOrRequest(lat, lon, (t.getMillis / 1000).toInt).flatMap { weatherStamp =>
+          val transformedWeather = transformWeather(weatherStamp)
+          Extraction.decompose(transformedWeather) match {
+            case obj: JObject => obj.success
+            case _ =>
+              s"Couldn't transform weather object $transformedWeather into JSON".failure // Shouldn't ever happen
+          }
         }
       case _ =>
         s"One of required event fields missing. latitude: $latitude, longitude: $longitude, tstamp: $time".failure
@@ -196,8 +183,7 @@ case class WeatherEnrichment(apiKey: String,
     * @param origin original OpenWeatherMap Weather stamp
     * @return tranfsormed weather
     */
-  private[enrichments] def transformWeather(
-      origin: Weather): TransformedWeather = {
+  private[enrichments] def transformWeather(origin: Weather): TransformedWeather = {
     val time = new DateTime(origin.dt.toLong * 1000, DateTimeZone.UTC).toString
     TransformedWeather(origin.main,
                        origin.wind,
@@ -213,11 +199,10 @@ case class WeatherEnrichment(apiKey: String,
   * Copy of `com.snowplowanalytics.weather.providers.openweather.Responses.Weather` intended to
   * execute typesafe (as opposed to JSON) transformation
   */
-private[enrichments] case class TransformedWeather(
-    main: MainInfo,
-    wind: Wind,
-    clouds: Clouds,
-    rain: Option[Rain],
-    snow: Option[Snow],
-    weather: List[WeatherCondition],
-    dt: String)
+private[enrichments] case class TransformedWeather(main: MainInfo,
+                                                   wind: Wind,
+                                                   clouds: Clouds,
+                                                   rain: Option[Rain],
+                                                   snow: Option[Snow],
+                                                   weather: List[WeatherCondition],
+                                                   dt: String)

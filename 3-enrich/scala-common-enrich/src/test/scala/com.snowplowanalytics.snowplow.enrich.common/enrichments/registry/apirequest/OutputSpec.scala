@@ -34,16 +34,14 @@ class OutputSpec extends Specification with ValidationMatchers {
       end
 
   def e1 = {
-    val output = Output(
-      "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
-      Some(JsonOutput("$.value")))
+    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+                        Some(JsonOutput("$.value")))
     output.extract(JObject(Nil)) must beFailing
   }
 
   def e2 = {
-    val output = Output(
-      "iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
-      Some(JsonOutput("$.value")))
+    val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0",
+                        Some(JsonOutput("$.value")))
     output
       .parse("""{"value": 32}""")
       .flatMap(output.extract)
@@ -55,23 +53,19 @@ class OutputSpec extends Specification with ValidationMatchers {
   }
 
   def e3 = {
-    val output = Output(
-      "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
-      Some(JsonOutput("$.objects[1].deepNesting[3]")))
-    output
-      .parse("""
-        |{
-        |  "value": 32,
-        |  "objects":
-        |  [
-        |    {"wrongValue": 11},
-        |    {"deepNesting": [1,2,3,42]},
-        |    {"wrongValue": 10}
-        |  ]
-        |}
-      """.stripMargin)
-      .flatMap(output.extract)
-      .map(output.describeJson) must beSuccessful.like {
+    val output = Output("iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0",
+                        Some(JsonOutput("$.objects[1].deepNesting[3]")))
+    output.parse("""
+                   |{
+                   |  "value": 32,
+                   |  "objects":
+                   |  [
+                   |    {"wrongValue": 11},
+                   |    {"deepNesting": [1,2,3,42]},
+                   |    {"wrongValue": 10}
+                   |  ]
+                   |}
+      """.stripMargin).flatMap(output.extract).map(output.describeJson) must beSuccessful.like {
       case context =>
         context must be equalTo (("schema",
                                   "iglu:com.snowplowanalytics/complex_schema/jsonschema/1-0-0") ~ ("data" -> 42))

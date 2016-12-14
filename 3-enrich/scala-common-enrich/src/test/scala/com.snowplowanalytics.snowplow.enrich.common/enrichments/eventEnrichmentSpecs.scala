@@ -25,10 +25,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import scalaz._
 import Scalaz._
 
-class ExtractEventTypeSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class ExtractEventTypeSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the extractEventType function" ^
       p ^
@@ -39,9 +36,7 @@ class ExtractEventTypeSpec
 
   val FieldName = "e"
   def err: (String) => String =
-    input =>
-      "Field [%s]: [%s] is not a recognised event code"
-        .format(FieldName, input)
+    input => "Field [%s]: [%s] is not a recognised event code".format(FieldName, input)
 
   def e1 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
@@ -52,11 +47,8 @@ class ExtractEventTypeSpec
       "unstructured event" !! "ue" ! "unstruct" |
       "structured event" !! "se" ! "struct" |
       "structured event (legacy)" !! "ev" ! "struct" |
-      "ad impression (legacy)" !! "ad" ! "ad_impression" |> {
-
-      (_, input, expected) =>
-        EventEnrichments.extractEventType(FieldName, input) must beSuccessful(
-          expected)
+      "ad impression (legacy)" !! "ad" ! "ad_impression" |> { (_, input, expected) =>
+      EventEnrichments.extractEventType(FieldName, input) must beSuccessful(expected)
     }
 
   def e2 =
@@ -65,12 +57,11 @@ class ExtractEventTypeSpec
       "empty string" !! "" ! err("") |
       "unrecognized #1" !! "e" ! err("e") |
       "unrecognized #2" !! "evnt" ! err("evnt") |> { (_, input, expected) =>
-      EventEnrichments.extractEventType(FieldName, input) must beFailing(
-        expected)
+      EventEnrichments.extractEventType(FieldName, input) must beFailing(expected)
     }
 
   val SeventiesTstamp = Some(new DateTime(0, DateTimeZone.UTC))
-  val BCTstamp = SeventiesTstamp.map(_.minusYears(2000))
+  val BCTstamp        = SeventiesTstamp.map(_.minusYears(2000))
 
   def e3 =
     "SPEC NAME" || "INPUT VAL" | "EXPECTED OUTPUT" |
@@ -83,10 +74,7 @@ class ExtractEventTypeSpec
     }
 }
 
-class DerivedTimestampSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class DerivedTimestampSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the getDerivedTimestamp function" ^
       p ^
@@ -105,7 +93,6 @@ class DerivedTimestampSpec
         EventEnrichments.getDerivedTimestamp(Option(sent),
                                              Option(created),
                                              Option(collected),
-                                             Option(truth)) must beSuccessful(
-          Option(expected))
+                                             Option(truth)) must beSuccessful(Option(expected))
     }
 }

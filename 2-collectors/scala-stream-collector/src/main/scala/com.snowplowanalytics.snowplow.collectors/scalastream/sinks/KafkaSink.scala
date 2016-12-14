@@ -30,24 +30,21 @@ import akka.stream.Materializer
 import akka.stream.scaladsl._
 
 // Kafka
-import org.apache.kafka.common.serialization.{
-  ByteArraySerializer,
-  StringSerializer
-}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.apache.kafka.clients.producer.ProducerRecord
 
 // Config
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future, Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 
 // Logging
 import org.slf4j.LoggerFactory
 
 // Scala
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 import scala.collection.JavaConverters._
 
 // Snowplow
@@ -56,11 +53,10 @@ import CollectorPayload.thrift.model1.CollectorPayload
 /**
   * Kafka Sink for the Scala collector.
   */
-final class KafkaSink(config: CollectorConfig, inputType: InputType.InputType)(
-    implicit sys: ActorSystem,
-    mat: Materializer)
+final class KafkaSink(config: CollectorConfig,
+                      inputType: InputType.InputType)(implicit sys: ActorSystem, mat: Materializer)
     extends AbstractSink {
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   val MaxBytes = 1000000L
 
@@ -80,7 +76,7 @@ final class KafkaSink(config: CollectorConfig, inputType: InputType.InputType)(
 
   private val topicName = inputType match {
     case InputType.Good => config.kafkaTopicGoodName
-    case InputType.Bad => config.kafkaTopicBadName
+    case InputType.Bad  => config.kafkaTopicBadName
   }
 
   def storeRawEvents(events: List[Array[Byte]], key: String) = {

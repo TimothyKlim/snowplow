@@ -41,11 +41,8 @@ import utils.ScalazJson4sUtils
   */
 object AnonIpEnrichment extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow",
-                                        "anon_ip",
-                                        "jsonschema",
-                                        1,
-                                        0)
+  val supportedSchema =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
     * Creates an AnonIpEnrichment instance from a JValue.
@@ -55,17 +52,14 @@ object AnonIpEnrichment extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured AnonIpEnrichment instance
     */
-  def parse(config: JValue,
-            schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
-        param <- ScalazJson4sUtils
-          .extract[Int](config, "parameters", "anonOctets")
+        param  <- ScalazJson4sUtils.extract[Int](config, "parameters", "anonOctets")
         octets <- AnonOctets.fromInt(param)
         enrich = AnonIpEnrichment(octets)
       } yield enrich).toValidationNel
     })
-  }
 
 }
 
@@ -76,10 +70,10 @@ object AnonOctets extends Enumeration {
 
   type AnonOctets = Value
 
-  val One = Value(1, "1")
-  val Two = Value(2, "2")
+  val One   = Value(1, "1")
+  val Two   = Value(2, "2")
   val Three = Value(3, "3")
-  val All = Value(4, "4")
+  val All   = Value(4, "4")
 
   /**
     * Convert a Stringly-typed integer
@@ -94,14 +88,13 @@ object AnonOctets extends Enumeration {
     *        octets to anonymize
     * @return a Validation-boxed AnonOctets
     */
-  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] = {
+  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] =
     try {
       AnonOctets(anonOctets).success
     } catch {
       case nse: NoSuchElementException =>
         "IP address octets to anonymize must be 1, 2, 3 or 4".toProcessingMessage.failure
     }
-  }
 }
 
 /**
@@ -138,10 +131,13 @@ case class AnonIpEnrichment(
   import AnonOctets._
   def anonymizeIp(ip: String): String =
     Option(ip)
-      .map(_.split("\\.").zipWithIndex.map {
-        case (q, i) => {
-          if (octets.id >= All.id - i) "x" else q
-        }
-      }.mkString("."))
+      .map(
+        _.split("\\.").zipWithIndex
+          .map {
+            case (q, i) => {
+              if (octets.id >= All.id - i) "x" else q
+            }
+          }
+          .mkString("."))
       .orNull
 }

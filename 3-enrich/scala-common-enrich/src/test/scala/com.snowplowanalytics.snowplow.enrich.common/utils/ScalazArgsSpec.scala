@@ -34,10 +34,7 @@ import org.specs2.scalaz.ValidationMatchers
 /**
   * Specs the explodeUri function
   */
-class ScalazArgsSpec
-    extends Specification
-    with DataTables
-    with ValidationMatchers {
+class ScalazArgsSpec extends Specification with DataTables with ValidationMatchers {
   def is =
     "This is a specification to test the ScalazArgs functionality" ^
       p ^
@@ -49,24 +46,13 @@ class ScalazArgsSpec
       end
 
   val scaldingArgs = Args(
-    Array("--alpha",
-          "123",
-          "--beta",
-          "456",
-          "--delta",
-          "789",
-          "abc",
-          "--hive",
-          "run=2013-07-07"))
+    Array("--alpha", "123", "--beta", "456", "--delta", "789", "abc", "--hive", "run=2013-07-07"))
 
   import ScalazArgs._
   def e1 =
-    scaldingArgs
-      .requiredz("alpha")
-      .leftMap(_.toString)
-      .map(_.toString) must beSuccessful("123")
+    scaldingArgs.requiredz("alpha").leftMap(_.toString).map(_.toString) must beSuccessful("123")
 
-  val scalazArgs = new ScalazArgs(scaldingArgs)
+  val scalazArgs              = new ScalazArgs(scaldingArgs)
   def err: (String) => String = key => "".format(key)
 
   def e2 =
@@ -89,10 +75,7 @@ class ScalazArgsSpec
 
   // TODO: can remove these when future Scalding Args drops support for name=value arguments
   def e4 =
-    scalazArgs
-      .requiredz("hive")
-      .leftMap(_.toString) must_== "run=2013-07-07".success
+    scalazArgs.requiredz("hive").leftMap(_.toString) must_== "run=2013-07-07".success
   def e5 =
-    scalazArgs.optionalz("hive").leftMap(_.toString) must_== Some(
-      "run=2013-07-07").success
+    scalazArgs.optionalz("hive").leftMap(_.toString) must_== Some("run=2013-07-07").success
 }

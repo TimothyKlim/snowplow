@@ -25,7 +25,7 @@ import Validation.FlatMap._
 import scala.util.control.NonFatal
 
 // Json4s
-import org.json4s.{JValue, JNothing, JObject}
+import org.json4s.{JNothing, JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.{compactJson, parseJson}
 
@@ -106,12 +106,11 @@ sealed trait ApiOutput[A] {
     * @param response API response assumed to be JSON
     * @return validated extracted value
     */
-  def get(response: String): Validation[Throwable, JValue] = {
+  def get(response: String): Validation[Throwable, JValue] =
     for {
       validated <- parse(response)
-      result <- extract(validated)
+      result    <- extract(validated)
     } yield result
-  }
 }
 
 /**
@@ -129,14 +128,13 @@ case class JsonOutput(jsonPath: String) extends ApiOutput[JValue] {
     * @param json JSON value to look in
     * @return validated found JSON, with absent value treated like failure
     */
-  def extract(json: JValue): Validation[Throwable, JValue] = {
+  def extract(json: JValue): Validation[Throwable, JValue] =
     query(path, json).map(wrapArray) match {
       case Success(JNothing) =>
         ValueNotFoundException(
           s"Error: no values were found by JSON Path [$jsonPath] in [${compactJson(json)}]").failure
       case other => other.leftMap(JsonPathException.apply)
     }
-  }
 
   def parse(response: String): Validation[Throwable, JValue] =
     try {

@@ -28,33 +28,33 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{SchemaKey, SchemaCriterion, Resolver}
+import iglu.client.{Resolver, SchemaCriterion, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonNode
 
 // This project
 import registry.{
-  Enrichment,
   AnonIpEnrichment,
-  IpLookupsEnrichment,
-  RefererParserEnrichment,
   CampaignAttributionEnrichment,
-  UserAgentUtilsEnrichment,
-  UaParserEnrichment,
-  CurrencyConversionEnrichment,
-  JavascriptScriptEnrichment,
-  EventFingerprintEnrichment,
   CookieExtractorEnrichment,
-  HttpHeaderExtractorEnrichment,
-  WeatherEnrichment,
-  UserAgentUtilsEnrichmentConfig,
-  UaParserEnrichmentConfig,
-  CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig,
-  EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  CurrencyConversionEnrichment,
+  CurrencyConversionEnrichmentConfig,
+  Enrichment,
+  EventFingerprintEnrichment,
+  EventFingerprintEnrichmentConfig,
+  HttpHeaderExtractorEnrichment,
   HttpHeaderExtractorEnrichmentConfig,
+  IpLookupsEnrichment,
+  JavascriptScriptEnrichment,
+  JavascriptScriptEnrichmentConfig,
+  RefererParserEnrichment,
+  UaParserEnrichment,
+  UaParserEnrichmentConfig,
+  UserAgentUtilsEnrichment,
+  UserAgentUtilsEnrichmentConfig,
+  WeatherEnrichment,
   WeatherEnrichmentConfig
 }
 import registry.apirequest.{ApiRequestEnrichment, ApiRequestEnrichmentConfig}
@@ -68,12 +68,8 @@ import utils.ScalazJson4sUtils
   */
 object EnrichmentRegistry {
 
-  private val EnrichmentConfigSchemaCriterion = SchemaCriterion(
-    "com.snowplowanalytics.snowplow",
-    "enrichments",
-    "jsonschema",
-    1,
-    0)
+  private val EnrichmentConfigSchemaCriterion =
+    SchemaCriterion("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", 1, 0)
 
   /**
     * Constructs our EnrichmentRegistry
@@ -94,8 +90,7 @@ object EnrichmentRegistry {
 
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
-      d <- asJsonNode(node)
-        .verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
+      d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
     } yield
       (fromJsonNode(d) match {
         case JArray(x) => x
@@ -113,16 +108,13 @@ object EnrichmentRegistry {
       } yield
         for {
           pair <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true)
-          conf <- buildEnrichmentConfig(pair._1,
-                                        fromJsonNode(pair._2),
-                                        localMode)
+          conf <- buildEnrichmentConfig(pair._1, fromJsonNode(pair._2), localMode)
         } yield conf)
       .flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
       .map(_.flatten.toMap) // Eliminate our Option boxing (drop Nones)
 
     // Build an EnrichmentRegistry from the Map
-    configs.bimap(e => NonEmptyList(e.toString.toProcessingMessage),
-                  s => EnrichmentRegistry(s))
+    configs.bimap(e => NonEmptyList(e.toString.toProcessingMessage), s => EnrichmentRegistry(s))
   }
 
   /**
@@ -136,80 +128,50 @@ object EnrichmentRegistry {
     * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
     *         the Enrichment object and the schemaKey
     */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey,
-                                    enrichmentConfig: JValue,
-                                    localMode: Boolean)
-    : ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
+  private def buildEnrichmentConfig(
+      schemaKey: SchemaKey,
+      enrichmentConfig: JValue,
+      localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
-    val enabled = ScalazJson4sUtils
-      .extract[Boolean](enrichmentConfig, "enabled")
-      .toValidationNel
+    val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
 
     enabled match {
       case Success(false) =>
         None.success.toValidationNel // Enrichment is disabled
       case e => {
-        val name = ScalazJson4sUtils
-          .extract[String](enrichmentConfig, "name")
-          .toValidationNel
+        val name = ScalazJson4sUtils.extract[String](enrichmentConfig, "name").toValidationNel
         name.flatMap(nm => {
 
           if (nm == "ip_lookups") {
-            IpLookupsEnrichment
-              .parse(enrichmentConfig, schemaKey, localMode)
-              .map((nm, _).some)
+            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
           } else if (nm == "anon_ip") {
-            AnonIpEnrichment
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "referer_parser") {
-            RefererParserEnrichment
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "campaign_attribution") {
-            CampaignAttributionEnrichment
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "user_agent_utils_config") {
-            UserAgentUtilsEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "ua_parser_config") {
-            UaParserEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "currency_conversion_config") {
-            CurrencyConversionEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "javascript_script_config") {
-            JavascriptScriptEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "event_fingerprint_config") {
-            EventFingerprintEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
-            CookieExtractorEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "http_header_extractor_config") {
             HttpHeaderExtractorEnrichmentConfig
               .parse(enrichmentConfig, schemaKey)
               .map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
-            WeatherEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "api_request_enrichment_config") {
-            ApiRequestEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "sql_query_enrichment_config") {
-            SqlQueryEnrichmentConfig
-              .parse(enrichmentConfig, schemaKey)
-              .map((nm, _).some)
+            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -331,8 +293,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * @return Option boxing the HttpHeaderExtractorEnrichment instance
    */
   def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
-    getEnrichment[HttpHeaderExtractorEnrichment](
-      "http_header_extractor_config")
+    getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
 
   /**
     * Returns an Option boxing the WeatherEnrichment
@@ -369,8 +330,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
     * @param name The name of the enrichment to get
     * @return Option boxing the enrichment
     */
-  private def getEnrichment[A <: Enrichment: Manifest](
-      name: String): Option[A] =
+  private def getEnrichment[A <: Enrichment: Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))
 
   /**

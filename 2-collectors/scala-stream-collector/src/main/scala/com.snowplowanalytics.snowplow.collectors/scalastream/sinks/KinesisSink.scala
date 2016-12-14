@@ -24,20 +24,16 @@ import java.util.concurrent.ScheduledExecutorService
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
-  EnvironmentVariableCredentialsProvider,
   BasicAWSCredentials,
-  ClasspathPropertiesFileCredentialsProvider
+  ClasspathPropertiesFileCredentialsProvider,
+  EnvironmentVariableCredentialsProvider
 }
 import com.amazonaws.services.kinesis.AmazonKinesisClient
 
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
 import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
-import io.github.cloudify.scala.aws.kinesis.Definitions.{
-  Stream,
-  PutResult,
-  Record
-}
+import io.github.cloudify.scala.aws.kinesis.Definitions.{PutResult, Record, Stream}
 import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 
@@ -45,14 +41,14 @@ import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future, Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 
 // Logging
 import org.slf4j.LoggerFactory
 
 // Scala
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 import scala.collection.JavaConverters._
 
 // Snowplow
@@ -73,10 +69,9 @@ object KinesisSink {
     * @param config
     * @param inputType
     */
-  def createAndInitialize(
-      config: CollectorConfig,
-      inputType: InputType.InputType,
-      executorService: ScheduledExecutorService): KinesisSink = {
+  def createAndInitialize(config: CollectorConfig,
+                          inputType: InputType.InputType,
+                          executorService: ScheduledExecutorService): KinesisSink = {
     val ks = new KinesisSink(config, inputType, executorService)
     ks.scheduleFlush()
 
@@ -102,19 +97,19 @@ class KinesisSink private (config: CollectorConfig,
                            val executorService: ScheduledExecutorService)
     extends AbstractSink {
 
-  import log.{error, debug, info, trace}
+  import log.{debug, error, info, trace}
 
   // Records must not exceed MaxBytes - 1MB
   val MaxBytes = 1000000L
 
   val BackoffTime = 3000L
 
-  val ByteThreshold = config.byteLimit
+  val ByteThreshold   = config.byteLimit
   val RecordThreshold = config.recordLimit
-  val TimeThreshold = config.timeLimit
+  val TimeThreshold   = config.timeLimit
 
-  private val maxBackoff = config.maxBackoff
-  private val minBackoff = config.minBackoff
+  private val maxBackoff      = config.maxBackoff
+  private val minBackoff      = config.minBackoff
   private val randomGenerator = new java.util.Random()
 
   info("Creating thread pool of size " + config.threadpoolSize)
@@ -130,7 +125,7 @@ class KinesisSink private (config: CollectorConfig,
     *
     * @param interval When to schedule the next flush
     */
-  def scheduleFlush(interval: Long = TimeThreshold): Unit = {
+  def scheduleFlush(interval: Long = TimeThreshold): Unit =
     executorService.schedule(new Thread {
       override def run(): Unit = {
         val lastFlushed = EventStorage.getLastFlushTime()
@@ -143,7 +138,6 @@ class KinesisSink private (config: CollectorConfig,
         }
       }
     }, interval, MILLISECONDS)
-  }
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
@@ -151,7 +145,7 @@ class KinesisSink private (config: CollectorConfig,
   // The output stream for this sink.
   private val streamName = inputType match {
     case InputType.Good => config.streamGoodName
-    case InputType.Bad => config.streamBadName
+    case InputType.Bad  => config.streamBadName
   }
   private val sinkStream = loadStream(streamName)
 
@@ -191,16 +185,14 @@ class KinesisSink private (config: CollectorConfig,
     *
     * @return The stream
     */
-  def loadStream(name: String): Stream = {
+  def loadStream(name: String): Stream =
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      error(
-        s"Cannot write because stream $name doesn't exist or is not active")
+      error(s"Cannot write because stream $name doesn't exist or is not active")
       System.exit(1)
       throw new RuntimeException("System.exit should never fail")
     }
-  }
 
   /**
     * Creates a new Kinesis client from provided AWS access key and secret
@@ -215,8 +207,7 @@ class KinesisSink private (config: CollectorConfig,
     val client = if (isDefault(accessKey) && isDefault(secretKey)) {
       new AmazonKinesisClient(new EnvironmentVariableCredentialsProvider())
     } else if (isDefault(accessKey) || isDefault(secretKey)) {
-      throw new RuntimeException(
-        "access-key and secret-key must both be set to 'env', or neither")
+      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
       new AmazonKinesisClient(InstanceProfile)
     } else if (isIam(accessKey) || isIam(secretKey)) {
@@ -236,16 +227,15 @@ class KinesisSink private (config: CollectorConfig,
   }
 
   object EventStorage {
-    private var storedEvents = List[(ByteBuffer, String)]()
-    private var byteCount = 0L
+    private var storedEvents              = List[(ByteBuffer, String)]()
+    private var byteCount                 = 0L
     @volatile private var lastFlushedTime = 0L
 
     def store(event: Array[Byte], key: String) = {
       val eventBytes = ByteBuffer.wrap(event)
-      val eventSize = eventBytes.capacity
+      val eventSize  = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        error(
-          s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
+        error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -278,22 +268,18 @@ class KinesisSink private (config: CollectorConfig,
     Nil
   }
 
-  def scheduleBatch(batch: List[(ByteBuffer, String)],
-                    lastBackoff: Long = minBackoff): Unit = {
+  def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff): Unit = {
     val nextBackoff = getNextBackoff(lastBackoff)
     executorService.schedule(new Thread {
-      override def run(): Unit = {
+      override def run(): Unit =
         sendBatch(batch, nextBackoff)
-      }
     }, lastBackoff, MILLISECONDS)
   }
 
   // TODO: limit max retries?
-  def sendBatch(batch: List[(ByteBuffer, String)],
-                nextBackoff: Long = minBackoff): Unit = {
+  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff): Unit =
     if (batch.size > 0) {
-      info(
-        s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
+      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
         p <- sinkStream.multiPut(batch)
       } yield p
@@ -311,8 +297,7 @@ class KinesisSink private (config: CollectorConfig,
               error(
                 s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]")
             }
-            error(
-              s"Retrying all failed records in $nextBackoff milliseconds...")
+            error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }
@@ -324,7 +309,6 @@ class KinesisSink private (config: CollectorConfig,
         }
       }
     }
-  }
 
   /**
     * How long to wait before sending the next request
@@ -333,8 +317,8 @@ class KinesisSink private (config: CollectorConfig,
     * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
     */
   private def getNextBackoff(lastBackoff: Long): Long =
-    (minBackoff + randomGenerator
-      .nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
+    (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong
+      .min(maxBackoff)
 
   /**
     * Is the access/secret key set to the special value "default" i.e. use

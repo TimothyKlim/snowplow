@@ -18,7 +18,7 @@ import java.math.{BigInteger => JBigInteger}
 import java.net.URLEncoder
 
 // Jackson
-import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
@@ -48,9 +48,8 @@ object JsonUtils {
   private lazy val Mapper = new ObjectMapper
 
   // Defines the maximalist JSON Schema-compatible date-time format
-  private val JsonSchemaDateTimeFormat = DateTimeFormat
-    .forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    .withZone(DateTimeZone.UTC)
+  private val JsonSchemaDateTimeFormat =
+    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
     * Validates a String as correct JSON.
@@ -64,8 +63,7 @@ object JsonUtils {
     */
   val extractBase64EncJson: (String, String) => Validation[String, String] =
     (field, str) =>
-      CU.decodeBase64Url(field, str)
-        .flatMap(json => validateAndReformatJson(field, json))
+      CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json))
 
   /**
     * Converts a Joda DateTime into
@@ -94,9 +92,9 @@ object JsonUtils {
     *         original String
     */
   private[utils] def booleanToJValue(str: String): JValue = str match {
-    case "true" => JBool(true)
+    case "true"  => JBool(true)
     case "false" => JBool(false)
-    case _ => JString(str)
+    case _       => JString(str)
   }
 
   /**
@@ -132,8 +130,7 @@ object JsonUtils {
     * @return the reformatted date-time String if
     *         possible, or otherwise the original String
     */
-  def toJsonSchemaDateTime(str: String,
-                           fromFormat: DateTimeFormatter): String =
+  def toJsonSchemaDateTime(str: String, fromFormat: DateTimeFormatter): String =
     try {
       val dt = DateTime.parse(str, fromFormat)
       toJsonSchemaDateTime(dt)
@@ -168,9 +165,9 @@ object JsonUtils {
                dateTimes: DateTimeFields): JField = {
 
     val v = (value, dateTimes) match {
-      case ("", _) => JNull
+      case ("", _)                  => JNull
       case _ if bools.contains(key) => booleanToJValue(value)
-      case _ if ints.contains(key) => integerToJValue(value)
+      case _ if ints.contains(key)  => integerToJValue(value)
       case (_, Some((nel, fmt))) if nel.toList.contains(key) =>
         JString(toJsonSchemaDateTime(value, fmt))
       case _ => JString(value)
@@ -188,9 +185,8 @@ object JsonUtils {
     * @return a Scalaz Validation, wrapping either an error
     *         String or the reformatted JSON String
     */
-  private[utils] def validateAndReformatJson(
-      field: String,
-      str: String): Validation[String, String] =
+  private[utils] def validateAndReformatJson(field: String,
+                                             str: String): Validation[String, String] =
     extractJson(field, str).map(j => compact(fromJsonNode(j)))
 
   /**
@@ -201,8 +197,7 @@ object JsonUtils {
     * @return a Scalaz Validation, wrapping either an error
     *         String or the extracted JsonNode
     */
-  def extractJson(field: String,
-                  instance: String): Validation[String, JsonNode] =
+  def extractJson(field: String, instance: String): Validation[String, JsonNode] =
     try {
       Mapper.readTree(instance).success
     } catch {
@@ -240,12 +235,11 @@ object JsonUtils {
     *         instance information etc removed. Option-boxed
     *         because the message can be null
     */
-  def stripInstanceEtc(message: String): Option[String] = {
+  def stripInstanceEtc(message: String): Option[String] =
     for (m <- Option(message)) yield {
       m.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
         .replaceAll("\\t", "    ")
         .replaceAll("\\p{Cntrl}", "") // Any other control character
         .trim
     }
-  }
 }

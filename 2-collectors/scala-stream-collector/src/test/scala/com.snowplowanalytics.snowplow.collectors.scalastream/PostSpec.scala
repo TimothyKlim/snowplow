@@ -33,7 +33,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec}
 
 // Config
-import com.typesafe.config.{ConfigFactory, Config, ConfigException}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -42,11 +42,7 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class PostSpec
-    extends WordSpec
-    with Matchers
-    with ScalatestRouteTest
-    with HelpersSpec {
+class PostSpec extends WordSpec with Matchers with ScalatestRouteTest with HelpersSpec {
   val testConf: Config =
     ConfigFactory.parseString("""
 collector {
@@ -93,10 +89,10 @@ collector {
   }
 }
 """)
-  val collectorConfig = new CollectorConfig(testConf)
-  val sink = new TestSink
-  val sinks = CollectorSinks(sink, sink)
-  val collectorService = new CollectorService(collectorConfig, sinks)
+  val collectorConfig    = new CollectorConfig(testConf)
+  val sink               = new TestSink
+  val sinks              = CollectorSinks(sink, sink)
+  val collectorService   = new CollectorService(collectorConfig, sinks)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -106,9 +102,8 @@ collector {
   def collectorPost(uri: String,
                     cookie: Option[HttpCookiePair] = None,
                     remoteAddr: String = "127.0.0.1") = {
-    val headers: MutableList[HttpHeader] = MutableList(
-      `Remote-Address`(remoteAddress(remoteAddr)),
-      `Raw-Request-URI`(uri))
+    val headers: MutableList[HttpHeader] =
+      MutableList(`Remote-Address`(remoteAddress(remoteAddr)), `Raw-Request-URI`(uri))
     cookie.foreach(headers += Cookie(_))
     Post(uri).withHeaders(headers.toList)
   }
@@ -139,9 +134,8 @@ collector {
       }
     }
     "return the same cookie as passed in" in {
-      collectorPost(
-        "/com.snowplowanalytics.snowplow/tp2",
-        Some(HttpCookiePair(collectorConfig.cookieName.get, "UUID_Test"))) ~>
+      collectorPost("/com.snowplowanalytics.snowplow/tp2",
+                    Some(HttpCookiePair(collectorConfig.cookieName.get, "UUID_Test"))) ~>
         collectorService.routes ~> check {
         val httpCookies: immutable.Seq[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
@@ -163,9 +157,8 @@ collector {
         val p3pHeader = p3pHeaders(0)
 
         val policyRef = collectorConfig.p3pPolicyRef
-        val CP = collectorConfig.p3pCP
-        p3pHeader.value should ===(
-          "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
+        val CP        = collectorConfig.p3pCP
+        p3pHeader.value should ===("policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {

@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.{DefaultFormats, JValue, JNothing, MappingException}
+import org.json4s.{DefaultFormats, JNothing, JValue, MappingException}
 import org.json4s.JsonDSL._
 
 // Iglu
@@ -43,9 +43,7 @@ object ScalazJson4sUtils {
     * @return the list extracted from the JSON on
     *         success or an error String on failure
     */
-  def extract[A: Manifest](config: JValue,
-                           head: String,
-                           tail: String*): ValidatedMessage[A] = {
+  def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
 
     val path = head +: tail
 
@@ -62,10 +60,7 @@ object ScalazJson4sUtils {
             .failure
       }
     } else
-      s"JSON path %s not found"
-        .format(path.mkString("."))
-        .toProcessingMessage
-        .failure
+      s"JSON path %s not found".format(path.mkString(".")).toProcessingMessage.failure
   }
 
   /**
@@ -81,6 +76,6 @@ object ScalazJson4sUtils {
   def fieldExists(config: JValue, head: String, tail: String*): Boolean =
     (head +: tail).foldLeft(config)(_ \ _) match {
       case JNothing => false
-      case s => true
+      case s        => true
     }
 }

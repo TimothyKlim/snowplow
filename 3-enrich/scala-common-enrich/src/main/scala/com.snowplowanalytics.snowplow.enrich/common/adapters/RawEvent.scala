@@ -17,7 +17,7 @@ package adapters
 import org.joda.time.DateTime
 
 // This project
-import loaders.{CollectorSource, CollectorContext, CollectorApi}
+import loaders.{CollectorApi, CollectorContext, CollectorSource}
 
 /**
   * The canonical input format for the ETL

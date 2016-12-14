@@ -20,7 +20,7 @@ package bad
 import org.apache.commons.codec.binary.Base64
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.scalaz.ValidationMatchers
 
 // ScalaCheck
@@ -30,10 +30,7 @@ import org.scalacheck.Arbitrary._
 // This project
 import SpecHelpers._
 
-class CorruptedThriftLinesSpec
-    extends Specification
-    with ScalaCheck
-    with ValidationMatchers {
+class CorruptedThriftLinesSpec extends Specification with ScalaCheck with ValidationMatchers {
   def is =
     "This is a specification to test handling of corrupted Thrift payloads" ^
       p ^

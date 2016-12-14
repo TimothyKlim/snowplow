@@ -21,7 +21,7 @@ package registry
 import java.math.{BigInteger => JBigInteger}
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // Scalaz
 import scalaz._
@@ -52,10 +52,8 @@ object CallrailAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val CallComplete = SchemaKey("com.callrail",
-                                 "call_complete",
-                                 "jsonschema",
-                                 "1-0-0").toSchemaUri
+    val CallComplete =
+      SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-0").toSchemaUri
   }
 
   // Datetime format used by CallRail (as we will need to massage)
@@ -65,7 +63,7 @@ object CallrailAdapter extends Adapter {
   // Create a simple formatter function
   private val CallrailFormatter: FormatterFunc = {
     val bools = List("first_call", "answered")
-    val ints = List("duration")
+    val ints  = List("duration")
     val dateTimes: JU.DateTimeFields =
       Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
@@ -82,8 +80,7 @@ object CallrailAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents = {
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {

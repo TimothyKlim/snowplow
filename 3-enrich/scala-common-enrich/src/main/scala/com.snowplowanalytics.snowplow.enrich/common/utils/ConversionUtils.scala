@@ -84,8 +84,8 @@ object ConversionUtils {
 
     // TODO: should we be using decodeString below instead?
     // Trouble is we can't be sure of the querystring's encoding.
-    val query = fixTabsNewlines(uri.getRawQuery)
-    val path = fixTabsNewlines(uri.getRawPath)
+    val query    = fixTabsNewlines(uri.getRawQuery)
+    val path     = fixTabsNewlines(uri.getRawPath)
     val fragment = fixTabsNewlines(uri.getRawFragment)
 
     UriComponents(
@@ -123,9 +123,7 @@ object ConversionUtils {
   def fixTabsNewlines(str: String): Option[String] = {
     val f = for {
       s <- Option(str)
-      r = s
-        .replaceAll("\\t", "    ")
-        .replaceAll("\\p{Cntrl}", "") // Any other control character
+      r = s.replaceAll("\\t", "    ").replaceAll("\\p{Cntrl}", "") // Any other control character
     } yield r
     if (f == Some("")) None else f
   }
@@ -151,10 +149,10 @@ object ConversionUtils {
   // 2. Functionality:
   // 1. If passed in null or "", return Success(None)
   // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
-  def decodeBase64Url(field: String, str: String): Validation[String, String] = {
+  def decodeBase64Url(field: String, str: String): Validation[String, String] =
     try {
       val decodedBytes = UrlSafeBase64.decode(str)
-      val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
+      val result       = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
       case NonFatal(e) =>
@@ -162,7 +160,6 @@ object ConversionUtils {
           .format(field, str, e.getMessage)
           .failure
     }
-  }
 
   /**
     * Encodes a URL-safe Base64 string.
@@ -196,7 +193,7 @@ object ConversionUtils {
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.toLowerCase.success
-      case None => s"Field [$field]: [$str] is not a valid UUID".failure
+      case None    => s"Field [$field]: [$str] is not a valid UUID".failure
     }
   }
 
@@ -240,8 +237,7 @@ object ConversionUtils {
     * @return a Scalaz Validation, wrapping either
     *         an error String or the decoded String
     */
-  val decodeString: (String, String, String) => ValidatedString = (enc, field,
-                                                                   str) =>
+  val decodeString: (String, String, String) => ValidatedString = (enc, field, str) =>
     try {
       // TODO: switch to style of fixTabsNewlines above
       // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
@@ -334,9 +330,7 @@ object ConversionUtils {
     *         error message, all
     *         wrapped in a Validation
     */
-  def stringToUri(
-      uri: String,
-      useNetaporter: Boolean = false): Validation[String, Option[URI]] =
+  def stringToUri(uri: String, useNetaporter: Boolean = false): Validation[String, Option[URI]] =
     try {
       val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
       Some(URI.create(r)).success
@@ -355,7 +349,7 @@ object ConversionUtils {
             }
             for {
               parsedUri <- netaporterUri
-              finalUri <- stringToUri(parsedUri.toString, true)
+              finalUri  <- stringToUri(parsedUri.toString, true)
             } yield finalUri
           }
           case true =>
@@ -364,9 +358,7 @@ object ConversionUtils {
               .failure
         }
       case NonFatal(e) =>
-        "Unexpected error creating URI from string [%s]: [%s]"
-          .format(uri, e.getMessage)
-          .failure
+        "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).failure
     }
 
   /**
@@ -375,15 +367,9 @@ object ConversionUtils {
     * @param uri URI containing the querystring
     * @param encoding Encoding of the URI
     */
-  def extractQuerystring(
-      uri: URI,
-      encoding: String): Validation[String, Map[String, String]] =
+  def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
     try {
-      URLEncodedUtils
-        .parse(uri, encoding)
-        .map(p => (p.getName -> p.getValue))
-        .toMap
-        .success
+      URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
     } catch {
       case NonFatal(e1) =>
         try {
@@ -459,9 +445,7 @@ object ConversionUtils {
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double-like String"
-          .format(field, str)
-          .failure
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).failure
   }
 
   /**
@@ -474,8 +458,7 @@ object ConversionUtils {
     * @return a Scalaz Validation, being either
     *         a Failure String or a Success Double
     */
-  def stringToMaybeDouble(field: String,
-                          str: String): Validation[String, Option[Double]] = {
+  def stringToMaybeDouble(field: String, str: String): Validation[String, Option[Double]] =
     try {
       if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
         None.success
@@ -485,11 +468,8 @@ object ConversionUtils {
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Double-like String"
-          .format(field, str)
-          .failure
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).failure
     }
-  }
 
   /**
     * Extract a Java Byte representing
@@ -513,9 +493,7 @@ object ConversionUtils {
         case "1" => (1.toByte: JByte).success
         case "0" => (0.toByte: JByte).success
         case _ =>
-          "Field [%s]: cannot convert [%s] to Boolean-like JByte"
-            .format(field, str)
-            .failure
+          "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).failure
     }
 
   /**

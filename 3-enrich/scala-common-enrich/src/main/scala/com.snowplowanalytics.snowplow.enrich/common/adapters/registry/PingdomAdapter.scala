@@ -36,7 +36,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 
 // This project
 import loaders.CollectorPayload
@@ -61,14 +61,8 @@ object PingdomAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map(
-    "assign" -> SchemaKey("com.pingdom",
-                          "incident_assign",
-                          "jsonschema",
-                          "1-0-0").toSchemaUri,
-    "notify_user" -> SchemaKey("com.pingdom",
-                               "incident_notify_user",
-                               "jsonschema",
-                               "1-0-0").toSchemaUri,
+    "assign"      -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
+    "notify_user" -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
     "notify_of_close" -> SchemaKey("com.pingdom",
                                    "incident_notify_of_close",
                                    "jsonschema",
@@ -88,8 +82,7 @@ object PingdomAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.querystring) match {
       case (Nil) =>
         s"${VendorName} payload querystring is empty: nothing to process".failureNel
@@ -112,7 +105,7 @@ object PingdomAdapter extends Adapter {
                   }
                 } yield {
                   val formattedEvent = reformatParameters(parsedEvent)
-                  val qsParams = s - "message"
+                  val qsParams       = s - "message"
                   NonEmptyList(
                     RawEvent(
                       api = payload.api,

@@ -35,7 +35,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{SchemaKey, Resolver}
+import iglu.client.{Resolver, SchemaKey}
 import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
@@ -62,13 +62,13 @@ object PagerdutyAdapter extends Adapter {
   private val Incident =
     SchemaKey("com.pagerduty", "incident", "jsonschema", "1-0-0").toSchemaUri
   private val EventSchemaMap = Map(
-    "incident.trigger" -> Incident,
-    "incident.acknowledge" -> Incident,
+    "incident.trigger"       -> Incident,
+    "incident.acknowledge"   -> Incident,
     "incident.unacknowledge" -> Incident,
-    "incident.resolve" -> Incident,
-    "incident.assign" -> Incident,
-    "incident.escalate" -> Incident,
-    "incident.delegate" -> Incident
+    "incident.resolve"       -> Incident,
+    "incident.assign"        -> Incident,
+    "incident.escalate"      -> Incident,
+    "incident.delegate"      -> Incident
   )
 
   /**
@@ -84,8 +84,7 @@ object PagerdutyAdapter extends Adapter {
     * @return a Validation boxing either a NEL of RawEvents on
     *         Success, or a NEL of Failure Strings
     */
-  def toRawEvents(payload: CollectorPayload)(
-      implicit resolver: Resolver): ValidatedRawEvents =
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) =>
         s"Request body is empty: no ${VendorName} events to process".failureNel
@@ -108,14 +107,11 @@ object PagerdutyAdapter extends Adapter {
                 val eventOpt: Option[String] =
                   (event \ "type").extractOpt[String]
                 for {
-                  schema <- lookupSchema(eventOpt,
-                                         VendorName,
-                                         index,
-                                         EventSchemaMap)
+                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
 
                   val formattedEvent = reformatParameters(event)
-                  val qsParams = toMap(payload.querystring)
+                  val qsParams       = toMap(payload.querystring)
                   RawEvent(
                     api = payload.api,
                     parameters = toUnstructEventParams(TrackerVersion,
@@ -146,8 +142,7 @@ object PagerdutyAdapter extends Adapter {
     * @return either a Successful List of JValue JSONs
     *         or a Failure String
     */
-  private[registry] def payloadBodyToEvents(
-      body: String): Validation[String, List[JValue]] =
+  private[registry] def payloadBodyToEvents(body: String): Validation[String, List[JValue]] =
     try {
       val parsed = parse(body)
       (parsed \ "messages") match {

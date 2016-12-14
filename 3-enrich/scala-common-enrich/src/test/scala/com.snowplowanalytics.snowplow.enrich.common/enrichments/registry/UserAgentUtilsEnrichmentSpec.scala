@@ -36,8 +36,8 @@ class UserAgentUtilsEnrichmentSpec
         "IE spec" !! "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0" ! "Internet Explorer 11" ! "Internet Explorer" ! Some(
           "11.0") ! "Browser" ! "TRIDENT" ! ("Windows 7", "Windows", "Microsoft Corporation") ! "Computer" ! false |> {
 
-        (_, input, browserName, browserFamily, browserVersion, browserType,
-         browserRenderEngine, osFields, deviceType, deviceIsMobile) =>
+        (_, input, browserName, browserFamily, browserVersion, browserType, browserRenderEngine,
+         osFields, deviceType, deviceIsMobile) =>
           {
             val expected = ClientAttributes(browserName,
                                             browserFamily,
@@ -49,8 +49,7 @@ class UserAgentUtilsEnrichmentSpec
                                             osFields._3,
                                             deviceType,
                                             deviceIsMobile)
-            UserAgentUtilsEnrichment.extractClientAttributes(input) must beSuccessful(
-              expected)
+            UserAgentUtilsEnrichment.extractClientAttributes(input) must beSuccessful(expected)
           }
       }
     }

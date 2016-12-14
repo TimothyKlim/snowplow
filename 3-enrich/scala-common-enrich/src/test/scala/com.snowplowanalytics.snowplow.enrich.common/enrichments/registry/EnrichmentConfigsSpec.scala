@@ -56,10 +56,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
-                                "anon_ip",
-                                "jsonschema",
-                                "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
       val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
       result must beSuccessful(AnonIpEnrichment(AnonOctets(2)))
@@ -85,22 +82,18 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
-                                "ip_lookups",
-                                "jsonschema",
-                                "1-0-0")
+      val schemaKey =
+        SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
       val expected = IpLookupsEnrichment(
-        Some(
-          "geo",
-          new URI(
-            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"),
-          "GeoIPCity.dat"),
-        Some(
-          "isp",
-          new URI(
-            "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),
-          "GeoIPISP.dat"),
+        Some("geo",
+             new URI(
+               "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPCity.dat"),
+             "GeoIPCity.dat"),
+        Some("isp",
+             new URI(
+               "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPISP.dat"),
+             "GeoIPISP.dat"),
         None,
         None,
         None,
@@ -125,14 +118,11 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
-                                "referer_parser",
-                                "jsonschema",
-                                "1-0-0")
+      val schemaKey =
+        SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
 
       val expected = RefererParserEnrichment(
-        List("www.subdomain1.snowplowanalytics.com",
-             "www.subdomain2.snowplowanalytics.com"))
+        List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
 
       val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
       result must beSuccessful(expected)
@@ -162,30 +152,25 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
-                                "campaign_attribution",
-                                "jsonschema",
-                                "1-0-0")
+      val schemaKey =
+        SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
 
       val expected = CampaignAttributionEnrichment(
         List("utm_medium", "medium"),
         List("utm_source", "source"),
         List("utm_term"),
         List(),
-        List("utm _ campaign",
-             "CID",
-             "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
+        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
         List(
-          "gclid" -> "Override",
-          "msclkid" -> "Microsoft",
-          "dclid" -> "DoubleClick",
+          "gclid"      -> "Override",
+          "msclkid"    -> "Microsoft",
+          "dclid"      -> "DoubleClick",
           "customclid" -> "Custom"
         )
       )
 
       val result =
-        CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson,
-                                            schemaKey)
+        CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
       result must beSuccessful(expected)
 
     }
@@ -206,8 +191,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
                                 "1-0-0")
 
       val result =
-        UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson,
-                                             schemaKey)
+        UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
       result must beSuccessful(UserAgentUtilsEnrichment)
 
     }
@@ -222,10 +206,8 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow",
-                                "ua_parser_config",
-                                "jsonschema",
-                                "1-0-0")
+      val schemaKey =
+        SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
 
       val result =
         UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
@@ -252,13 +234,10 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
                                 "jsonschema",
                                 "1-0-0")
 
-      val result = CurrencyConversionEnrichmentConfig
-        .parse(currencyConversionEnrichmentJson, schemaKey)
+      val result =
+        CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
       result must beSuccessful(
-        CurrencyConversionEnrichment(DeveloperAccount,
-                                     "---",
-                                     "EUR",
-                                     "EOD_PRIOR"))
+        CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
 
     }
   }
@@ -291,8 +270,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       // val expected = JavascriptScriptEnrichment(JavascriptScriptEnrichmentConfig.compile(script).toOption.get)
 
       val result =
-        JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson,
-                                               schemaKey)
+        JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson, schemaKey)
       result must beSuccessful // TODO: check the result's contents by evaluating some JavaScript
     }
   }
@@ -319,8 +297,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
       result must beSuccessful.like {
         case enr =>
-          enr.algorithm("sample") must beEqualTo(
-            "5e8ff9bf55ba3508199d22e984129be6")
+          enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
       }
     }
   }
@@ -341,8 +318,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
                                 "1-0-0")
 
       val result =
-        CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson,
-                                              schemaKey)
+        CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
       result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
     }
   }

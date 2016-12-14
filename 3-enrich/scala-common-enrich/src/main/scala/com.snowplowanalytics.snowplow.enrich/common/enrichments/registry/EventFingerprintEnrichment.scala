@@ -58,19 +58,16 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
     *        Must be a supported SchemaKey for this enrichment
     * @return a configured EventFingerprintEnrichment instance
     */
-  def parse(config: JValue, schemaKey: SchemaKey)
-    : ValidatedNelMessage[EventFingerprintEnrichment] = {
+  def parse(config: JValue,
+            schemaKey: SchemaKey): ValidatedNelMessage[EventFingerprintEnrichment] =
     isParseable(config, schemaKey).flatMap(conf => {
       (for {
         excludedParameters <- ScalazJson4sUtils
           .extract[List[String]](config, "parameters", "excludeParameters")
-        algorithmName <- ScalazJson4sUtils
-          .extract[String](config, "parameters", "hashAlgorithm")
-        algorithm <- getAlgorithm(algorithmName)
-      } yield
-        EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
+        algorithmName <- ScalazJson4sUtils.extract[String](config, "parameters", "hashAlgorithm")
+        algorithm     <- getAlgorithm(algorithmName)
+      } yield EventFingerprintEnrichment(algorithm, excludedParameters)).toValidationNel
     })
-  }
 
   /**
     * Look up the fingerprinting algorithm by name
@@ -78,8 +75,7 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
     * @param algorithmName
     * @return A hashing algorithm
     */
-  private[registry] def getAlgorithm(
-      algorithmName: String): ValidatedMessage[String => String] =
+  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] =
     algorithmName match {
       case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).success
       case other =>

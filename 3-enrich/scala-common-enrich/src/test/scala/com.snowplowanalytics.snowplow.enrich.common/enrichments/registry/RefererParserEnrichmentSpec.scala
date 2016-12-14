@@ -69,7 +69,5 @@ class ExtractRefererDetailsSpec extends Specification with DataTables {
       new URI(
         "http://www.google.com/search?q=%0Agateway%09oracle%09cards%09denise%09linn&hl=en&client=safari"),
       PageHost) must_== Some(
-      Referer(Medium.Search,
-              Some("Google"),
-              Some("gateway    oracle    cards    denise    linn")))
+      Referer(Medium.Search, Some("Google"), Some("gateway    oracle    cards    denise    linn")))
 }

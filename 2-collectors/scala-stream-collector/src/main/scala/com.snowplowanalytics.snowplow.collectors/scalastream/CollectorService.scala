@@ -39,10 +39,9 @@ object CollectorService {
   private val querystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
 
-final class CollectorService(collectorConfig: CollectorConfig,
-                             sinks: CollectorSinks) {
+final class CollectorService(collectorConfig: CollectorConfig, sinks: CollectorSinks) {
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
-  val cookieName = collectorConfig.cookieName
+  val cookieName      = collectorConfig.cookieName
 
   // format: OFF
   val routes = {
@@ -85,14 +84,13 @@ final class CollectorService(collectorConfig: CollectorConfig,
   }
   // format: ON
 
-  private def getRequestDetails(
-      cookieName: Option[String]): Directive1[(Option[HttpCookiePair],
-                                               Option[String],
-                                               Option[String],
-                                               String,
-                                               String,
-                                               RemoteAddress,
-                                               HttpRequest)] = {
+  private def getRequestDetails(cookieName: Option[String]): Directive1[(Option[HttpCookiePair],
+                                                                         Option[String],
+                                                                         Option[String],
+                                                                         String,
+                                                                         String,
+                                                                         RemoteAddress,
+                                                                         HttpRequest)] =
     cookieIfWanted(cookieName).flatMap { reqCookie =>
       optionalHeaderValueByName("User-Agent").flatMap { userAgent =>
         optionalHeaderValueByName("Referer").flatMap { refererURI =>
@@ -100,14 +98,7 @@ final class CollectorService(collectorConfig: CollectorConfig,
             extractHost.flatMap { host =>
               extractClientIP.flatMap { ip =>
                 extractRequest.flatMap { request =>
-                  provide(
-                    (reqCookie,
-                     userAgent,
-                     refererURI,
-                     rawRequest,
-                     host,
-                     ip,
-                     request))
+                  provide((reqCookie, userAgent, refererURI, rawRequest, host, ip, request))
                 }
               }
             }
@@ -115,7 +106,6 @@ final class CollectorService(collectorConfig: CollectorConfig,
         }
       }
     }
-  }
 
   /**
     * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
@@ -123,11 +113,9 @@ final class CollectorService(collectorConfig: CollectorConfig,
     * @param name Optionally configured cookie name
     * @return Directive1[Option[HttpCookie]]
     */
-  def cookieIfWanted(
-      name: Option[String]): Directive1[Option[HttpCookiePair]] = {
+  def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookiePair]] =
     name match {
       case Some(n) => optionalCookie(n)
-      case None => provide(None)
+      case None    => provide(None)
     }
-  }
 }

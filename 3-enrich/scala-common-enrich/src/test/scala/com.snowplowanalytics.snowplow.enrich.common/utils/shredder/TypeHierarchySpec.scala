@@ -26,7 +26,7 @@ class TypeHierarchySpec extends Specification {
       "the complete method should finalize a partial TypeHierarchy" ! e2 ^
       end
 
-  val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+  val EventId            = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
 
   def e1 = {
