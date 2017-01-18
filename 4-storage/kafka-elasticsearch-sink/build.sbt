@@ -1,7 +1,7 @@
 lazy val akkaStreamKafkaVersion      = "0.13"
-lazy val akkaVersion                 = "2.4.14"
-lazy val doobieVersion               = "0.3.1-M3"
-lazy val elastic4sVersion            = "5.1.2"
+lazy val akkaVersion                 = "2.4.16"
+lazy val doobieVersion               = "0.4.0"
+lazy val elastic4sVersion            = "5.1.5"
 lazy val igluClientVersion           = "0.3.2"
 lazy val postgresqlVersion           = "9.4.1212"
 lazy val scalazVersion               = "7.2.8"
@@ -11,53 +11,53 @@ lazy val snowplowTrackerVersion      = "0.4.1-kt"
 lazy val buildSettings = Seq(
   organization := "com.snowplowanalytics",
   description := "Kafka sink for Elasticsearch",
-  scalaVersion := "2.11.8",
-  scalafmtConfig := Some(file(".scalafmt.conf"))
+  scalaVersion := "2.11.8"
 )
 
 lazy val commonSettings =
-  reformatOnCompileSettings ++
-    Seq(
-      resolvers ++= Seq(
-        // For Snowplow
-        "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
-        "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-        // For Scalazon
-        "BintrayJCenter" at "http://jcenter.bintray.com",
-        // For user-agent-utils
-        "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
-        Resolver.bintrayRepo("fcomb", "maven")
-      ),
-      scalacOptions := Seq("-encoding",
-                           "UTF-8",
-                           "-target:jvm-1.8",
-                           "-unchecked",
-                           "-deprecation",
-                           "-feature",
-                           "-language:higherKinds",
-                           "-language:existentials",
-                           "-language:postfixOps",
-                           "-Xexperimental",
-                           "-Xlint",
-                           // "-Xfatal-warnings",
-                           "-Xfuture",
-                           "-Ybackend:GenBCode",
-                           "-Ydelambdafy:method",
-                           "-Yno-adapted-args",
-                           "-Yopt-warnings",
-                           "-Yopt:l:classpath",
-                           "-Yopt:unreachable-code" /*,
+  Seq(
+    resolvers ++= Seq(
+      // For Snowplow
+      "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
+      "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+      // For Scalazon
+      "BintrayJCenter" at "http://jcenter.bintray.com",
+      // For user-agent-utils
+      "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
+      Resolver.bintrayRepo("fcomb", "maven")
+    ),
+    scalacOptions := Seq(
+      "-encoding",
+      "UTF-8",
+      "-target:jvm-1.8",
+      "-unchecked",
+      "-deprecation",
+      "-feature",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-language:postfixOps",
+      "-Xexperimental",
+      "-Xlint",
+      // "-Xfatal-warnings",
+      "-Xfuture",
+      "-Ybackend:GenBCode",
+      "-Ydelambdafy:method",
+      "-Yno-adapted-args",
+      "-Yopt-warnings",
+      "-Yopt:l:classpath",
+      "-Yopt:unreachable-code" /*,
                            "-Ywarn-dead-code",
                            "-Ywarn-infer-any",
                            "-Ywarn-numeric-widen",
                            "-Ywarn-unused",
                            "-Ywarn-unused-import",
-                           "-Ywarn-value-discard"*/ ),
-      sources in (Compile, doc) := Seq.empty,
-      shellPrompt := { s =>
-        Project.extract(s).currentProject.id + " > "
-      }
-    )
+                           "-Ywarn-value-discard"*/
+    ),
+    sources in (Compile, doc) := Seq.empty,
+    shellPrompt := { s =>
+      Project.extract(s).currentProject.id + " > "
+    }
+  )
 
 lazy val noPublishSettings = Seq(
   publish := (),
@@ -119,20 +119,20 @@ lazy val root = Project(id = "snowplow-elasticsearch-sink", base = file("."))
     javaOptions in Universal ++= javaRunOptions.map(o => s"-J$o"),
     packageName in Universal := "dist",
     javaOptions in (Test, run) ++= javaRunOptions,
-    sourceGenerators in Compile += Def
-      .task {
-        val file = (sourceManaged in Compile).value / "settings.scala"
-        IO.write(file,
-                 """package com.snowplowanalytics.snowplow.storage.generated
-                   |object Settings {
-                   |  val organization = "%s"
-                   |  val version = "%s"
-                   |  val name = "%s"
-                   |}
-                   |""".stripMargin.format(organization.value, version.value, name.value))
-        Seq(file)
-      }
-      .taskValue,
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(
+        file,
+        """package com.snowplowanalytics.snowplow.storage.generated
+          |object Settings {
+          |  val organization = "%s"
+          |  val version = "%s"
+          |  val name = "%s"
+          |}
+          |""".stripMargin.format(organization.value, version.value, name.value)
+      )
+      Seq(file)
+    }.taskValue,
     parallelExecution := true,
     fork in run := true
   )

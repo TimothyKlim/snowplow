@@ -143,10 +143,12 @@ class ShredderSpec extends Specification with ValidationMatchers {
       }""")
 
       val expected =
-        NonEmptyList("Could not extract inner data field from custom context",
-                     "Context JSON did not contain a stringly typed schema field",
-                     """Schema failing does not conform to regular expression %s""".format(
-                       Shredder.schemaPattern))
+        NonEmptyList(
+          "Could not extract inner data field from custom context",
+          "Context JSON did not contain a stringly typed schema field",
+          """Schema failing does not conform to regular expression %s""".format(
+            Shredder.schemaPattern)
+        )
 
       actual must be failing (expected)
     }
